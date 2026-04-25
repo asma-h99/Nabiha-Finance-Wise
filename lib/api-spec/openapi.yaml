@@ -3,20 +3,27 @@ info:
   # Do not change the title, if the title changes, the import paths will be broken
   title: Api
   version: 0.1.0
-  description: API specification
+  description: Nabiha Financial Awareness API
 servers:
   - url: /api
     description: Base API path
 tags:
   - name: health
     description: Health operations
+  - name: expenses
+    description: Expense management
+  - name: categories
+    description: Expense categories
+  - name: commitments
+    description: Personal financial commitments
+  - name: summary
+    description: Dashboard summary and analytics
 paths:
   /healthz:
     get:
       operationId: healthCheck
       tags: [health]
       summary: Health check
-      description: Returns server health status
       responses:
         "200":
           description: Healthy
@@ -24,6 +31,307 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+
+  /expenses:
+    get:
+      operationId: listExpenses
+      tags: [expenses]
+      summary: List all expenses
+      parameters:
+        - name: categoryId
+          in: query
+          required: false
+          schema:
+            type: integer
+        - name: priority
+          in: query
+          required: false
+          schema:
+            $ref: "#/components/schemas/Priority"
+        - name: month
+          in: query
+          required: false
+          schema:
+            type: string
+            description: "YYYY-MM format"
+      responses:
+        "200":
+          description: List of expenses
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Expense"
+    post:
+      operationId: createExpense
+      tags: [expenses]
+      summary: Create a new expense
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateExpenseBody"
+      responses:
+        "201":
+          description: Created expense
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Expense"
+
+  /expenses/{id}:
+    get:
+      operationId: getExpense
+      tags: [expenses]
+      summary: Get expense by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Expense
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Expense"
+        "404":
+          description: Not found
+    put:
+      operationId: updateExpense
+      tags: [expenses]
+      summary: Update an expense
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateExpenseBody"
+      responses:
+        "200":
+          description: Updated expense
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Expense"
+    delete:
+      operationId: deleteExpense
+      tags: [expenses]
+      summary: Delete an expense
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+
+  /categories:
+    get:
+      operationId: listCategories
+      tags: [categories]
+      summary: List all categories
+      responses:
+        "200":
+          description: List of categories
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Category"
+    post:
+      operationId: createCategory
+      tags: [categories]
+      summary: Create a new category
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateCategoryBody"
+      responses:
+        "201":
+          description: Created category
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Category"
+
+  /categories/{id}:
+    delete:
+      operationId: deleteCategory
+      tags: [categories]
+      summary: Delete a category
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+
+  /commitments:
+    get:
+      operationId: listCommitments
+      tags: [commitments]
+      summary: List all financial commitments
+      responses:
+        "200":
+          description: List of commitments
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Commitment"
+    post:
+      operationId: createCommitment
+      tags: [commitments]
+      summary: Create a financial commitment
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateCommitmentBody"
+      responses:
+        "201":
+          description: Created commitment
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Commitment"
+
+  /commitments/{id}:
+    put:
+      operationId: updateCommitment
+      tags: [commitments]
+      summary: Update a commitment
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateCommitmentBody"
+      responses:
+        "200":
+          description: Updated commitment
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Commitment"
+    delete:
+      operationId: deleteCommitment
+      tags: [commitments]
+      summary: Delete a commitment
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+
+  /summary/dashboard:
+    get:
+      operationId: getDashboardSummary
+      tags: [summary]
+      summary: Get dashboard summary with totals and breakdowns
+      parameters:
+        - name: month
+          in: query
+          required: false
+          schema:
+            type: string
+            description: "YYYY-MM format"
+      responses:
+        "200":
+          description: Dashboard summary
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DashboardSummary"
+
+  /summary/priority-breakdown:
+    get:
+      operationId: getPriorityBreakdown
+      tags: [summary]
+      summary: Get spending breakdown by priority level
+      parameters:
+        - name: month
+          in: query
+          required: false
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Priority breakdown
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/PriorityBreakdown"
+
+  /summary/category-breakdown:
+    get:
+      operationId: getCategoryBreakdown
+      tags: [summary]
+      summary: Get spending breakdown by category
+      parameters:
+        - name: month
+          in: query
+          required: false
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Category breakdown
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/CategoryBreakdown"
+
+  /summary/monthly-trend:
+    get:
+      operationId: getMonthlyTrend
+      tags: [summary]
+      summary: Get monthly spending trend for the last 6 months
+      responses:
+        "200":
+          description: Monthly trend data
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/MonthlyTrend"
+
 components:
   schemas:
     HealthStatus:
@@ -34,3 +342,268 @@ components:
       required:
         - status
 
+    Priority:
+      type: string
+      enum: [essential, important, luxury]
+
+    Expense:
+      type: object
+      properties:
+        id:
+          type: integer
+        title:
+          type: string
+        amount:
+          type: number
+        priority:
+          $ref: "#/components/schemas/Priority"
+        categoryId:
+          type: integer
+          nullable: true
+        categoryName:
+          type: string
+          nullable: true
+        notes:
+          type: string
+          nullable: true
+        date:
+          type: string
+          format: date
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - title
+        - amount
+        - priority
+        - date
+        - createdAt
+
+    CreateExpenseBody:
+      type: object
+      properties:
+        title:
+          type: string
+        amount:
+          type: number
+        priority:
+          $ref: "#/components/schemas/Priority"
+        categoryId:
+          type: integer
+          nullable: true
+        notes:
+          type: string
+          nullable: true
+        date:
+          type: string
+          format: date
+      required:
+        - title
+        - amount
+        - priority
+        - date
+
+    UpdateExpenseBody:
+      type: object
+      properties:
+        title:
+          type: string
+        amount:
+          type: number
+        priority:
+          $ref: "#/components/schemas/Priority"
+        categoryId:
+          type: integer
+          nullable: true
+        notes:
+          type: string
+          nullable: true
+        date:
+          type: string
+          format: date
+
+    Category:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        icon:
+          type: string
+          nullable: true
+        color:
+          type: string
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - name
+        - createdAt
+
+    CreateCategoryBody:
+      type: object
+      properties:
+        name:
+          type: string
+        icon:
+          type: string
+          nullable: true
+        color:
+          type: string
+          nullable: true
+      required:
+        - name
+
+    Commitment:
+      type: object
+      properties:
+        id:
+          type: integer
+        title:
+          type: string
+        amount:
+          type: number
+        dueDay:
+          type: integer
+          description: Day of month when due (1-31)
+        isPaid:
+          type: boolean
+        notes:
+          type: string
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - title
+        - amount
+        - dueDay
+        - isPaid
+        - createdAt
+
+    CreateCommitmentBody:
+      type: object
+      properties:
+        title:
+          type: string
+        amount:
+          type: number
+        dueDay:
+          type: integer
+        notes:
+          type: string
+          nullable: true
+      required:
+        - title
+        - amount
+        - dueDay
+
+    UpdateCommitmentBody:
+      type: object
+      properties:
+        title:
+          type: string
+        amount:
+          type: number
+        dueDay:
+          type: integer
+        isPaid:
+          type: boolean
+        notes:
+          type: string
+          nullable: true
+
+    DashboardSummary:
+      type: object
+      properties:
+        totalThisMonth:
+          type: number
+        totalLastMonth:
+          type: number
+        essentialTotal:
+          type: number
+        importantTotal:
+          type: number
+        luxuryTotal:
+          type: number
+        commitmentsTotal:
+          type: number
+        unpaidCommitmentsCount:
+          type: integer
+        expensesCount:
+          type: integer
+        topCategory:
+          type: string
+          nullable: true
+      required:
+        - totalThisMonth
+        - totalLastMonth
+        - essentialTotal
+        - importantTotal
+        - luxuryTotal
+        - commitmentsTotal
+        - unpaidCommitmentsCount
+        - expensesCount
+
+    PriorityBreakdown:
+      type: object
+      properties:
+        priority:
+          $ref: "#/components/schemas/Priority"
+        total:
+          type: number
+        count:
+          type: integer
+        percentage:
+          type: number
+      required:
+        - priority
+        - total
+        - count
+        - percentage
+
+    CategoryBreakdown:
+      type: object
+      properties:
+        categoryId:
+          type: integer
+          nullable: true
+        categoryName:
+          type: string
+        total:
+          type: number
+        count:
+          type: integer
+        percentage:
+          type: number
+      required:
+        - categoryName
+        - total
+        - count
+        - percentage
+
+    MonthlyTrend:
+      type: object
+      properties:
+        month:
+          type: string
+          description: "YYYY-MM format"
+        total:
+          type: number
+        essential:
+          type: number
+        important:
+          type: number
+        luxury:
+          type: number
+      required:
+        - month
+        - total
+        - essential
+        - important
+        - luxury

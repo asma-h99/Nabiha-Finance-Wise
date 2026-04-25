@@ -1,0 +1,31 @@
+kind = "web"
+previewPath = "/"
+title = "نَبِيهَة"
+version = "1.0.0"
+id = "artifacts/nabiha"
+router = "path"
+
+[[integratedSkills]]
+name = "react-vite"
+version = "1.0.0"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 18778
+
+[services.development]
+run = "pnpm --filter @workspace/nabiha run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/nabiha", "run", "build" ]
+publicDir = "artifacts/nabiha/dist/public"
+serve = "static"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "18778"
+BASE_PATH = "/"
