@@ -1,0 +1,68 @@
+# نَبِيهَة (Nabiha) — Financial Intelligence Platform
+
+## App Overview
+
+Build a web application called **نبيهة (Nabiha)** — a financial intelligence platform designed to help junior employees manage their first salary with confidence.
+
+**Primary language:** Arabic (RTL layout) **Exception:** Keep brand/product names in English (e.g. Netflix, Adobe, Gmail)
+
+---
+
+## Core Features
+
+### 1. Authentication & Profile
+
+- Users can sign up and log in (email/password and Gmail OAuth)
+- After signing in, users set their monthly salary and preferred currency (default: JOD; support all major Arab region currencies)
+- Salary should be editable at any time from the dashboard
+
+---
+
+### 2. Subscription Tracker
+
+- Users can add, edit, and delete recurring subscriptions (e.g. streaming services, SaaS tools)
+- Each subscription has a name, amount, renewal frequency, and active/inactive status
+- The dashboard shows a summary: total active subscriptions and how much of the salary they consume
+- Visualize the breakdown of subscriptions as a chart (e.g. donut chart) showing each subscription's share of the total salary
+
+---
+
+### 3. Financial Calendar
+
+- A calendar view showing the user's financial commitments and personal events throughout the year
+- Users can add events: subscription renewals, personal occasions, holidays, and custom financial events
+- Clicking a month shows a detailed timeline of all events and payments due that month
+- Events can be one-time or recurring
+
+---
+
+### 4. Borrowing Capacity Simulator
+
+- A tool that lets users simulate the impact of taking a loan on their monthly budget
+- Inputs: loan amount, interest rate, repayment period
+- Output: estimated monthly payment and a clear signal (safe / risky / not recommended) based on remaining salary after all commitments
+- Show a projected balance chart over the loan period
+
+---
+
+### 5. Notifications & Alerts
+
+- Notify users before upcoming financial commitments (e.g. 3 days before, 1 day before, day of)
+- Alert when projected balance drops below a safe threshold
+- Notifications appear in-app and optionally via email
+- Email alerts should be RTL-friendly, clearly formatted, and include actionable suggestions
+
+---
+
+## Design Direction
+
+- Clean, modern fintech aesthetic with an approachable, friendly tone
+- RTL layout throughout
+- Color scheme: use purple/blue as primary, with green for positive states, orange/red for warnings
+- Fully responsive: mobile, tablet, and desktop
+
+---
+
+## Brand Voice
+
+Nabiha is a helpful financial companion — supportive, clear, and empowering. The tagline is: **"درهمك بأمان مع نبيهة الزمان"**
