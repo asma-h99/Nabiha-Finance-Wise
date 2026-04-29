@@ -70,14 +70,14 @@ export function SalaryCard() {
   return (
     <Card className="rounded-3xl border-none shadow-md bg-gradient-to-br from-primary to-primary/80 text-primary-foreground overflow-hidden relative" data-testid="card-salary">
       <div className="absolute -left-10 -bottom-10 w-40 h-40 bg-white/10 rounded-full blur-2xl pointer-events-none" />
-      <CardHeader className="pb-2 flex flex-row items-center justify-between relative z-10">
-        <CardTitle className="text-sm font-medium opacity-90 flex items-center gap-2">
+      <CardHeader className="pb-2 relative z-10">
+        <CardTitle className="text-sm font-medium opacity-90 flex items-center justify-center gap-2">
           <Wallet className="w-4 h-4" />
           راتبي الشهري
         </CardTitle>
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild>
-            <Button variant="ghost" size="icon" className="h-8 w-8 text-primary-foreground hover:bg-white/20" data-testid="button-edit-salary">
+            <Button variant="ghost" size="icon" className="absolute top-3 left-3 h-8 w-8 text-primary-foreground hover:bg-white/20" data-testid="button-edit-salary">
               <Pencil className="w-4 h-4" />
             </Button>
           </DialogTrigger>
