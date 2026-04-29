@@ -4,11 +4,8 @@ import {
   useCreateExpense, 
   useDeleteExpense, 
   useListCategories,
-  useGetProfile,
-  getListExpensesQueryKey,
-  getGetDashboardSummaryQueryKey,
+  getListExpensesQueryKey 
 } from "@workspace/api-client-react";
-import { formatAmount, getCurrency } from "@/lib/currency";
 import { useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -48,9 +45,6 @@ export default function Expenses() {
   
   const [filterPriority, setFilterPriority] = useState<string>("all");
   const [filterMonth, setFilterMonth] = useState<string>(new Date().toISOString().slice(0, 7));
-  const { data: profile } = useGetProfile();
-  const currency = profile?.currency ?? "JOD";
-  const currencySymbol = getCurrency(currency).symbol;
 
   const { data: expenses, isLoading } = useListExpenses({ 
     month: filterMonth,
@@ -63,7 +57,8 @@ export default function Expenses() {
     mutation: {
       onSuccess: () => {
         queryClient.invalidateQueries({ queryKey: getListExpensesQueryKey() });
-        queryClient.invalidateQueries({ queryKey: getGetDashboardSummaryQueryKey() });
+        // Invalidate dashboard too
+        queryClient.invalidateQueries({ queryKey: ['/api/dashboard/summary'] as any });
         toast({ title: "تم إضافة المصروف بنجاح" });
         setIsOpen(false);
         form.reset({
@@ -153,7 +148,7 @@ export default function Expenses() {
                     name="amount"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>المبلغ ({currencySymbol})</FormLabel>
+                        <FormLabel>المبلغ (ر.س)</FormLabel>
                         <FormControl>
                           <Input type="number" step="0.01" className="h-12 rounded-xl bg-background text-lg font-semibold" {...field} />
                         </FormControl>
@@ -318,7 +313,7 @@ export default function Expenses() {
                   <div className="flex items-center gap-4">
                     <div className="text-left">
                       <div className="text-xl font-black text-foreground">
-                        {formatAmount(expense.amount, currency)}
+                        {expense.amount.toLocaleString()} <span className="text-sm font-normal text-muted-foreground">ر.س</span>
                       </div>
                     </div>
                     

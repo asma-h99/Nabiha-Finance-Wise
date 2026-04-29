@@ -5,7 +5,6 @@ import { categoriesTable } from "./categories";
 
 export const expensesTable = pgTable("expenses", {
   id: serial("id").primaryKey(),
-  userId: text("user_id").notNull(),
   title: text("title").notNull(),
   amount: numeric("amount", { precision: 12, scale: 2 }).notNull(),
   priority: text("priority").notNull().$type<"essential" | "important" | "luxury">(),
@@ -15,6 +14,6 @@ export const expensesTable = pgTable("expenses", {
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 
-export const insertExpenseSchema = createInsertSchema(expensesTable).omit({ id: true, userId: true, createdAt: true });
+export const insertExpenseSchema = createInsertSchema(expensesTable).omit({ id: true, createdAt: true });
 export type InsertExpense = z.infer<typeof insertExpenseSchema>;
 export type Expense = typeof expensesTable.$inferSelect;

@@ -1,6 +1,5 @@
 import React, { useState } from "react";
-import { useListCommitments, useCreateCommitment, useUpdateCommitment, useDeleteCommitment, useGetProfile, getListCommitmentsQueryKey, getGetDashboardSummaryQueryKey } from "@workspace/api-client-react";
-import { formatAmount, getCurrency } from "@/lib/currency";
+import { useListCommitments, useCreateCommitment, useUpdateCommitment, useDeleteCommitment, getListCommitmentsQueryKey } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -28,19 +27,11 @@ export default function Commitments() {
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const { data: commitments, isLoading } = useListCommitments();
-  const { data: profile } = useGetProfile();
-  const currency = profile?.currency ?? "JOD";
-  const currencySymbol = getCurrency(currency).symbol;
   
-  const invalidateAfterMutation = () => {
-    queryClient.invalidateQueries({ queryKey: getListCommitmentsQueryKey() });
-    queryClient.invalidateQueries({ queryKey: getGetDashboardSummaryQueryKey() });
-  };
-
   const createCommitment = useCreateCommitment({
     mutation: {
       onSuccess: () => {
-        invalidateAfterMutation();
+        queryClient.invalidateQueries({ queryKey: getListCommitmentsQueryKey() });
         toast({ title: "تم إضافة الالتزام بنجاح" });
         setIsOpen(false);
         form.reset();
@@ -51,7 +42,7 @@ export default function Commitments() {
   const updateCommitment = useUpdateCommitment({
     mutation: {
       onSuccess: () => {
-        invalidateAfterMutation();
+        queryClient.invalidateQueries({ queryKey: getListCommitmentsQueryKey() });
       },
     }
   });
@@ -59,7 +50,7 @@ export default function Commitments() {
   const deleteCommitment = useDeleteCommitment({
     mutation: {
       onSuccess: () => {
-        invalidateAfterMutation();
+        queryClient.invalidateQueries({ queryKey: getListCommitmentsQueryKey() });
         toast({ title: "تم حذف الالتزام بنجاح" });
       },
     }
@@ -134,7 +125,7 @@ export default function Commitments() {
                     name="amount"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>المبلغ ({currencySymbol})</FormLabel>
+                        <FormLabel>المبلغ (ر.س)</FormLabel>
                         <FormControl>
                           <Input type="number" placeholder="0.00" className="h-12 rounded-xl bg-background" {...field} />
                         </FormControl>
@@ -203,7 +194,7 @@ export default function Commitments() {
                         {commitment.title}
                       </h3>
                       <div className="text-2xl font-black mt-2 text-primary">
-                        {formatAmount(commitment.amount, currency)}
+                        {commitment.amount.toLocaleString()} <span className="text-sm font-normal text-muted-foreground">ر.س</span>
                       </div>
                     </div>
                     <div className="text-right">
