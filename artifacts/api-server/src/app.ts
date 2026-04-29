@@ -1,5 +1,5 @@
 import express, { type Express } from "express";
-import cors from "cors";
+import cors, { type CorsOptions } from "cors";
 import pinoHttp from "pino-http";
 import { clerkMiddleware } from "@clerk/express";
 import { publishableKeyFromHost } from "@clerk/shared/keys";
@@ -35,9 +35,6 @@ app.use(
 
 app.use(CLERK_PROXY_PATH, clerkProxyMiddleware());
 
-// Frontend and API are served from the same origin via the workspace proxy
-// (path-based routing), so CORS should never need to wildcard with credentials.
-// Restrict to an explicit allowlist of known Replit domains.
 const allowedOrigins = new Set<string>();
 for (const d of (process.env.REPLIT_DOMAINS ?? "").split(",")) {
   const t = d.trim();
@@ -45,18 +42,16 @@ for (const d of (process.env.REPLIT_DOMAINS ?? "").split(",")) {
 }
 const devDomain = process.env.REPLIT_DEV_DOMAIN?.trim();
 if (devDomain) allowedOrigins.add(`https://${devDomain}`);
+const corsOptions: CorsOptions = {
+  credentials: true,
+  origin: (origin, cb) => {
+    if (!origin) return cb(null, true);
+    if (allowedOrigins.has(origin)) return cb(null, true);
+    return cb(null, false);
+  },
+};
 
-app.use(
-  cors({
-    credentials: true,
-    origin: (origin, cb) => {
-      // Same-origin requests have no Origin header; allow them.
-      if (!origin) return cb(null, true);
-      if (allowedOrigins.has(origin)) return cb(null, true);
-      return cb(new Error("Origin not allowed by CORS"));
-    },
-  }),
-);
+app.use(cors(corsOptions));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
