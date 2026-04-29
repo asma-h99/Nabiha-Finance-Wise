@@ -124,8 +124,8 @@ export default function Dashboard() {
       </div>
       {/* Money KPIs: Salary, Balance, Subscriptions Card */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 md:gap-4">
-        <SalaryCard />
         <BalanceCard />
+        <SalaryCard />
         <Card className="rounded-3xl border-none shadow-md bg-card/60 backdrop-blur-sm" data-testid="card-this-month">
           <CardHeader className="pb-2 flex flex-row items-center justify-between">
             <CardTitle className="text-sm font-medium text-muted-foreground">صرفياتي هذا الشهر</CardTitle>
