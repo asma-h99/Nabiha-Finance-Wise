@@ -1,5 +1,6 @@
 import React from "react";
-import { useGetDashboardSummary, useGetPriorityBreakdown, useGetCategoryBreakdown, useGetMonthlyTrend } from "@workspace/api-client-react";
+import { useGetDashboardSummary, useGetPriorityBreakdown, useGetCategoryBreakdown, useGetMonthlyTrend, useGetProfile } from "@workspace/api-client-react";
+import { formatAmount } from "@/lib/currency";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { AlertCircle, ArrowDownCircle, ArrowUpCircle, Wallet, Target, Info, Sparkles } from "lucide-react";
@@ -22,6 +23,8 @@ const PRIORITY_LABELS = {
 
 export default function Dashboard() {
   const currentMonth = new Date().toISOString().slice(0, 7);
+  const { data: profile } = useGetProfile();
+  const currency = profile?.currency ?? "JOD";
   const { data: summary, isLoading: loadingSummary } = useGetDashboardSummary({ month: currentMonth });
   const { data: priorityData, isLoading: loadingPriority } = useGetPriorityBreakdown({ month: currentMonth });
   const { data: categoryData, isLoading: loadingCategory } = useGetCategoryBreakdown({ month: currentMonth });
@@ -81,12 +84,12 @@ export default function Dashboard() {
           </CardHeader>
           <CardContent>
             <div className="text-3xl font-bold text-foreground mb-1">
-              {summary?.totalThisMonth.toLocaleString()} ر.س
+              {formatAmount(summary?.totalThisMonth ?? 0, currency)}
             </div>
             <div className={`text-sm flex items-center gap-1 mt-2 font-medium ${isOverspending ? 'text-destructive' : 'text-primary'}`}>
               {isOverspending ? <ArrowUpCircle className="w-4 h-4" /> : <ArrowDownCircle className="w-4 h-4" />}
               <span>
-                {Math.abs((summary?.totalThisMonth || 0) - (summary?.totalLastMonth || 0)).toLocaleString()} ر.س 
+                {formatAmount(Math.abs((summary?.totalThisMonth || 0) - (summary?.totalLastMonth || 0)), currency)} 
                 {isOverspending ? " أكثر من الشهر الماضي" : " أقل من الشهر الماضي"}
               </span>
             </div>
@@ -120,7 +123,7 @@ export default function Dashboard() {
           </CardHeader>
           <CardContent>
             <div className="text-3xl font-bold text-foreground mb-1">
-              {summary?.commitmentsTotal.toLocaleString()} ر.س
+              {formatAmount(summary?.commitmentsTotal ?? 0, currency)}
             </div>
             <div className="text-sm text-muted-foreground mt-2">
               منها {summary?.unpaidCommitmentsCount} بانتظار الدفع
@@ -158,7 +161,7 @@ export default function Dashboard() {
                     ))}
                   </Pie>
                   <RechartsTooltip 
-                    formatter={(value: number) => [`${value} ر.س`, 'المبلغ']}
+                    formatter={(value: number) => [formatAmount(value, currency), 'المبلغ']}
                     labelFormatter={(label: string) => PRIORITY_LABELS[label as keyof typeof PRIORITY_LABELS] || label}
                     contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
                   />
@@ -191,7 +194,7 @@ export default function Dashboard() {
                   <YAxis dataKey="categoryName" type="category" axisLine={false} tickLine={false} width={80} style={{ fontFamily: 'var(--font-sans)', fontSize: '0.875rem', fill: 'hsl(var(--foreground))' }} />
                   <RechartsTooltip 
                     cursor={{fill: 'transparent'}}
-                    formatter={(value: number) => [`${value} ر.س`, 'المبلغ']}
+                    formatter={(value: number) => [formatAmount(value, currency), 'المبلغ']}
                     contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
                   />
                   <Bar dataKey="total" radius={[0, 4, 4, 0]} barSize={24}>
@@ -224,7 +227,7 @@ export default function Dashboard() {
                   <YAxis axisLine={false} tickLine={false} tickFormatter={(val) => `${val}`} style={{ fontFamily: 'var(--font-sans)', fontSize: '0.875rem', fill: 'hsl(var(--foreground))' }} />
                   <RechartsTooltip 
                     formatter={(value: number, name: string) => [
-                      `${value} ر.س`, 
+                      formatAmount(value, currency), 
                       name === 'total' ? 'الإجمالي' : PRIORITY_LABELS[name as keyof typeof PRIORITY_LABELS] || name
                     ]}
                     contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}

@@ -2,20 +2,30 @@ openapi: 3.1.0
 info:
   # Do not change the title, if the title changes, the import paths will be broken
   title: Api
-  version: 0.1.0
-  description: Nabiha Financial Awareness API
+  version: 0.2.0
+  description: Nabiha Financial Intelligence Platform API
 servers:
   - url: /api
     description: Base API path
 tags:
   - name: health
     description: Health operations
+  - name: profile
+    description: User salary, currency, and onboarding profile
   - name: expenses
     description: Expense management
   - name: categories
     description: Expense categories
   - name: commitments
     description: Personal financial commitments
+  - name: subscriptions
+    description: Recurring subscriptions tracker
+  - name: events
+    description: Financial calendar events
+  - name: notifications
+    description: In-app notifications
+  - name: simulator
+    description: Borrowing capacity simulator
   - name: summary
     description: Dashboard summary and analytics
 paths:
@@ -31,6 +41,36 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+
+  /profile:
+    get:
+      operationId: getProfile
+      tags: [profile]
+      summary: Get current user profile
+      responses:
+        "200":
+          description: User profile
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserProfile"
+    put:
+      operationId: updateProfile
+      tags: [profile]
+      summary: Create or update user profile
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateProfileBody"
+      responses:
+        "200":
+          description: Updated profile
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserProfile"
 
   /expenses:
     get:
@@ -255,6 +295,197 @@ paths:
         "204":
           description: Deleted
 
+  /subscriptions:
+    get:
+      operationId: listSubscriptions
+      tags: [subscriptions]
+      summary: List subscriptions
+      responses:
+        "200":
+          description: Subscriptions list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Subscription"
+    post:
+      operationId: createSubscription
+      tags: [subscriptions]
+      summary: Create a subscription
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateSubscriptionBody"
+      responses:
+        "201":
+          description: Created subscription
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Subscription"
+
+  /subscriptions/{id}:
+    put:
+      operationId: updateSubscription
+      tags: [subscriptions]
+      summary: Update a subscription
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateSubscriptionBody"
+      responses:
+        "200":
+          description: Updated subscription
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Subscription"
+    delete:
+      operationId: deleteSubscription
+      tags: [subscriptions]
+      summary: Delete a subscription
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+
+  /events:
+    get:
+      operationId: listEvents
+      tags: [events]
+      summary: List financial calendar events
+      parameters:
+        - name: year
+          in: query
+          required: false
+          schema:
+            type: integer
+        - name: month
+          in: query
+          required: false
+          schema:
+            type: string
+            description: "YYYY-MM format"
+      responses:
+        "200":
+          description: Events list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Event"
+    post:
+      operationId: createEvent
+      tags: [events]
+      summary: Create an event
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateEventBody"
+      responses:
+        "201":
+          description: Created event
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Event"
+
+  /events/{id}:
+    delete:
+      operationId: deleteEvent
+      tags: [events]
+      summary: Delete an event
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+
+  /notifications:
+    get:
+      operationId: listNotifications
+      tags: [notifications]
+      summary: List notifications for current user
+      responses:
+        "200":
+          description: Notifications list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Notification"
+
+  /notifications/{id}/read:
+    post:
+      operationId: markNotificationRead
+      tags: [notifications]
+      summary: Mark notification as read
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Marked as read
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Notification"
+
+  /notifications/read-all:
+    post:
+      operationId: markAllNotificationsRead
+      tags: [notifications]
+      summary: Mark all notifications as read
+      responses:
+        "204":
+          description: Marked all as read
+
+  /simulator/borrowing-capacity:
+    post:
+      operationId: simulateBorrowingCapacity
+      tags: [simulator]
+      summary: Calculate borrowing capacity given desired loan params
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SimulatorBody"
+      responses:
+        "200":
+          description: Simulator result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SimulatorResult"
+
   /summary/dashboard:
     get:
       operationId: getDashboardSummary
@@ -332,6 +563,19 @@ paths:
                 items:
                   $ref: "#/components/schemas/MonthlyTrend"
 
+  /summary/subscriptions-breakdown:
+    get:
+      operationId: getSubscriptionsBreakdown
+      tags: [summary]
+      summary: Get monthly cost breakdown by subscription category
+      responses:
+        "200":
+          description: Subscription breakdown
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SubscriptionsBreakdown"
+
 components:
   schemas:
     HealthStatus:
@@ -342,9 +586,54 @@ components:
       required:
         - status
 
+    Currency:
+      type: string
+      enum: [JOD, SAR, AED, EGP, KWD, BHD, QAR, OMR, IQD, LBP, MAD, TND, DZD, LYD, YER, SDG, SYP, USD]
+
     Priority:
       type: string
       enum: [essential, important, luxury]
+
+    UserProfile:
+      type: object
+      properties:
+        userId:
+          type: string
+        monthlySalary:
+          type: number
+        currency:
+          $ref: "#/components/schemas/Currency"
+        onboardingComplete:
+          type: boolean
+        displayName:
+          type: string
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+      required:
+        - userId
+        - monthlySalary
+        - currency
+        - onboardingComplete
+        - createdAt
+        - updatedAt
+
+    UpdateProfileBody:
+      type: object
+      properties:
+        monthlySalary:
+          type: number
+        currency:
+          $ref: "#/components/schemas/Currency"
+        onboardingComplete:
+          type: boolean
+        displayName:
+          type: string
+          nullable: true
 
     Expense:
       type: object
@@ -469,7 +758,6 @@ components:
           type: number
         dueDay:
           type: integer
-          description: Day of month when due (1-31)
         isPaid:
           type: boolean
         notes:
@@ -518,6 +806,261 @@ components:
           type: string
           nullable: true
 
+    SubscriptionFrequency:
+      type: string
+      enum: [monthly, yearly, weekly]
+
+    SubscriptionStatus:
+      type: string
+      enum: [active, inactive, upcoming]
+
+    SubscriptionCategory:
+      type: string
+      enum: [streaming, music, productivity, fitness, other]
+
+    Subscription:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        amount:
+          type: number
+        frequency:
+          $ref: "#/components/schemas/SubscriptionFrequency"
+        category:
+          $ref: "#/components/schemas/SubscriptionCategory"
+        nextRenewalDate:
+          type: string
+          format: date
+        status:
+          $ref: "#/components/schemas/SubscriptionStatus"
+        brandColor:
+          type: string
+          nullable: true
+        brandIcon:
+          type: string
+          nullable: true
+        notes:
+          type: string
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - name
+        - amount
+        - frequency
+        - category
+        - nextRenewalDate
+        - status
+        - createdAt
+
+    CreateSubscriptionBody:
+      type: object
+      properties:
+        name:
+          type: string
+        amount:
+          type: number
+        frequency:
+          $ref: "#/components/schemas/SubscriptionFrequency"
+        category:
+          $ref: "#/components/schemas/SubscriptionCategory"
+        nextRenewalDate:
+          type: string
+          format: date
+        status:
+          $ref: "#/components/schemas/SubscriptionStatus"
+        brandColor:
+          type: string
+          nullable: true
+        brandIcon:
+          type: string
+          nullable: true
+        notes:
+          type: string
+          nullable: true
+      required:
+        - name
+        - amount
+        - frequency
+        - category
+        - nextRenewalDate
+
+    UpdateSubscriptionBody:
+      type: object
+      properties:
+        name:
+          type: string
+        amount:
+          type: number
+        frequency:
+          $ref: "#/components/schemas/SubscriptionFrequency"
+        category:
+          $ref: "#/components/schemas/SubscriptionCategory"
+        nextRenewalDate:
+          type: string
+          format: date
+        status:
+          $ref: "#/components/schemas/SubscriptionStatus"
+        brandColor:
+          type: string
+          nullable: true
+        brandIcon:
+          type: string
+          nullable: true
+        notes:
+          type: string
+          nullable: true
+
+    EventType:
+      type: string
+      enum: [salary, bill, subscription, goal, reminder, expense]
+
+    Event:
+      type: object
+      properties:
+        id:
+          type: integer
+        title:
+          type: string
+        amount:
+          type: number
+          nullable: true
+        date:
+          type: string
+          format: date
+        type:
+          $ref: "#/components/schemas/EventType"
+        notes:
+          type: string
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - title
+        - date
+        - type
+        - createdAt
+
+    CreateEventBody:
+      type: object
+      properties:
+        title:
+          type: string
+        amount:
+          type: number
+          nullable: true
+        date:
+          type: string
+          format: date
+        type:
+          $ref: "#/components/schemas/EventType"
+        notes:
+          type: string
+          nullable: true
+      required:
+        - title
+        - date
+        - type
+
+    NotificationType:
+      type: string
+      enum: [info, warning, success, danger]
+
+    Notification:
+      type: object
+      properties:
+        id:
+          type: integer
+        title:
+          type: string
+        message:
+          type: string
+        type:
+          $ref: "#/components/schemas/NotificationType"
+        isRead:
+          type: boolean
+        link:
+          type: string
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - title
+        - message
+        - type
+        - isRead
+        - createdAt
+
+    SimulatorBody:
+      type: object
+      properties:
+        loanAmount:
+          type: number
+        annualInterestRate:
+          type: number
+          description: Percentage e.g. 5.5
+        termMonths:
+          type: integer
+        monthlySalary:
+          type: number
+          nullable: true
+          description: Optional override of saved profile salary
+      required:
+        - loanAmount
+        - annualInterestRate
+        - termMonths
+
+    SimulatorResult:
+      type: object
+      properties:
+        monthlyPayment:
+          type: number
+        totalInterest:
+          type: number
+        totalRepayment:
+          type: number
+        debtToIncomeRatio:
+          type: number
+          description: Percentage of monthly salary consumed by this payment
+        commitmentsTotal:
+          type: number
+        currentDebtToIncomeRatio:
+          type: number
+          description: Existing commitments + this payment vs salary, percentage
+        affordability:
+          type: string
+          enum: [safe, caution, risky]
+        projectedBalance:
+          type: array
+          items:
+            type: object
+            properties:
+              month:
+                type: integer
+              remainingBalance:
+                type: number
+            required:
+              - month
+              - remainingBalance
+      required:
+        - monthlyPayment
+        - totalInterest
+        - totalRepayment
+        - debtToIncomeRatio
+        - commitmentsTotal
+        - currentDebtToIncomeRatio
+        - affordability
+        - projectedBalance
+
     DashboardSummary:
       type: object
       properties:
@@ -535,11 +1078,21 @@ components:
           type: number
         unpaidCommitmentsCount:
           type: integer
+        subscriptionsTotal:
+          type: number
+        activeSubscriptionsCount:
+          type: integer
         expensesCount:
           type: integer
         topCategory:
           type: string
           nullable: true
+        monthlySalary:
+          type: number
+        currency:
+          $ref: "#/components/schemas/Currency"
+        remainingBalance:
+          type: number
       required:
         - totalThisMonth
         - totalLastMonth
@@ -548,7 +1101,12 @@ components:
         - luxuryTotal
         - commitmentsTotal
         - unpaidCommitmentsCount
+        - subscriptionsTotal
+        - activeSubscriptionsCount
         - expensesCount
+        - monthlySalary
+        - currency
+        - remainingBalance
 
     PriorityBreakdown:
       type: object
@@ -607,3 +1165,30 @@ components:
         - essential
         - important
         - luxury
+
+    SubscriptionsBreakdown:
+      type: object
+      properties:
+        monthlyTotal:
+          type: number
+        yearlyTotal:
+          type: number
+        byCategory:
+          type: array
+          items:
+            type: object
+            properties:
+              category:
+                $ref: "#/components/schemas/SubscriptionCategory"
+              total:
+                type: number
+              count:
+                type: integer
+            required:
+              - category
+              - total
+              - count
+      required:
+        - monthlyTotal
+        - yearlyTotal
+        - byCategory
