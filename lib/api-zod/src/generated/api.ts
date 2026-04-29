@@ -285,7 +285,7 @@ export const ListSubscriptionsResponseItem = zod.object({
   id: zod.number(),
   name: zod.string(),
   amount: zod.number(),
-  frequency: zod.enum(["monthly", "yearly", "weekly"]),
+  frequency: zod.enum(["monthly", "yearly", "weekly", "quarterly"]),
   category: zod.enum([
     "streaming",
     "music",
@@ -310,7 +310,7 @@ export const ListSubscriptionsResponse = zod.array(
 export const CreateSubscriptionBody = zod.object({
   name: zod.string(),
   amount: zod.number(),
-  frequency: zod.enum(["monthly", "yearly", "weekly"]),
+  frequency: zod.enum(["monthly", "yearly", "weekly", "quarterly"]),
   category: zod.enum([
     "streaming",
     "music",
@@ -335,7 +335,7 @@ export const UpdateSubscriptionParams = zod.object({
 export const UpdateSubscriptionBody = zod.object({
   name: zod.string().optional(),
   amount: zod.number().optional(),
-  frequency: zod.enum(["monthly", "yearly", "weekly"]).optional(),
+  frequency: zod.enum(["monthly", "yearly", "weekly", "quarterly"]).optional(),
   category: zod
     .enum(["streaming", "music", "productivity", "fitness", "other"])
     .optional(),
@@ -350,7 +350,7 @@ export const UpdateSubscriptionResponse = zod.object({
   id: zod.number(),
   name: zod.string(),
   amount: zod.number(),
-  frequency: zod.enum(["monthly", "yearly", "weekly"]),
+  frequency: zod.enum(["monthly", "yearly", "weekly", "quarterly"]),
   category: zod.enum([
     "streaming",
     "music",
@@ -394,6 +394,8 @@ export const ListEventsResponseItem = zod.object({
     "reminder",
     "expense",
   ]),
+  recurrence: zod.enum(["none", "weekly", "monthly", "yearly"]),
+  recurrenceEndDate: zod.coerce.date().nullish(),
   notes: zod.string().nullish(),
   createdAt: zod.coerce.date(),
 });
@@ -414,7 +416,47 @@ export const CreateEventBody = zod.object({
     "reminder",
     "expense",
   ]),
+  recurrence: zod.enum(["none", "weekly", "monthly", "yearly"]).optional(),
+  recurrenceEndDate: zod.coerce.date().nullish(),
   notes: zod.string().nullish(),
+});
+
+/**
+ * @summary Update an event
+ */
+export const UpdateEventParams = zod.object({
+  id: zod.coerce.number(),
+});
+
+export const UpdateEventBody = zod.object({
+  title: zod.string().optional(),
+  amount: zod.number().nullish(),
+  date: zod.coerce.date().optional(),
+  type: zod
+    .enum(["salary", "bill", "subscription", "goal", "reminder", "expense"])
+    .optional(),
+  recurrence: zod.enum(["none", "weekly", "monthly", "yearly"]).optional(),
+  recurrenceEndDate: zod.coerce.date().nullish(),
+  notes: zod.string().nullish(),
+});
+
+export const UpdateEventResponse = zod.object({
+  id: zod.number(),
+  title: zod.string(),
+  amount: zod.number().nullish(),
+  date: zod.coerce.date(),
+  type: zod.enum([
+    "salary",
+    "bill",
+    "subscription",
+    "goal",
+    "reminder",
+    "expense",
+  ]),
+  recurrence: zod.enum(["none", "weekly", "monthly", "yearly"]),
+  recurrenceEndDate: zod.coerce.date().nullish(),
+  notes: zod.string().nullish(),
+  createdAt: zod.coerce.date(),
 });
 
 /**

@@ -32,6 +32,7 @@ function getLastMonth() {
 
 function monthlyEquivalent(amount: number, frequency: string): number {
   if (frequency === "yearly") return amount / 12;
+  if (frequency === "quarterly") return amount / 3;
   if (frequency === "weekly") return amount * 4.333;
   return amount;
 }

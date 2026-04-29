@@ -1,12 +1,24 @@
+import {
+  db,
+  commitmentsTable,
+  subscriptionsTable,
+  userProfilesTable,
+} from "@workspace/db";
 import { Router } from "express";
-import { db, commitmentsTable, userProfilesTable } from "@workspace/db";
 import { SimulateBorrowingCapacityBody } from "@workspace/api-zod";
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { requireAuth } from "../lib/auth";
 
 const router = Router();
 
 router.use(requireAuth);
+
+function subToMonthly(amount: number, freq: string): number {
+  if (freq === "yearly") return amount / 12;
+  if (freq === "quarterly") return amount / 3;
+  if (freq === "weekly") return amount * 4.333;
+  return amount;
+}
 
 router.post("/simulator/borrowing-capacity", async (req, res) => {
   if (!req.userId) { res.status(401).json({ error: "Unauthorized" }); return; }
@@ -40,8 +52,19 @@ router.post("/simulator/borrowing-capacity", async (req, res) => {
     salary = profile ? Number(profile.monthlySalary) : 0;
   }
 
-  const debtToIncomeRatio =
-    salary > 0 ? (monthlyPayment / salary) * 100 : 0;
+  const activeSubs = await db
+    .select()
+    .from(subscriptionsTable)
+    .where(
+      and(
+        eq(subscriptionsTable.userId, userId),
+        eq(subscriptionsTable.status, "active"),
+      ),
+    );
+  const subscriptionsMonthly = activeSubs.reduce(
+    (s, x) => s + subToMonthly(Number(x.amount), x.frequency),
+    0,
+  );
 
   const allCommitments = await db
     .select()
@@ -52,8 +75,20 @@ router.post("/simulator/borrowing-capacity", async (req, res) => {
     0,
   );
 
+  // Available income = salary minus already-active subscriptions
+  const availableIncome = Math.max(salary - subscriptionsMonthly, 0);
+
+  const debtToIncomeRatio =
+    salary > 0 ? (monthlyPayment / salary) * 100 : 0;
+
+  // Affordability is the share of AVAILABLE income (post-subscriptions)
+  // consumed by the new loan payment.
   const currentDebtToIncomeRatio =
-    salary > 0 ? ((commitmentsTotal + monthlyPayment) / salary) * 100 : 0;
+    availableIncome > 0
+      ? (monthlyPayment / availableIncome) * 100
+      : monthlyPayment > 0
+        ? 100
+        : 0;
 
   let affordability: "safe" | "caution" | "risky";
   if (currentDebtToIncomeRatio < 30) affordability = "safe";

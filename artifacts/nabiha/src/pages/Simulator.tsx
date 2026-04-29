@@ -17,6 +17,7 @@ import {
   AlertTriangle,
   XCircle,
   TrendingUp,
+  type LucideIcon,
 } from "lucide-react";
 import {
   ResponsiveContainer,
@@ -37,7 +38,7 @@ const VERDICT_META: Record<
     color: string;
     bg: string;
     border: string;
-    icon: any;
+    icon: LucideIcon;
     msg: string;
   }
 > = {
@@ -47,7 +48,7 @@ const VERDICT_META: Record<
     bg: "bg-green-50",
     border: "border-green-300",
     icon: CheckCircle2,
-    msg: "هالقرض ضمن قدرتك. القسط أقل من 30% من راتبك.",
+    msg: "هالقرض ضمن قدرتك. القسط أقل من 30% من دخلك المتاح بعد الاشتراكات.",
   },
   caution: {
     label: "حذر",
@@ -55,7 +56,7 @@ const VERDICT_META: Record<
     bg: "bg-orange-50",
     border: "border-orange-300",
     icon: AlertTriangle,
-    msg: "القرض كبير شويّة. القسط بين 30%-45% من راتبك. خلّي بالك.",
+    msg: "القرض كبير شويّة. القسط بين 30%-45% من دخلك المتاح بعد الاشتراكات.",
   },
   risky: {
     label: "خطر",
@@ -63,7 +64,7 @@ const VERDICT_META: Record<
     bg: "bg-red-50",
     border: "border-red-300",
     icon: XCircle,
-    msg: "هالقرض صعب جداً عليك. القسط بياكل أكتر من 45% من راتبك.",
+    msg: "هالقرض صعب جداً. القسط بياكل أكتر من 45% من دخلك المتاح بعد الاشتراكات.",
   },
 };
 
@@ -319,10 +320,11 @@ export default function Simulator() {
                   </div>
                   <div className="bg-muted/40 rounded-2xl p-4">
                     <p className="text-xs text-muted-foreground mb-1">
-                      الالتزامات الحالية + القسط
+                      نسبة القسط من الدخل المتاح
                     </p>
                     <p
                       className={`text-xl font-bold ${result.currentDebtToIncomeRatio < 45 ? "text-green-600" : "text-red-600"}`}
+                      data-testid="text-affordability-ratio"
                     >
                       {result.currentDebtToIncomeRatio.toFixed(1)}%
                     </p>

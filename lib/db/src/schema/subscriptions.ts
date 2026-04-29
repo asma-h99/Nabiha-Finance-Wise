@@ -7,7 +7,7 @@ export const subscriptionsTable = pgTable("subscriptions", {
   userId: text("user_id").notNull(),
   name: text("name").notNull(),
   amount: numeric("amount", { precision: 12, scale: 2 }).notNull(),
-  frequency: text("frequency").notNull().$type<"monthly" | "yearly" | "weekly">(),
+  frequency: text("frequency").notNull().$type<"monthly" | "yearly" | "weekly" | "quarterly">(),
   category: text("category").notNull().$type<"streaming" | "music" | "productivity" | "fitness" | "other">().default("other"),
   nextRenewalDate: text("next_renewal_date").notNull(),
   status: text("status").notNull().$type<"active" | "inactive" | "upcoming">().default("active"),

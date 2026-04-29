@@ -133,6 +133,7 @@ export const SubscriptionFrequency = {
   monthly: "monthly",
   yearly: "yearly",
   weekly: "weekly",
+  quarterly: "quarterly",
 } as const;
 
 export type SubscriptionStatus =
@@ -204,12 +205,24 @@ export const EventType = {
   expense: "expense",
 } as const;
 
+export type EventRecurrence =
+  (typeof EventRecurrence)[keyof typeof EventRecurrence];
+
+export const EventRecurrence = {
+  none: "none",
+  weekly: "weekly",
+  monthly: "monthly",
+  yearly: "yearly",
+} as const;
+
 export interface Event {
   id: number;
   title: string;
   amount?: number | null;
   date: string;
   type: EventType;
+  recurrence: EventRecurrence;
+  recurrenceEndDate?: string | null;
   notes?: string | null;
   createdAt: string;
 }
@@ -219,6 +232,18 @@ export interface CreateEventBody {
   amount?: number | null;
   date: string;
   type: EventType;
+  recurrence?: EventRecurrence;
+  recurrenceEndDate?: string | null;
+  notes?: string | null;
+}
+
+export interface UpdateEventBody {
+  title?: string;
+  amount?: number | null;
+  date?: string;
+  type?: EventType;
+  recurrence?: EventRecurrence;
+  recurrenceEndDate?: string | null;
   notes?: string | null;
 }
 

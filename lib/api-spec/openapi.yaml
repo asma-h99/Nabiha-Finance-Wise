@@ -410,6 +410,29 @@ paths:
                 $ref: "#/components/schemas/Event"
 
   /events/{id}:
+    put:
+      operationId: updateEvent
+      tags: [events]
+      summary: Update an event
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateEventBody"
+      responses:
+        "200":
+          description: Updated event
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Event"
     delete:
       operationId: deleteEvent
       tags: [events]
@@ -808,7 +831,7 @@ components:
 
     SubscriptionFrequency:
       type: string
-      enum: [monthly, yearly, weekly]
+      enum: [monthly, yearly, weekly, quarterly]
 
     SubscriptionStatus:
       type: string
@@ -920,6 +943,10 @@ components:
       type: string
       enum: [salary, bill, subscription, goal, reminder, expense]
 
+    EventRecurrence:
+      type: string
+      enum: [none, weekly, monthly, yearly]
+
     Event:
       type: object
       properties:
@@ -935,6 +962,12 @@ components:
           format: date
         type:
           $ref: "#/components/schemas/EventType"
+        recurrence:
+          $ref: "#/components/schemas/EventRecurrence"
+        recurrenceEndDate:
+          type: string
+          format: date
+          nullable: true
         notes:
           type: string
           nullable: true
@@ -946,6 +979,7 @@ components:
         - title
         - date
         - type
+        - recurrence
         - createdAt
 
     CreateEventBody:
@@ -961,6 +995,12 @@ components:
           format: date
         type:
           $ref: "#/components/schemas/EventType"
+        recurrence:
+          $ref: "#/components/schemas/EventRecurrence"
+        recurrenceEndDate:
+          type: string
+          format: date
+          nullable: true
         notes:
           type: string
           nullable: true
@@ -968,6 +1008,29 @@ components:
         - title
         - date
         - type
+
+    UpdateEventBody:
+      type: object
+      properties:
+        title:
+          type: string
+        amount:
+          type: number
+          nullable: true
+        date:
+          type: string
+          format: date
+        type:
+          $ref: "#/components/schemas/EventType"
+        recurrence:
+          $ref: "#/components/schemas/EventRecurrence"
+        recurrenceEndDate:
+          type: string
+          format: date
+          nullable: true
+        notes:
+          type: string
+          nullable: true
 
     NotificationType:
       type: string

@@ -3,6 +3,7 @@ import { db, notificationsTable } from "@workspace/db";
 import { MarkNotificationReadParams } from "@workspace/api-zod";
 import { eq, and, desc } from "drizzle-orm";
 import { requireAuth } from "../lib/auth";
+import { generateUpcomingNotifications } from "../lib/notificationGenerator";
 
 const router = Router();
 
@@ -11,6 +12,11 @@ router.use(requireAuth);
 router.get("/notifications", async (req, res) => {
   if (!req.userId) { res.status(401).json({ error: "Unauthorized" }); return; }
   const userId = req.userId;
+  try {
+    await generateUpcomingNotifications(userId);
+  } catch (err) {
+    req.log.error({ err }, "notification generation failed");
+  }
   const items = await db
     .select()
     .from(notificationsTable)

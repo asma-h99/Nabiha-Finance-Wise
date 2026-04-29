@@ -14,14 +14,14 @@ import {
   CheckCheck,
   AlertTriangle,
   Info,
-  CalendarDays,
   CreditCard,
   TrendingUp,
+  type LucideIcon,
 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { ar } from "date-fns/locale";
 
-const TYPE_ICONS: Record<string, { icon: any; color: string; bg: string }> = {
+const TYPE_ICONS: Record<string, { icon: LucideIcon; color: string; bg: string }> = {
   info: {
     icon: Info,
     color: "text-blue-600",

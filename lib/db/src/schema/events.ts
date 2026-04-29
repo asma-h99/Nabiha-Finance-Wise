@@ -9,6 +9,8 @@ export const eventsTable = pgTable("events", {
   amount: numeric("amount", { precision: 12, scale: 2 }),
   date: text("date").notNull(),
   type: text("type").notNull().$type<"salary" | "bill" | "subscription" | "goal" | "reminder" | "expense">(),
+  recurrence: text("recurrence").notNull().$type<"none" | "weekly" | "monthly" | "yearly">().default("none"),
+  recurrenceEndDate: text("recurrence_end_date"),
   notes: text("notes"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });

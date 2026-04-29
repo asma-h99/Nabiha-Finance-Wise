@@ -3,6 +3,8 @@ import { db, eventsTable } from "@workspace/db";
 import {
   ListEventsQueryParams,
   CreateEventBody,
+  UpdateEventBody,
+  UpdateEventParams,
   DeleteEventParams,
 } from "@workspace/api-zod";
 import { eq, and, sql, asc, type SQL } from "drizzle-orm";
@@ -11,6 +13,14 @@ import { requireAuth } from "../lib/auth";
 const router = Router();
 
 router.use(requireAuth);
+
+function toDateString(d: Date | string): string {
+  return typeof d === "string" ? d : d.toISOString().slice(0, 10);
+}
+
+function serializeEvent(e: typeof eventsTable.$inferSelect) {
+  return { ...e, amount: e.amount === null ? null : Number(e.amount) };
+}
 
 router.get("/events", async (req, res) => {
   if (!req.userId) { res.status(401).json({ error: "Unauthorized" }); return; }
@@ -34,7 +44,7 @@ router.get("/events", async (req, res) => {
     .where(and(...conditions))
     .orderBy(asc(eventsTable.date));
 
-  res.json(events.map((e) => ({ ...e, amount: e.amount === null ? null : Number(e.amount) })));
+  res.json(events.map(serializeEvent));
 });
 
 router.post("/events", async (req, res) => {
@@ -52,13 +62,59 @@ router.post("/events", async (req, res) => {
       userId,
       title: body.title,
       amount: body.amount === undefined || body.amount === null ? null : String(body.amount),
-      date: typeof body.date === "string" ? body.date : body.date.toISOString().slice(0, 10),
+      date: toDateString(body.date),
       type: body.type,
+      recurrence: body.recurrence ?? "none",
+      recurrenceEndDate: body.recurrenceEndDate
+        ? toDateString(body.recurrenceEndDate)
+        : null,
       notes: body.notes ?? null,
     })
     .returning();
 
-  res.status(201).json({ ...event, amount: event.amount === null ? null : Number(event.amount) });
+  res.status(201).json(serializeEvent(event));
+});
+
+router.put("/events/:id", async (req, res) => {
+  if (!req.userId) { res.status(401).json({ error: "Unauthorized" }); return; }
+  const userId = req.userId;
+  const paramsResult = UpdateEventParams.safeParse(req.params);
+  if (!paramsResult.success) {
+    res.status(400).json({ error: "Invalid params" });
+    return;
+  }
+  const bodyResult = UpdateEventBody.safeParse(req.body);
+  if (!bodyResult.success) {
+    res.status(400).json({ error: "Invalid body" });
+    return;
+  }
+  const body = bodyResult.data;
+  const updates: Partial<typeof eventsTable.$inferInsert> = {};
+  if (body.title !== undefined) updates.title = body.title;
+  if (body.amount !== undefined) {
+    updates.amount = body.amount === null ? null : String(body.amount);
+  }
+  if (body.date !== undefined) updates.date = toDateString(body.date);
+  if (body.type !== undefined) updates.type = body.type;
+  if (body.recurrence !== undefined) updates.recurrence = body.recurrence;
+  if (body.recurrenceEndDate !== undefined) {
+    updates.recurrenceEndDate = body.recurrenceEndDate
+      ? toDateString(body.recurrenceEndDate)
+      : null;
+  }
+  if (body.notes !== undefined) updates.notes = body.notes ?? null;
+
+  const [event] = await db
+    .update(eventsTable)
+    .set(updates)
+    .where(and(eq(eventsTable.id, paramsResult.data.id), eq(eventsTable.userId, userId)))
+    .returning();
+
+  if (!event) {
+    res.status(404).json({ error: "Not found" });
+    return;
+  }
+  res.json(serializeEvent(event));
 });
 
 router.delete("/events/:id", async (req, res) => {
