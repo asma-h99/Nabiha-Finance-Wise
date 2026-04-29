@@ -168,7 +168,7 @@ export function FinancialCalendarCard() {
           </div>
         ) : !isMonthlyView ? (
           /* === YEARLY GRID === */
-          <div className="grid grid-cols-3 gap-2" dir="ltr">
+          <div className="grid grid-cols-4 gap-2" dir="rtl">
             {MONTHS.map((month, monthIdx) => {
               const isCurrentMonth = monthIdx === currentMonthIdx;
               return (
