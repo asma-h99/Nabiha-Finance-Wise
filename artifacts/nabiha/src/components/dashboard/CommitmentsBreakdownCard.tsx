@@ -26,20 +26,20 @@ import {
   type LucideIcon,
 } from "lucide-react";
 
-// Financial-grade palette: emerald brand → gold accent → professional blues/teals/slates
+// Cohesive financial palette anchored to brand emerald + warm gold
 const SLICE_COLORS = [
-  "#1B7E63", // brand emerald
-  "#f59e0b", // warm gold
-  "#2563eb", // royal blue
-  "#0891b2", // ocean teal
-  "#7c3aed", // deep violet
-  "#d97706", // amber
-  "#059669", // forest green
-  "#1e40af", // navy
-  "#0f766e", // dark teal
+  "#f59e0b", // warm gold  (accent 1)
+  "#0d9488", // teal        (adjacent to brand emerald)
+  "#1e40af", // navy blue   (trust / finance)
+  "#d97706", // amber       (warm accent)
+  "#7c3aed", // deep violet (premium)
+  "#0891b2", // ocean blue  (cool accent)
+  "#059669", // medium green
   "#4f46e5", // indigo
+  "#0f766e", // dark teal
+  "#9333ea", // purple
 ];
-const REMAINING_COLOR = "#94a3b8"; // professional slate for "remaining"
+const REMAINING_COLOR = "#1B7E63"; // brand emerald for the remaining slice
 
 const ICON_COLORS = [
   { bg: "bg-emerald-100", text: "text-emerald-700" },
@@ -82,27 +82,29 @@ interface CustomLabelProps {
   name: string;
 }
 
-function CustomLabel({ cx, cy, midAngle, innerRadius, outerRadius, percent, name }: CustomLabelProps) {
-  if (percent < 0.04) return null;
+function CustomLabel({ cx, cy, midAngle, innerRadius, outerRadius, percent }: CustomLabelProps) {
+  if (percent < 0.05) return null; // skip slivers
   const RADIAN = Math.PI / 180;
-  const radius = innerRadius + (outerRadius - innerRadius) * 0.52;
+  // Position label in the middle of the ring
+  const radius = innerRadius + (outerRadius - innerRadius) * 0.55;
   const x = cx + radius * Math.cos(-midAngle * RADIAN);
   const y = cy + radius * Math.sin(-midAngle * RADIAN);
-  const shortName = name.length > 10 ? name.slice(0, 9) + "…" : name;
-  const pctText = `${(percent * 100).toFixed(0)}%`;
 
   return (
     <text
       x={x}
       y={y}
-      fill="white"
       textAnchor="middle"
       dominantBaseline="central"
-      fontSize={10}
-      fontWeight="bold"
+      fontSize={12}
+      fontWeight="800"
+      // White fill + dark outline so it reads on any slice color
+      fill="white"
+      stroke="rgba(0,0,0,0.45)"
+      strokeWidth={3}
+      paintOrder="stroke"
     >
-      <tspan x={x} dy="-0.65em">{shortName}</tspan>
-      <tspan x={x} dy="1.3em">{pctText}</tspan>
+      {`${(percent * 100).toFixed(0)}%`}
     </text>
   );
 }
@@ -155,16 +157,16 @@ export function CommitmentsBreakdownCard() {
         ) : (
           <>
             {/* Donut chart */}
-            <div className="relative" style={{ height: 260 }}>
+            <div className="relative" style={{ height: 300 }}>
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
                   <Pie
                     data={pieData}
                     cx="50%"
                     cy="50%"
-                    innerRadius={78}
-                    outerRadius={118}
-                    paddingAngle={2}
+                    innerRadius={72}
+                    outerRadius={125}
+                    paddingAngle={3}
                     dataKey="value"
                     nameKey="name"
                     labelLine={false}
@@ -250,10 +252,10 @@ export function CommitmentsBreakdownCard() {
               </div>
 
               {/* Remaining */}
-              <div className="flex items-center gap-2.5 px-3 py-2.5 rounded-2xl border border-slate-200 bg-slate-50/60" data-testid="row-remaining">
+              <div className="flex items-center gap-2.5 px-3 py-2.5 rounded-2xl border border-emerald-200 bg-emerald-50/60" data-testid="row-remaining">
                 <span className="w-3 h-3 rounded-full shrink-0" style={{ backgroundColor: REMAINING_COLOR }} />
-                <span className="flex-1 font-bold text-sm text-slate-600">الراتب المتبقي</span>
-                <span className="font-bold text-sm text-slate-600 tabular-nums">{format(remaining, baseCurrency)}</span>
+                <span className="flex-1 font-bold text-sm text-emerald-700">الراتب المتبقي</span>
+                <span className="font-bold text-sm text-emerald-700 tabular-nums">{format(remaining, baseCurrency)}</span>
               </div>
             </div>
           </>
