@@ -14,7 +14,6 @@ import Dashboard from "@/pages/Dashboard";
 import Expenses from "@/pages/Expenses";
 import Commitments from "@/pages/Commitments";
 import Categories from "@/pages/Categories";
-import MonthCalendar from "@/pages/MonthCalendar";
 import { CurrencyProvider } from "@/contexts/CurrencyContext";
 import { CurrencySwitcher } from "@/components/CurrencySwitcher";
 
@@ -246,7 +245,6 @@ function AppShell() {
         <Route path="/app/expenses" component={Expenses} />
         <Route path="/app/commitments" component={Commitments} />
         <Route path="/app/categories" component={Categories} />
-        <Route path="/app/calendar/:month" component={MonthCalendar} />
         <Route component={NotFound} />
       </Switch>
     </Layout>
