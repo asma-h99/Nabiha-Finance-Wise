@@ -26,7 +26,7 @@ import {
 import happyMascot from "@assets/Gemini_Generated_Image_d3nzkdd3nzkdd3nz_1777144269395.png";
 import { SalaryCard } from "@/components/dashboard/SalaryCard";
 import { BalanceCard } from "@/components/dashboard/BalanceCard";
-import { SubscriptionsCard } from "@/components/dashboard/SubscriptionsCard";
+import { FinancialCalendarCard } from "@/components/dashboard/FinancialCalendarCard";
 import { useDisplayCurrency } from "@/contexts/CurrencyContext";
 import { formatMoney } from "@/lib/currency";
 import { useMemo } from "react";
@@ -147,9 +147,9 @@ export default function Dashboard() {
           </CardContent>
         </Card>
       </div>
-      {/* Subscriptions tracker (full width) */}
+      {/* Financial Calendar */}
       <div className="grid grid-cols-1 gap-6">
-        <SubscriptionsCard />
+        <FinancialCalendarCard />
       </div>
       {/* Secondary KPIs */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">

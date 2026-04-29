@@ -28,7 +28,7 @@ export function BalanceCard() {
     stateColor = "text-destructive";
     stateBg = "bg-destructive/10 border-destructive/20";
     stateIcon = AlertTriangle;
-    stateLabel = "تنبيه: تجاوزتي راتبك";
+    stateLabel = "تنبيه: تجاوزت راتبك";
   } else if (isWarning) {
     stateColor = "text-amber-600";
     stateBg = "bg-amber-50 border-amber-200";
