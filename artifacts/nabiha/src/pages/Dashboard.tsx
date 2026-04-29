@@ -97,8 +97,7 @@ export default function Dashboard() {
   const isOverspending = (summary?.totalThisMonth || 0) > (summary?.totalLastMonth || 0);
 
   return (
-    <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
-
+    <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700 text-center">
       {/* Welcome Banner */}
       <div className="bg-gradient-to-l from-primary/10 to-primary/5 rounded-3xl p-6 md:p-8 flex flex-col md:flex-row-reverse items-center gap-6 border border-primary/10 shadow-sm relative overflow-hidden">
         <div className="absolute -left-20 -top-20 w-64 h-64 bg-primary/10 rounded-full blur-3xl pointer-events-none"></div>
@@ -123,7 +122,6 @@ export default function Dashboard() {
           )}
         </div>
       </div>
-
       {/* Money KPIs: Salary, Balance, Subscriptions Card */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         <SalaryCard />
@@ -149,12 +147,10 @@ export default function Dashboard() {
           </CardContent>
         </Card>
       </div>
-
       {/* Subscriptions tracker (full width) */}
       <div className="grid grid-cols-1 gap-6">
         <SubscriptionsCard />
       </div>
-
       {/* Secondary KPIs */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
         <Card className="rounded-3xl border-none shadow-md bg-card/60 backdrop-blur-sm">
@@ -192,7 +188,6 @@ export default function Dashboard() {
           </CardContent>
         </Card>
       </div>
-
       {/* Charts Row */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Priority Breakdown */}
@@ -309,7 +304,6 @@ export default function Dashboard() {
           </CardContent>
         </Card>
       </div>
-
     </div>
   );
 }
