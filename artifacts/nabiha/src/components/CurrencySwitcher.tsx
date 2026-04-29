@@ -53,7 +53,7 @@ export function CurrencySwitcher({ className }: { className?: string }) {
             ملاحظة: أسعار الصرف تقريبية وثابتة، وليست أسعاراً لحظية.
           </div>
         </div>
-        <ScrollArea className="max-h-[55vh] sm:max-h-[360px]">
+        <ScrollArea className="h-[60vh] sm:h-[380px]">
           <div className="p-2">
             <div className="px-2 pt-1 pb-1.5 text-[11px] font-bold text-muted-foreground uppercase tracking-wide">
               العملات العربية
