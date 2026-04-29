@@ -21,7 +21,6 @@ function subToMonthly(amount: number, freq: string): number {
 }
 
 router.post("/simulator/borrowing-capacity", async (req, res) => {
-  if (!req.userId) { res.status(401).json({ error: "Unauthorized" }); return; }
   const userId = req.userId;
   const parseResult = SimulateBorrowingCapacityBody.safeParse(req.body);
   if (!parseResult.success) {
@@ -90,10 +89,17 @@ router.post("/simulator/borrowing-capacity", async (req, res) => {
         ? 100
         : 0;
 
-  let affordability: "safe" | "caution" | "risky";
-  if (currentDebtToIncomeRatio < 30) affordability = "safe";
-  else if (currentDebtToIncomeRatio <= 45) affordability = "caution";
-  else affordability = "risky";
+  let affordability:
+    | "excellent"
+    | "safe"
+    | "caution"
+    | "risky"
+    | "very-risky";
+  if (currentDebtToIncomeRatio < 15) affordability = "excellent";
+  else if (currentDebtToIncomeRatio < 30) affordability = "safe";
+  else if (currentDebtToIncomeRatio < 45) affordability = "caution";
+  else if (currentDebtToIncomeRatio < 60) affordability = "risky";
+  else affordability = "very-risky";
 
   // Build projected balance schedule
   const projectedBalance: { month: number; remainingBalance: number }[] = [];

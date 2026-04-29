@@ -14,7 +14,6 @@ const router = Router();
 router.use(requireAuth);
 
 router.get("/commitments", async (req, res) => {
-  if (!req.userId) { res.status(401).json({ error: "Unauthorized" }); return; }
   const userId = req.userId;
   const commitments = await db
     .select()
@@ -25,7 +24,6 @@ router.get("/commitments", async (req, res) => {
 });
 
 router.post("/commitments", async (req, res) => {
-  if (!req.userId) { res.status(401).json({ error: "Unauthorized" }); return; }
   const userId = req.userId;
   const parseResult = CreateCommitmentBody.safeParse(req.body);
   if (!parseResult.success) {
@@ -42,7 +40,6 @@ router.post("/commitments", async (req, res) => {
 });
 
 router.put("/commitments/:id", async (req, res) => {
-  if (!req.userId) { res.status(401).json({ error: "Unauthorized" }); return; }
   const userId = req.userId;
   const paramsResult = UpdateCommitmentParams.safeParse(req.params);
   if (!paramsResult.success) {
@@ -78,7 +75,6 @@ router.put("/commitments/:id", async (req, res) => {
 });
 
 router.delete("/commitments/:id", async (req, res) => {
-  if (!req.userId) { res.status(401).json({ error: "Unauthorized" }); return; }
   const userId = req.userId;
   const parseResult = DeleteCommitmentParams.safeParse(req.params);
   if (!parseResult.success) {

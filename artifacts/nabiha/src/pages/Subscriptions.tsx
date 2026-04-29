@@ -49,6 +49,7 @@ import {
   Trash2,
   Pause,
   Play,
+  Clock,
   CalendarClock,
   PieChart as PieIcon,
   Pencil,
@@ -442,8 +443,22 @@ export default function Subscriptions() {
           </Card>
         ) : (
           subs.map((s) => {
-            const isActive = s.status === "active";
-            const newStatus: SubscriptionStatus = isActive ? "inactive" : "active";
+            const isUpcoming = s.status === "upcoming";
+            const isInactive = s.status === "inactive";
+            const nextStatus: SubscriptionStatus =
+              s.status === "active"
+                ? "inactive"
+                : s.status === "inactive"
+                  ? "upcoming"
+                  : "active";
+            const toggleLabel =
+              s.status === "active"
+                ? "إيقاف"
+                : s.status === "inactive"
+                  ? "قريباً"
+                  : "تفعيل";
+            const ToggleIcon =
+              s.status === "active" ? Pause : s.status === "inactive" ? Clock : Play;
             const remaining = daysUntil(s.nextRenewalDate);
             const cappedRemaining = Math.max(0, Math.min(30, remaining));
             const progressPct = ((30 - cappedRemaining) / 30) * 100;
@@ -459,17 +474,38 @@ export default function Subscriptions() {
                 : remaining <= 7
                   ? "bg-amber-400"
                   : "bg-purple-500";
+            const brandColor = s.brandColor ?? "#7C3AED";
+            const isIconUrl =
+              !!s.brandIcon &&
+              (s.brandIcon.startsWith("http") || s.brandIcon.startsWith("/"));
             return (
               <Card
                 key={s.id}
-                className={`rounded-3xl transition-all hover:shadow-md ${!isActive ? "opacity-60" : ""}`}
+                className={`rounded-3xl transition-all hover:shadow-md ${isInactive ? "opacity-60" : ""}`}
                 data-testid={`subscription-${s.id}`}
               >
                 <CardContent className="p-5">
                   <div className="flex items-start justify-between mb-3">
                     <div className="flex items-center gap-3">
-                      <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-purple-500 to-fuchsia-600 flex items-center justify-center text-white font-bold text-lg">
-                        {s.name[0]}
+                      <div
+                        className="w-12 h-12 rounded-2xl flex items-center justify-center text-white font-bold text-lg overflow-hidden shrink-0"
+                        style={{
+                          background: s.brandColor
+                            ? brandColor
+                            : "linear-gradient(135deg, #A855F7, #C026D3)",
+                        }}
+                      >
+                        {isIconUrl ? (
+                          <img
+                            src={s.brandIcon!}
+                            alt={s.name}
+                            className="w-full h-full object-cover"
+                          />
+                        ) : s.brandIcon ? (
+                          <span className="text-base">{s.brandIcon}</span>
+                        ) : (
+                          s.name[0]
+                        )}
                       </div>
                       <div>
                         <h3 className="font-bold text-lg">{s.name}</h3>
@@ -483,7 +519,12 @@ export default function Subscriptions() {
                         </div>
                       </div>
                     </div>
-                    {!isActive && <Badge variant="secondary">موقوف</Badge>}
+                    {isUpcoming && (
+                      <Badge className="bg-blue-100 text-blue-700 hover:bg-blue-100">
+                        قريباً
+                      </Badge>
+                    )}
+                    {isInactive && <Badge variant="secondary">موقوف</Badge>}
                   </div>
                   <p className="text-2xl font-bold text-purple-600 mb-3">
                     {formatAmount(s.amount, currency)}
@@ -524,22 +565,13 @@ export default function Subscriptions() {
                       onClick={() =>
                         updateSub.mutate({
                           id: s.id,
-                          data: { status: newStatus },
+                          data: { status: nextStatus },
                         })
                       }
                       data-testid={`btn-toggle-${s.id}`}
                     >
-                      {isActive ? (
-                        <>
-                          <Pause className="w-3.5 h-3.5" />
-                          إيقاف
-                        </>
-                      ) : (
-                        <>
-                          <Play className="w-3.5 h-3.5" />
-                          تفعيل
-                        </>
-                      )}
+                      <ToggleIcon className="w-3.5 h-3.5" />
+                      {toggleLabel}
                     </Button>
                     <Button
                       size="sm"

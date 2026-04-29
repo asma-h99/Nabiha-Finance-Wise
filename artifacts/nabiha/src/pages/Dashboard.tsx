@@ -3,6 +3,8 @@ import {
   useGetMonthlyTrend,
   useGetSubscriptionsBreakdown,
   useGetProfile,
+  useListSubscriptions,
+  type SubscriptionFrequency,
 } from "@workspace/api-client-react";
 import { formatAmount } from "@/lib/currency";
 import {
@@ -41,9 +43,23 @@ import {
 import happyMascot from "@assets/Gemini_Generated_Image_d3nzkdd3nzkdd3nz_1777144269395.png";
 
 const LEFTOVER_COLOR = "#0F8F87";
-const SUBS_COLOR = "#7C3AED";
-const COMMITMENTS_COLOR = "#F97316";
-const EXPENSES_COLOR = "#EC4899";
+const SUB_PALETTE = [
+  "#7C3AED",
+  "#3B82F6",
+  "#EC4899",
+  "#F97316",
+  "#8B5CF6",
+  "#06B6D4",
+  "#A855F7",
+  "#F43F5E",
+];
+
+function subMonthly(amount: number, freq: SubscriptionFrequency): number {
+  if (freq === "yearly") return amount / 12;
+  if (freq === "quarterly") return amount / 3;
+  if (freq === "weekly") return amount * 4.333;
+  return amount;
+}
 
 export default function Dashboard() {
   const currentMonth = new Date().toISOString().slice(0, 7);
@@ -54,6 +70,7 @@ export default function Dashboard() {
   });
   const { data: trendData, isLoading: loadingTrend } = useGetMonthlyTrend();
   const { data: subsBreakdown } = useGetSubscriptionsBreakdown();
+  const { data: subs } = useListSubscriptions();
 
   if (loadingSummary) {
     return (
@@ -77,13 +94,21 @@ export default function Dashboard() {
   const overspent = salary > 0 && consumed > salary;
   const leftoverPct = salary > 0 ? (leftover / salary) * 100 : 0;
 
+  // Donut: per-subscription share of salary + leftover slice
+  // (Spec: each subscription's share of salary plus the leftover "المتبقي")
+  const activeSubs =
+    subs?.filter((s) => s.status === "active") ?? [];
+  const subSlices = activeSubs.map((s, i) => ({
+    name: s.name,
+    value: subMonthly(s.amount, s.frequency),
+    color: SUB_PALETTE[i % SUB_PALETTE.length],
+  }));
+  const subsLeftover = Math.max(salary - subsMonthly, 0);
   const donutData =
     salary > 0
       ? [
-          { name: "اشتراكات", value: subsMonthly, color: SUBS_COLOR },
-          { name: "التزامات", value: commitmentsMonthly, color: COMMITMENTS_COLOR },
-          { name: "مصاريف الشهر", value: expensesThisMonth, color: EXPENSES_COLOR },
-          { name: "متبقّي", value: leftover, color: LEFTOVER_COLOR },
+          ...subSlices,
+          { name: "متبقّي بعد الاشتراكات", value: subsLeftover, color: LEFTOVER_COLOR },
         ].filter((d) => d.value > 0)
       : [];
 
@@ -196,10 +221,10 @@ export default function Dashboard() {
           <CardHeader>
             <CardTitle className="text-lg flex items-center gap-2">
               <Wallet className="w-5 h-5 text-primary" />
-              توزيع الراتب هذا الشهر
+              توزيع الاشتراكات من راتبك
             </CardTitle>
             <CardDescription>
-              كيف انقسم راتبك بين الاشتراكات والالتزامات والمصاريف والمتبقّي
+              حصة كل اشتراك من راتبك الشهري والمتبقي بعدها
             </CardDescription>
           </CardHeader>
           <CardContent className="min-h-[320px] flex items-center justify-center">
@@ -274,19 +299,19 @@ export default function Dashboard() {
               label="اشتراكات"
               value={subsMonthly}
               currency={currency}
-              color={SUBS_COLOR}
+              color="#7C3AED"
             />
             <SummaryRow
               label="التزامات شهرية"
               value={commitmentsMonthly}
               currency={currency}
-              color={COMMITMENTS_COLOR}
+              color="#F97316"
             />
             <SummaryRow
               label="مصاريف الشهر"
               value={expensesThisMonth}
               currency={currency}
-              color={EXPENSES_COLOR}
+              color="#EC4899"
             />
             <div className="border-t pt-3">
               <SummaryRow

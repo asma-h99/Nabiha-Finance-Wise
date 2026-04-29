@@ -523,7 +523,13 @@ export const SimulateBorrowingCapacityResponse = zod.object({
   currentDebtToIncomeRatio: zod
     .number()
     .describe("Existing commitments + this payment vs salary, percentage"),
-  affordability: zod.enum(["safe", "caution", "risky"]),
+  affordability: zod.enum([
+    "excellent",
+    "safe",
+    "caution",
+    "risky",
+    "very-risky",
+  ]),
   projectedBalance: zod.array(
     zod.object({
       month: zod.number(),

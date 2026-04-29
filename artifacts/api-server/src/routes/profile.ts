@@ -9,7 +9,6 @@ const router = Router();
 router.use(requireAuth);
 
 router.get("/profile", async (req, res) => {
-  if (!req.userId) { res.status(401).json({ error: "Unauthorized" }); return; }
   const userId = req.userId;
   let [profile] = await db
     .select()
@@ -30,7 +29,6 @@ router.get("/profile", async (req, res) => {
 });
 
 router.put("/profile", async (req, res) => {
-  if (!req.userId) { res.status(401).json({ error: "Unauthorized" }); return; }
   const userId = req.userId;
   const parseResult = UpdateProfileBody.safeParse(req.body);
   if (!parseResult.success) {

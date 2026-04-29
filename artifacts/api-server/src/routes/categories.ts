@@ -9,7 +9,6 @@ const router = Router();
 router.use(requireAuth);
 
 router.get("/categories", async (req, res) => {
-  if (!req.userId) { res.status(401).json({ error: "Unauthorized" }); return; }
   const userId = req.userId;
   const categories = await db
     .select()
@@ -20,7 +19,6 @@ router.get("/categories", async (req, res) => {
 });
 
 router.post("/categories", async (req, res) => {
-  if (!req.userId) { res.status(401).json({ error: "Unauthorized" }); return; }
   const userId = req.userId;
   const parseResult = CreateCategoryBody.safeParse(req.body);
   if (!parseResult.success) {
@@ -37,7 +35,6 @@ router.post("/categories", async (req, res) => {
 });
 
 router.delete("/categories/:id", async (req, res) => {
-  if (!req.userId) { res.status(401).json({ error: "Unauthorized" }); return; }
   const userId = req.userId;
   const parseResult = DeleteCategoryParams.safeParse(req.params);
   if (!parseResult.success) {

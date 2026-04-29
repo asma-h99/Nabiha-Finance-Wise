@@ -10,7 +10,6 @@ const router = Router();
 router.use(requireAuth);
 
 router.get("/notifications", async (req, res) => {
-  if (!req.userId) { res.status(401).json({ error: "Unauthorized" }); return; }
   const userId = req.userId;
   try {
     await generateUpcomingNotifications(userId);
@@ -26,7 +25,6 @@ router.get("/notifications", async (req, res) => {
 });
 
 router.post("/notifications/:id/read", async (req, res) => {
-  if (!req.userId) { res.status(401).json({ error: "Unauthorized" }); return; }
   const userId = req.userId;
   const parseResult = MarkNotificationReadParams.safeParse(req.params);
   if (!parseResult.success) {
@@ -49,7 +47,6 @@ router.post("/notifications/:id/read", async (req, res) => {
 });
 
 router.post("/notifications/read-all", async (req, res) => {
-  if (!req.userId) { res.status(401).json({ error: "Unauthorized" }); return; }
   const userId = req.userId;
   await db
     .update(notificationsTable)

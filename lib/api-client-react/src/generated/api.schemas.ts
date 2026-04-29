@@ -280,9 +280,11 @@ export type SimulatorResultAffordability =
   (typeof SimulatorResultAffordability)[keyof typeof SimulatorResultAffordability];
 
 export const SimulatorResultAffordability = {
+  excellent: "excellent",
   safe: "safe",
   caution: "caution",
   risky: "risky",
+  "very-risky": "very-risky",
 } as const;
 
 export type SimulatorResultProjectedBalanceItem = {

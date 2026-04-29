@@ -31,8 +31,15 @@ import {
   AreaChart,
 } from "recharts";
 
+type Affordability =
+  | "excellent"
+  | "safe"
+  | "caution"
+  | "risky"
+  | "very-risky";
+
 const VERDICT_META: Record<
-  string,
+  Affordability,
   {
     label: string;
     color: string;
@@ -42,31 +49,71 @@ const VERDICT_META: Record<
     msg: string;
   }
 > = {
+  excellent: {
+    label: "آمن جداً",
+    color: "text-emerald-800",
+    bg: "bg-emerald-50",
+    border: "border-emerald-400",
+    icon: CheckCircle2,
+    msg: "ممتاز! القسط أقل من 15% من دخلك المتاح بعد الاشتراكات. مساحة مريحة.",
+  },
   safe: {
     label: "آمن",
     color: "text-green-700",
     bg: "bg-green-50",
     border: "border-green-300",
     icon: CheckCircle2,
-    msg: "هالقرض ضمن قدرتك. القسط أقل من 30% من دخلك المتاح بعد الاشتراكات.",
+    msg: "هالقرض ضمن قدرتك. القسط بين 15%-30% من دخلك المتاح بعد الاشتراكات.",
   },
   caution: {
-    label: "حذر",
+    label: "محفوف بالمخاطر",
+    color: "text-yellow-700",
+    bg: "bg-yellow-50",
+    border: "border-yellow-300",
+    icon: AlertTriangle,
+    msg: "حذر — القسط بين 30%-45% من دخلك المتاح. فكّر فيه مرتين.",
+  },
+  risky: {
+    label: "غير موصى به",
     color: "text-orange-700",
     bg: "bg-orange-50",
     border: "border-orange-300",
     icon: AlertTriangle,
-    msg: "القرض كبير شويّة. القسط بين 30%-45% من دخلك المتاح بعد الاشتراكات.",
+    msg: "القسط بين 45%-60% من دخلك المتاح. خطر كبير على ميزانيتك.",
   },
-  risky: {
-    label: "خطر",
+  "very-risky": {
+    label: "غير ممكن",
     color: "text-red-700",
     bg: "bg-red-50",
     border: "border-red-300",
     icon: XCircle,
-    msg: "هالقرض صعب جداً. القسط بياكل أكتر من 45% من دخلك المتاح بعد الاشتراكات.",
+    msg: "القسط أكثر من 60% من دخلك المتاح. هالقرض غير قابل للتنفيذ.",
   },
 };
+
+// Gauge zones: dark-green (very safe) → green → yellow → orange → red (very risky).
+// Each spans 36° of the 180° half-circle (5 × 36 = 180).
+const GAUGE_ZONES = [
+  { color: "#047857", thresholdPct: 15 },
+  { color: "#10B981", thresholdPct: 30 },
+  { color: "#F59E0B", thresholdPct: 45 },
+  { color: "#F97316", thresholdPct: 60 },
+  { color: "#EF4444", thresholdPct: 100 },
+];
+
+function describeArc(
+  cx: number,
+  cy: number,
+  r: number,
+  startAngleDeg: number,
+  endAngleDeg: number,
+): string {
+  const toRad = (a: number) => ((a - 180) * Math.PI) / 180;
+  const start = { x: cx + r * Math.cos(toRad(startAngleDeg)), y: cy + r * Math.sin(toRad(startAngleDeg)) };
+  const end = { x: cx + r * Math.cos(toRad(endAngleDeg)), y: cy + r * Math.sin(toRad(endAngleDeg)) };
+  const largeArc = endAngleDeg - startAngleDeg <= 180 ? 0 : 1;
+  return `M ${start.x} ${start.y} A ${r} ${r} 0 ${largeArc} 1 ${end.x} ${end.y}`;
+}
 
 export default function Simulator() {
   const { data: profile } = useGetProfile();
@@ -89,12 +136,18 @@ export default function Simulator() {
   };
 
   const result = simulate.data;
-  const verdict = result ? VERDICT_META[result.affordability] : null;
+  const verdict = result
+    ? VERDICT_META[result.affordability as Affordability]
+    : null;
   const VerdictIcon = verdict?.icon;
 
-  // Gauge calculation: % of salary the payment represents
-  const dtiPct = result ? (result.monthlyPayment / (profile?.monthlySalary || 1)) * 100 : 0;
-  const gaugePct = Math.min(dtiPct, 100);
+  // Gauge represents the % of available income (post-subscriptions) that
+  // the loan payment would consume. This matches the backend's
+  // `currentDebtToIncomeRatio` and `affordability` thresholds.
+  const dtiPct = result?.currentDebtToIncomeRatio ?? 0;
+  const gaugePct = Math.min(Math.max(dtiPct, 0), 100);
+  // Map DTI% (0–100) to needle angle along the half-circle (-90° to +90°).
+  const needleAngle = -90 + (gaugePct / 100) * 180;
 
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-700">
@@ -205,67 +258,71 @@ export default function Simulator() {
               </div>
             ) : (
               <div className="space-y-6">
-                {/* Gauge */}
+                {/* 5-zone gauge */}
                 <div className="relative">
                   <svg
-                    viewBox="0 0 200 120"
+                    viewBox="0 0 220 130"
                     className="w-full max-w-xs mx-auto"
                   >
-                    <defs>
-                      <linearGradient
-                        id="gauge-bg"
-                        x1="0%"
-                        y1="0%"
-                        x2="100%"
-                        y2="0%"
-                      >
-                        <stop offset="0%" stopColor="#10B981" />
-                        <stop offset="50%" stopColor="#F59E0B" />
-                        <stop offset="100%" stopColor="#EF4444" />
-                      </linearGradient>
-                    </defs>
-                    {/* Background arc */}
-                    <path
-                      d="M 20 100 A 80 80 0 0 1 180 100"
-                      fill="none"
-                      stroke="url(#gauge-bg)"
-                      strokeWidth="16"
-                      strokeLinecap="round"
-                      opacity="0.25"
-                    />
-                    {/* Filled arc */}
-                    <path
-                      d="M 20 100 A 80 80 0 0 1 180 100"
-                      fill="none"
-                      stroke="url(#gauge-bg)"
-                      strokeWidth="16"
-                      strokeLinecap="round"
-                      strokeDasharray={`${(gaugePct / 100) * 251.3} 251.3`}
-                      style={{ transition: "stroke-dasharray 0.6s ease" }}
-                    />
+                    {/* Five distinct color zones, each 36° of the 180° arc */}
+                    {GAUGE_ZONES.map((zone, i) => {
+                      const startAngle = i * 36;
+                      const endAngle = (i + 1) * 36;
+                      return (
+                        <path
+                          key={i}
+                          d={describeArc(110, 110, 85, startAngle, endAngle)}
+                          fill="none"
+                          stroke={zone.color}
+                          strokeWidth="18"
+                          strokeLinecap="butt"
+                          data-testid={`gauge-zone-${i}`}
+                        />
+                      );
+                    })}
+                    {/* Tick labels at zone boundaries (15/30/45/60) */}
+                    {[15, 30, 45, 60].map((pct) => {
+                      const a = (pct / 100) * 180;
+                      const rad = ((a - 180) * Math.PI) / 180;
+                      const x = 110 + 102 * Math.cos(rad);
+                      const y = 110 + 102 * Math.sin(rad);
+                      return (
+                        <text
+                          key={pct}
+                          x={x}
+                          y={y}
+                          textAnchor="middle"
+                          dominantBaseline="middle"
+                          className="fill-muted-foreground"
+                          style={{ fontSize: 8 }}
+                        >
+                          {pct}%
+                        </text>
+                      );
+                    })}
                     {/* Needle */}
                     <g
                       style={{
-                        transform: `rotate(${-90 + (gaugePct * 180) / 100}deg)`,
-                        transformOrigin: "100px 100px",
+                        transform: `rotate(${needleAngle}deg)`,
+                        transformOrigin: "110px 110px",
                         transition: "transform 0.6s ease",
                       }}
                     >
                       <line
-                        x1="100"
-                        y1="100"
-                        x2="100"
-                        y2="30"
+                        x1="110"
+                        y1="110"
+                        x2="110"
+                        y2="35"
                         stroke="#1F2A2C"
                         strokeWidth="3"
                         strokeLinecap="round"
                       />
-                      <circle cx="100" cy="100" r="6" fill="#1F2A2C" />
+                      <circle cx="110" cy="110" r="7" fill="#1F2A2C" />
                     </g>
                   </svg>
-                  <div className="text-center -mt-4">
+                  <div className="text-center -mt-2">
                     <p className="text-sm text-muted-foreground">
-                      نسبة القسط من الراتب
+                      نسبة القسط من دخلك المتاح
                     </p>
                     <p className="text-4xl font-bold text-foreground">
                       {dtiPct.toFixed(1)}%

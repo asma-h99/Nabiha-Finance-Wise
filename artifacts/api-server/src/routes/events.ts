@@ -23,7 +23,6 @@ function serializeEvent(e: typeof eventsTable.$inferSelect) {
 }
 
 router.get("/events", async (req, res) => {
-  if (!req.userId) { res.status(401).json({ error: "Unauthorized" }); return; }
   const userId = req.userId;
   const parseResult = ListEventsQueryParams.safeParse(req.query);
   if (!parseResult.success) {
@@ -48,7 +47,6 @@ router.get("/events", async (req, res) => {
 });
 
 router.post("/events", async (req, res) => {
-  if (!req.userId) { res.status(401).json({ error: "Unauthorized" }); return; }
   const userId = req.userId;
   const parseResult = CreateEventBody.safeParse(req.body);
   if (!parseResult.success) {
@@ -76,7 +74,6 @@ router.post("/events", async (req, res) => {
 });
 
 router.put("/events/:id", async (req, res) => {
-  if (!req.userId) { res.status(401).json({ error: "Unauthorized" }); return; }
   const userId = req.userId;
   const paramsResult = UpdateEventParams.safeParse(req.params);
   if (!paramsResult.success) {
@@ -118,7 +115,6 @@ router.put("/events/:id", async (req, res) => {
 });
 
 router.delete("/events/:id", async (req, res) => {
-  if (!req.userId) { res.status(401).json({ error: "Unauthorized" }); return; }
   const userId = req.userId;
   const parseResult = DeleteEventParams.safeParse(req.params);
   if (!parseResult.success) {

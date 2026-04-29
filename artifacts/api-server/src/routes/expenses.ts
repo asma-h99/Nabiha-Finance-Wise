@@ -30,7 +30,6 @@ async function ownsCategory(userId: string, categoryId: number): Promise<boolean
 }
 
 router.get("/expenses", async (req, res) => {
-  if (!req.userId) { res.status(401).json({ error: "Unauthorized" }); return; }
   const userId = req.userId;
   const parseResult = ListExpensesQueryParams.safeParse(req.query);
   if (!parseResult.success) {
@@ -71,7 +70,6 @@ router.get("/expenses", async (req, res) => {
 });
 
 router.post("/expenses", async (req, res) => {
-  if (!req.userId) { res.status(401).json({ error: "Unauthorized" }); return; }
   const userId = req.userId;
   const parseResult = CreateExpenseBody.safeParse(req.body);
   if (!parseResult.success) {
@@ -111,7 +109,6 @@ router.post("/expenses", async (req, res) => {
 });
 
 router.get("/expenses/:id", async (req, res) => {
-  if (!req.userId) { res.status(401).json({ error: "Unauthorized" }); return; }
   const userId = req.userId;
   const parseResult = GetExpenseParams.safeParse(req.params);
   if (!parseResult.success) {
@@ -150,7 +147,6 @@ router.get("/expenses/:id", async (req, res) => {
 });
 
 router.put("/expenses/:id", async (req, res) => {
-  if (!req.userId) { res.status(401).json({ error: "Unauthorized" }); return; }
   const userId = req.userId;
   const paramsResult = UpdateExpenseParams.safeParse(req.params);
   if (!paramsResult.success) {
@@ -202,7 +198,6 @@ router.put("/expenses/:id", async (req, res) => {
 });
 
 router.delete("/expenses/:id", async (req, res) => {
-  if (!req.userId) { res.status(401).json({ error: "Unauthorized" }); return; }
   const userId = req.userId;
   const parseResult = DeleteExpenseParams.safeParse(req.params);
   if (!parseResult.success) {

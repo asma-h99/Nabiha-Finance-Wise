@@ -19,7 +19,6 @@ function toDateString(d: Date | string): string {
 }
 
 router.get("/subscriptions", async (req, res) => {
-  if (!req.userId) { res.status(401).json({ error: "Unauthorized" }); return; }
   const userId = req.userId;
   const subs = await db
     .select()
@@ -30,7 +29,6 @@ router.get("/subscriptions", async (req, res) => {
 });
 
 router.post("/subscriptions", async (req, res) => {
-  if (!req.userId) { res.status(401).json({ error: "Unauthorized" }); return; }
   const userId = req.userId;
   const parseResult = CreateSubscriptionBody.safeParse(req.body);
   if (!parseResult.success) {
@@ -58,7 +56,6 @@ router.post("/subscriptions", async (req, res) => {
 });
 
 router.put("/subscriptions/:id", async (req, res) => {
-  if (!req.userId) { res.status(401).json({ error: "Unauthorized" }); return; }
   const userId = req.userId;
   const paramsResult = UpdateSubscriptionParams.safeParse(req.params);
   if (!paramsResult.success) {
@@ -98,7 +95,6 @@ router.put("/subscriptions/:id", async (req, res) => {
 });
 
 router.delete("/subscriptions/:id", async (req, res) => {
-  if (!req.userId) { res.status(401).json({ error: "Unauthorized" }); return; }
   const userId = req.userId;
   const parseResult = DeleteSubscriptionParams.safeParse(req.params);
   if (!parseResult.success) {

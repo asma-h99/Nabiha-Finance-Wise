@@ -38,7 +38,6 @@ function monthlyEquivalent(amount: number, frequency: string): number {
 }
 
 router.get("/summary/dashboard", async (req, res) => {
-  if (!req.userId) { res.status(401).json({ error: "Unauthorized" }); return; }
   const userId = req.userId;
   const parseResult = GetDashboardSummaryQueryParams.safeParse(req.query);
   if (!parseResult.success) {
@@ -138,7 +137,6 @@ router.get("/summary/dashboard", async (req, res) => {
 });
 
 router.get("/summary/priority-breakdown", async (req, res) => {
-  if (!req.userId) { res.status(401).json({ error: "Unauthorized" }); return; }
   const userId = req.userId;
   const parseResult = GetPriorityBreakdownQueryParams.safeParse(req.query);
   if (!parseResult.success) {
@@ -171,7 +169,6 @@ router.get("/summary/priority-breakdown", async (req, res) => {
 });
 
 router.get("/summary/category-breakdown", async (req, res) => {
-  if (!req.userId) { res.status(401).json({ error: "Unauthorized" }); return; }
   const userId = req.userId;
   const parseResult = GetCategoryBreakdownQueryParams.safeParse(req.query);
   if (!parseResult.success) {
@@ -208,7 +205,6 @@ router.get("/summary/category-breakdown", async (req, res) => {
 });
 
 router.get("/summary/monthly-trend", async (req, res) => {
-  if (!req.userId) { res.status(401).json({ error: "Unauthorized" }); return; }
   const userId = req.userId;
   const months: string[] = [];
   const now = new Date();
@@ -242,7 +238,6 @@ router.get("/summary/monthly-trend", async (req, res) => {
 });
 
 router.get("/summary/subscriptions-breakdown", async (req, res) => {
-  if (!req.userId) { res.status(401).json({ error: "Unauthorized" }); return; }
   const userId = req.userId;
   const subs = await db
     .select()

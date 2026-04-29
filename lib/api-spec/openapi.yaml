@@ -1101,7 +1101,7 @@ components:
           description: Existing commitments + this payment vs salary, percentage
         affordability:
           type: string
-          enum: [safe, caution, risky]
+          enum: [excellent, safe, caution, risky, very-risky]
         projectedBalance:
           type: array
           items:
