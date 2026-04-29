@@ -2,6 +2,7 @@ import { useListCommitments } from "@workspace/api-client-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { Link } from "wouter";
 import {
   CalendarDays,
@@ -105,17 +106,20 @@ export function FinancialCalendarCard() {
             {MONTHS.map((month, monthIdx) => {
               const isCurrentMonth = monthIdx === currentMonth;
               return (
-                <div
+                <Link
                   key={month}
-                  className={`rounded-2xl overflow-hidden border transition-shadow ${
+                  href={`/app/calendar/${monthIdx + 1}`}
+                  data-testid={`link-month-${monthIdx + 1}`}
+                  className={`group rounded-2xl overflow-hidden border transition-all cursor-pointer hover:shadow-lg hover:-translate-y-0.5 hover:border-primary/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 ${
                     isCurrentMonth
                       ? "border-primary/30 shadow-md"
                       : "border-border/60"
                   }`}
+                  aria-label={`${month} - عرض التقويم الشهري`}
                 >
                   {/* Month header */}
                   <div
-                    className={`px-2 py-1.5 text-center text-xs font-extrabold tracking-wide ${
+                    className={`px-2 py-1.5 text-center text-xs font-extrabold tracking-wide transition-colors group-hover:bg-primary ${
                       isCurrentMonth
                         ? "bg-primary text-primary-foreground"
                         : "bg-primary/80 text-primary-foreground"
@@ -137,21 +141,39 @@ export function FinancialCalendarCard() {
                         isCurrentMonth && commitment.isPaid;
 
                       return (
-                        <span
-                          key={commitment.id}
-                          title={commitment.title}
-                          className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 transition-opacity ${
-                            color.bg
-                          } ${color.text} ${
-                            isPaidThisMonth ? "opacity-40 ring-1 ring-green-400" : ""
-                          }`}
-                        >
-                          <Icon className="w-4 h-4" />
-                        </span>
+                        <Tooltip key={commitment.id} delayDuration={120}>
+                          <TooltipTrigger asChild>
+                            <span
+                              role="img"
+                              aria-label={commitment.title}
+                              onClick={(e) => e.stopPropagation()}
+                              className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 transition-transform hover:scale-110 ${
+                                color.bg
+                              } ${color.text} ${
+                                isPaidThisMonth ? "opacity-40 ring-1 ring-green-400" : ""
+                              }`}
+                            >
+                              <Icon className="w-4 h-4" />
+                            </span>
+                          </TooltipTrigger>
+                          <TooltipContent
+                            side="top"
+                            sideOffset={6}
+                            dir="rtl"
+                            className="font-semibold"
+                          >
+                            {commitment.title}
+                            {isPaidThisMonth && (
+                              <span className="block text-[10px] opacity-80 mt-0.5">
+                                مدفوع لهذا الشهر
+                              </span>
+                            )}
+                          </TooltipContent>
+                        </Tooltip>
                       );
                     })}
                   </div>
-                </div>
+                </Link>
               );
             })}
           </div>
