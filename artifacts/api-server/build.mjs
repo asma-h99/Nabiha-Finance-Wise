@@ -3,7 +3,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { build as esbuild } from "esbuild";
 import esbuildPluginPino from "esbuild-plugin-pino";
-import { rm } from "node:fs/promises";
+import { readFile, rm } from "node:fs/promises";
 
 // Plugins (e.g. 'esbuild-plugin-pino') may use `require` to resolve dependencies
 globalThis.require = createRequire(import.meta.url);
@@ -14,6 +14,17 @@ async function buildAll() {
   const distDir = path.resolve(artifactDir, "dist");
   await rm(distDir, { recursive: true, force: true });
 
+  // Externalize all runtime dependencies declared in package.json so Node
+  // resolves them from node_modules at runtime instead of bundling them.
+  // Workspace packages (@workspace/*) export TypeScript source files directly,
+  // so they must remain bundled.
+  const pkgJson = JSON.parse(
+    await readFile(path.resolve(artifactDir, "package.json"), "utf8"),
+  );
+  const runtimeDeps = Object.keys(pkgJson.dependencies ?? {}).filter(
+    (name) => !name.startsWith("@workspace/"),
+  );
+
   await esbuild({
     entryPoints: [path.resolve(artifactDir, "src/index.ts")],
     platform: "node",
@@ -22,12 +33,10 @@ async function buildAll() {
     outdir: distDir,
     outExtension: { ".js": ".mjs" },
     logLevel: "info",
-    // Some packages may not be bundleable, so we externalize them, we can add more here as needed.
-    // Some of the packages below may not be imported or installed, but we're adding them in case they are in the future.
-    // Examples of unbundleable packages:
-    // - uses native modules and loads them dynamically (e.g. sharp)
-    // - use path traversal to read files (e.g. @google-cloud/secret-manager loads sibling .proto files)
+    minify: true,
+    treeShaking: true,
     external: [
+      ...runtimeDeps,
       "*.node",
       "sharp",
       "better-sqlite3",
