@@ -108,6 +108,8 @@ interface SubFormState {
   category: SubscriptionCategory;
   nextDate: string;
   notes: string;
+  brandColor: string;
+  brandIcon: string;
 }
 
 const EMPTY_FORM: SubFormState = {
@@ -117,7 +119,20 @@ const EMPTY_FORM: SubFormState = {
   category: "streaming",
   nextDate: new Date().toISOString().slice(0, 10),
   notes: "",
+  brandColor: "",
+  brandIcon: "",
 };
+
+const BRAND_COLOR_PRESETS = [
+  "#7C3AED",
+  "#3B82F6",
+  "#EC4899",
+  "#F97316",
+  "#10B981",
+  "#EF4444",
+  "#0EA5E9",
+  "#1F2937",
+];
 
 export default function Subscriptions() {
   const { data: profile } = useGetProfile();
@@ -192,6 +207,8 @@ export default function Subscriptions() {
       category: s.category,
       nextDate: s.nextRenewalDate,
       notes: s.notes ?? "",
+      brandColor: s.brandColor ?? "",
+      brandIcon: s.brandIcon ?? "",
     });
     setOpen(true);
   };
@@ -205,6 +222,8 @@ export default function Subscriptions() {
       category: form.category,
       nextRenewalDate: form.nextDate,
       notes: form.notes || null,
+      brandColor: form.brandColor || null,
+      brandIcon: form.brandIcon || null,
     };
     if (editingId != null) {
       updateSubFromForm.mutate({ id: editingId, data: payload });
@@ -335,6 +354,48 @@ export default function Subscriptions() {
                   onChange={(e) => setForm({ ...form, nextDate: e.target.value })}
                   data-testid="input-sub-date"
                 />
+              </div>
+              <div>
+                <Label>أيقونة العلامة (حرف أو إيموجي)</Label>
+                <Input
+                  value={form.brandIcon}
+                  onChange={(e) =>
+                    setForm({ ...form, brandIcon: e.target.value })
+                  }
+                  placeholder="مثال: N أو 🎵"
+                  maxLength={4}
+                  data-testid="input-sub-brand-icon"
+                />
+              </div>
+              <div>
+                <Label>لون العلامة</Label>
+                <div className="flex flex-wrap items-center gap-2 mt-2">
+                  {BRAND_COLOR_PRESETS.map((c) => (
+                    <button
+                      key={c}
+                      type="button"
+                      onClick={() => setForm({ ...form, brandColor: c })}
+                      className={`w-8 h-8 rounded-full transition-all ${
+                        form.brandColor === c
+                          ? "ring-2 ring-offset-2 ring-purple-500 scale-110"
+                          : "hover:scale-105"
+                      }`}
+                      style={{ backgroundColor: c }}
+                      aria-label={`لون ${c}`}
+                      data-testid={`btn-color-${c}`}
+                    />
+                  ))}
+                  {form.brandColor && (
+                    <button
+                      type="button"
+                      onClick={() => setForm({ ...form, brandColor: "" })}
+                      className="text-xs text-muted-foreground underline ms-2"
+                      data-testid="btn-clear-color"
+                    >
+                      إعادة الافتراضي
+                    </button>
+                  )}
+                </div>
               </div>
               <div>
                 <Label>ملاحظات</Label>
