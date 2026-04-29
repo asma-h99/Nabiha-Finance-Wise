@@ -2,12 +2,11 @@ import { useGetBalanceSummary } from "@workspace/api-client-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useDisplayCurrency } from "@/contexts/CurrencyContext";
-import { getCurrency } from "@/lib/currency";
 import { TrendingDown, TrendingUp, AlertTriangle, CheckCircle2 } from "lucide-react";
 
 export function BalanceCard() {
   const { data, isLoading } = useGetBalanceSummary();
-  const { format, displayCurrency } = useDisplayCurrency();
+  const { format } = useDisplayCurrency();
 
   if (isLoading || !data) {
     return <Skeleton className="h-44 w-full rounded-3xl" />;
@@ -55,10 +54,6 @@ export function BalanceCard() {
           data-testid="text-balance-remaining"
         >
           {format(remaining, data.currency)}
-        </div>
-        <div className="text-xs text-muted-foreground -mt-2" data-testid="text-balance-currency-name">
-          {getCurrency(displayCurrency).arabicName}
-          <span className="opacity-70"> ({displayCurrency})</span>
         </div>
         {salary > 0 && (
           <div className="space-y-1.5">

@@ -128,7 +128,7 @@ export default function Commitments() {
                     name="amount"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>المبلغ ({getCurrency(baseCurrency).symbol})</FormLabel>
+                        <FormLabel>المبلغ ({getCurrency(baseCurrency).code})</FormLabel>
                         <FormControl>
                           <Input type="number" placeholder="0.00" className="h-12 rounded-xl bg-background" {...field} />
                         </FormControl>

@@ -110,7 +110,7 @@ export function SalaryCard() {
                   <SelectContent>
                     {CURRENCIES.map((c) => (
                       <SelectItem key={c.code} value={c.code} data-testid={`option-currency-${c.code}`}>
-                        {c.arabicName} ({c.code}) {c.symbol}
+                        {c.englishName} ({c.code})
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -154,12 +154,8 @@ export function SalaryCard() {
           </div>
         ) : (
           <>
-            <div className="text-3xl md:text-4xl font-extrabold mb-1 tracking-tight" data-testid="text-salary-amount">
+            <div className="text-3xl md:text-4xl font-extrabold mb-2 tracking-tight" data-testid="text-salary-amount">
               {format(salaryValue, cur.code)}
-            </div>
-            <div className="text-xs opacity-80 mb-2" data-testid="text-salary-currency-name">
-              {getCurrency(displayCurrency).arabicName}
-              <span className="opacity-70"> ({displayCurrency})</span>
             </div>
             <div className="flex items-center gap-2 text-sm opacity-90">
               <Calendar className="w-4 h-4" />

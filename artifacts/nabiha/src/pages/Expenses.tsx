@@ -151,7 +151,7 @@ export default function Expenses() {
                     name="amount"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>المبلغ ({getCurrency(baseCurrency).symbol})</FormLabel>
+                        <FormLabel>المبلغ ({getCurrency(baseCurrency).code})</FormLabel>
                         <FormControl>
                           <Input type="number" step="0.01" className="h-12 rounded-xl bg-background text-lg font-semibold" {...field} />
                         </FormControl>

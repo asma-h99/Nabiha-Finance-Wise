@@ -80,13 +80,13 @@ export function formatMoney(value: number, currency = "JOD"): string {
     minimumFractionDigits: decimals,
     maximumFractionDigits: decimals,
   });
-  return `${formatted} ${c.symbol}`;
+  return `${formatted} ${c.code}`;
 }
 
 export function formatCompact(value: number, currency = "JOD"): string {
   const c = getCurrency(currency);
   if (value >= 1000) {
-    return `${(value / 1000).toFixed(1).replace(/\.0$/, "")}K ${c.symbol}`;
+    return `${(value / 1000).toFixed(1).replace(/\.0$/, "")}K ${c.code}`;
   }
   return formatMoney(value, currency);
 }

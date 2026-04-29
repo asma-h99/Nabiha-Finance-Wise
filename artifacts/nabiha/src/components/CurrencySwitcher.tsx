@@ -34,8 +34,7 @@ export function CurrencySwitcher({ className }: { className?: string }) {
           aria-label="اختر عملة العرض"
         >
           <Coins className="w-4 h-4 text-primary" />
-          <span className="text-base leading-none">{current.symbol}</span>
-          <span className="hidden sm:inline text-xs text-muted-foreground font-medium">{current.code}</span>
+          <span className="text-sm leading-none font-bold tracking-wide">{current.code}</span>
         </Button>
       </PopoverTrigger>
       <PopoverContent
@@ -63,8 +62,7 @@ export function CurrencySwitcher({ className }: { className?: string }) {
                 <CurrencyRow
                   key={c.code}
                   code={c.code}
-                  symbol={c.symbol}
-                  arabicName={c.arabicName}
+                  englishName={c.englishName}
                   selected={c.code === displayCurrency}
                   onSelect={() => {
                     setDisplayCurrency(c.code);
@@ -81,8 +79,7 @@ export function CurrencySwitcher({ className }: { className?: string }) {
                 <CurrencyRow
                   key={c.code}
                   code={c.code}
-                  symbol={c.symbol}
-                  arabicName={c.arabicName}
+                  englishName={c.englishName}
                   selected={c.code === displayCurrency}
                   onSelect={() => {
                     setDisplayCurrency(c.code);
@@ -100,14 +97,12 @@ export function CurrencySwitcher({ className }: { className?: string }) {
 
 function CurrencyRow({
   code,
-  symbol,
-  arabicName,
+  englishName,
   selected,
   onSelect,
 }: {
   code: string;
-  symbol: string;
-  arabicName: string;
+  englishName: string;
   selected: boolean;
   onSelect: () => void;
 }) {
@@ -124,23 +119,21 @@ function CurrencyRow({
           "hover:bg-primary/5 focus:outline-none focus:bg-primary/10",
           selected && "bg-primary/10",
         )}
+        dir="ltr"
       >
         <span
           className={cn(
-            "shrink-0 w-9 h-9 rounded-xl flex items-center justify-center text-base font-extrabold",
+            "shrink-0 w-12 h-9 rounded-xl flex items-center justify-center text-xs font-extrabold tracking-wide",
             selected
               ? "bg-primary text-primary-foreground"
               : "bg-muted text-foreground",
           )}
         >
-          {symbol}
+          {code}
         </span>
-        <span className="flex-1 min-w-0">
+        <span className="flex-1 min-w-0 text-left">
           <span className="block text-sm font-semibold text-foreground truncate">
-            {arabicName}
-          </span>
-          <span className="block text-[11px] text-muted-foreground font-medium tracking-wide">
-            {code}
+            {englishName}
           </span>
         </span>
         {selected && <Check className="w-4 h-4 text-primary shrink-0" />}
