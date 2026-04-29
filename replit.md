@@ -6,10 +6,14 @@ Arabic-first financial awareness and expense management web application. The mas
 
 ## Features
 
-- **Dashboard (لوحة التحكم)**: Monthly spending overview, priority breakdown charts, category distribution, monthly trend
-- **Expenses (المصاريف)**: Track expenses with 3 priority levels: ضرورية (essential), مهمة (important), كمالية (luxury)
-- **Commitments (الالتزامات)**: Personal financial obligations (rent, subscriptions, loans) with due dates and payment tracking
-- **Categories (الفئات)**: Custom expense categories with color coding
+- **Auth (Clerk)**: Email/password + Gmail sign-in. Public landing at `/`, sign-in at `/sign-in`, protected app at `/app/*`.
+- **Salary & Currency profile**: Set monthly salary, currency (15 Arab + USD/EUR, default JOD), and payday. Currencies JOD/KWD/BHD/OMR rendered with 3 decimals end-to-end.
+- **Balance card**: Projected remaining = salary − monthly subscriptions − unpaid commitments − this month's expenses, with healthy/warning/critical states.
+- **Subscriptions tracker**: Donut chart + add/delete (with confirmation) for monthly/yearly subscriptions, with renewal day.
+- **Dashboard (لوحة التحكم)**: Monthly spending overview, priority breakdown charts, category distribution, monthly trend.
+- **Expenses (المصاريف)**: Track expenses with 3 priority levels: ضرورية, مهمة, كمالية.
+- **Commitments (الالتزامات)**: Personal obligations (rent, loans) with due dates and payment tracking.
+- **Categories (الفئات)**: Custom expense categories with color coding.
 
 ## Stack
 
@@ -45,12 +49,19 @@ Arabic-first financial awareness and expense management web application. The mas
 - `GET /api/summary/priority-breakdown` — breakdown by priority
 - `GET /api/summary/category-breakdown` — breakdown by category
 - `GET /api/summary/monthly-trend` — 6-month trend
+- `GET /api/summary/balance` — projected remaining balance (currency-aware)
+- `GET/PUT /api/profile` — single-row user profile (salary, currency, payday)
+- `GET/POST /api/subscriptions`, `PUT/DELETE /api/subscriptions/:id` — subscriptions CRUD
 
 ## DB Schema
 
 - `categories` — expense categories (name, icon, color)
 - `expenses` — individual expenses (title, amount, priority, categoryId, date)
 - `commitments` — recurring financial obligations (title, amount, dueDay, isPaid)
+- `user_profile` — single row id=1 (monthlySalary numeric(14,3), currency, payday)
+- `subscriptions` — recurring digital subscriptions (name, amount numeric(14,3), billingCycle, color, renewsOnDay)
+
+Note: data model is currently single-user (no per-user filtering). Per-user migration deferred.
 
 ## Assets
 

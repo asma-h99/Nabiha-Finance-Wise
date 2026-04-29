@@ -241,6 +241,121 @@ export const GetCategoryBreakdownResponse = zod.array(
 );
 
 /**
+ * @summary Get current user's salary & currency profile
+ */
+export const GetUserProfileResponse = zod.object({
+  monthlySalary: zod.number(),
+  currency: zod
+    .string()
+    .describe("ISO 4217 currency code (e.g. JOD, AED, SAR, USD)"),
+  payday: zod.number().describe("Day of month salary is received (1-31)"),
+  updatedAt: zod.coerce.date(),
+});
+
+/**
+ * @summary Update salary, currency, or payday
+ */
+export const UpdateUserProfileBody = zod.object({
+  monthlySalary: zod.number().optional(),
+  currency: zod.string().optional(),
+  payday: zod.number().optional(),
+});
+
+export const UpdateUserProfileResponse = zod.object({
+  monthlySalary: zod.number(),
+  currency: zod
+    .string()
+    .describe("ISO 4217 currency code (e.g. JOD, AED, SAR, USD)"),
+  payday: zod.number().describe("Day of month salary is received (1-31)"),
+  updatedAt: zod.coerce.date(),
+});
+
+/**
+ * @summary List all recurring subscriptions
+ */
+export const ListSubscriptionsResponseItem = zod.object({
+  id: zod.number(),
+  name: zod.string(),
+  amount: zod.number(),
+  billingCycle: zod.enum(["monthly", "yearly"]),
+  color: zod.string().nullish(),
+  icon: zod.string().nullish(),
+  renewsOnDay: zod.number().nullish(),
+  notes: zod.string().nullish(),
+  createdAt: zod.coerce.date(),
+});
+export const ListSubscriptionsResponse = zod.array(
+  ListSubscriptionsResponseItem,
+);
+
+/**
+ * @summary Add a new subscription
+ */
+export const CreateSubscriptionBody = zod.object({
+  name: zod.string(),
+  amount: zod.number(),
+  billingCycle: zod.enum(["monthly", "yearly"]),
+  color: zod.string().nullish(),
+  icon: zod.string().nullish(),
+  renewsOnDay: zod.number().nullish(),
+  notes: zod.string().nullish(),
+});
+
+/**
+ * @summary Update a subscription
+ */
+export const UpdateSubscriptionParams = zod.object({
+  id: zod.coerce.number(),
+});
+
+export const UpdateSubscriptionBody = zod.object({
+  name: zod.string().optional(),
+  amount: zod.number().optional(),
+  billingCycle: zod.enum(["monthly", "yearly"]).optional(),
+  color: zod.string().nullish(),
+  icon: zod.string().nullish(),
+  renewsOnDay: zod.number().nullish(),
+  notes: zod.string().nullish(),
+});
+
+export const UpdateSubscriptionResponse = zod.object({
+  id: zod.number(),
+  name: zod.string(),
+  amount: zod.number(),
+  billingCycle: zod.enum(["monthly", "yearly"]),
+  color: zod.string().nullish(),
+  icon: zod.string().nullish(),
+  renewsOnDay: zod.number().nullish(),
+  notes: zod.string().nullish(),
+  createdAt: zod.coerce.date(),
+});
+
+/**
+ * @summary Delete a subscription
+ */
+export const DeleteSubscriptionParams = zod.object({
+  id: zod.coerce.number(),
+});
+
+/**
+ * @summary Get monthly salary, outflow, and remaining balance
+ */
+export const GetBalanceSummaryResponse = zod.object({
+  currency: zod.string(),
+  monthlySalary: zod.number(),
+  subscriptionsMonthly: zod.number(),
+  commitmentsTotal: zod.number(),
+  unpaidCommitmentsTotal: zod.number(),
+  spentThisMonth: zod.number(),
+  projectedRemaining: zod
+    .number()
+    .describe(
+      "Salary minus subscriptions, unpaid commitments, and ad-hoc spend so far this month",
+    ),
+  subscriptionsCount: zod.number(),
+});
+
+/**
  * @summary Get monthly spending trend for the last 6 months
  */
 export const GetMonthlyTrendResponseItem = zod.object({

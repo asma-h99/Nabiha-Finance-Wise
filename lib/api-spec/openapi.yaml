@@ -18,6 +18,10 @@ tags:
     description: Personal financial commitments
   - name: summary
     description: Dashboard summary and analytics
+  - name: profile
+    description: User salary and currency profile
+  - name: subscriptions
+    description: Recurring subscriptions tracker
 paths:
   /healthz:
     get:
@@ -317,6 +321,119 @@ paths:
                 items:
                   $ref: "#/components/schemas/CategoryBreakdown"
 
+  /profile:
+    get:
+      operationId: getUserProfile
+      tags: [profile]
+      summary: Get current user's salary & currency profile
+      responses:
+        "200":
+          description: User profile
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserProfile"
+    put:
+      operationId: updateUserProfile
+      tags: [profile]
+      summary: Update salary, currency, or payday
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateUserProfileBody"
+      responses:
+        "200":
+          description: Updated user profile
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserProfile"
+
+  /subscriptions:
+    get:
+      operationId: listSubscriptions
+      tags: [subscriptions]
+      summary: List all recurring subscriptions
+      responses:
+        "200":
+          description: List of subscriptions
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Subscription"
+    post:
+      operationId: createSubscription
+      tags: [subscriptions]
+      summary: Add a new subscription
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateSubscriptionBody"
+      responses:
+        "201":
+          description: Created subscription
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Subscription"
+
+  /subscriptions/{id}:
+    put:
+      operationId: updateSubscription
+      tags: [subscriptions]
+      summary: Update a subscription
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateSubscriptionBody"
+      responses:
+        "200":
+          description: Updated subscription
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Subscription"
+    delete:
+      operationId: deleteSubscription
+      tags: [subscriptions]
+      summary: Delete a subscription
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+
+  /summary/balance:
+    get:
+      operationId: getBalanceSummary
+      tags: [summary]
+      summary: Get monthly salary, outflow, and remaining balance
+      responses:
+        "200":
+          description: Balance summary
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BalanceSummary"
+
   /summary/monthly-trend:
     get:
       operationId: getMonthlyTrend
@@ -607,3 +724,148 @@ components:
         - essential
         - important
         - luxury
+
+    UserProfile:
+      type: object
+      properties:
+        monthlySalary:
+          type: number
+        currency:
+          type: string
+          description: ISO 4217 currency code (e.g. JOD, AED, SAR, USD)
+        payday:
+          type: integer
+          description: Day of month salary is received (1-31)
+        updatedAt:
+          type: string
+          format: date-time
+      required:
+        - monthlySalary
+        - currency
+        - payday
+        - updatedAt
+
+    UpdateUserProfileBody:
+      type: object
+      properties:
+        monthlySalary:
+          type: number
+        currency:
+          type: string
+        payday:
+          type: integer
+
+    BillingCycle:
+      type: string
+      enum: [monthly, yearly]
+
+    Subscription:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        amount:
+          type: number
+        billingCycle:
+          $ref: "#/components/schemas/BillingCycle"
+        color:
+          type: string
+          nullable: true
+        icon:
+          type: string
+          nullable: true
+        renewsOnDay:
+          type: integer
+          nullable: true
+        notes:
+          type: string
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - name
+        - amount
+        - billingCycle
+        - createdAt
+
+    CreateSubscriptionBody:
+      type: object
+      properties:
+        name:
+          type: string
+        amount:
+          type: number
+        billingCycle:
+          $ref: "#/components/schemas/BillingCycle"
+        color:
+          type: string
+          nullable: true
+        icon:
+          type: string
+          nullable: true
+        renewsOnDay:
+          type: integer
+          nullable: true
+        notes:
+          type: string
+          nullable: true
+      required:
+        - name
+        - amount
+        - billingCycle
+
+    UpdateSubscriptionBody:
+      type: object
+      properties:
+        name:
+          type: string
+        amount:
+          type: number
+        billingCycle:
+          $ref: "#/components/schemas/BillingCycle"
+        color:
+          type: string
+          nullable: true
+        icon:
+          type: string
+          nullable: true
+        renewsOnDay:
+          type: integer
+          nullable: true
+        notes:
+          type: string
+          nullable: true
+
+    BalanceSummary:
+      type: object
+      properties:
+        currency:
+          type: string
+        monthlySalary:
+          type: number
+        subscriptionsMonthly:
+          type: number
+        commitmentsTotal:
+          type: number
+        unpaidCommitmentsTotal:
+          type: number
+        spentThisMonth:
+          type: number
+        projectedRemaining:
+          type: number
+          description: Salary minus subscriptions, unpaid commitments, and ad-hoc spend so far this month
+        subscriptionsCount:
+          type: integer
+      required:
+        - currency
+        - monthlySalary
+        - subscriptionsMonthly
+        - commitmentsTotal
+        - unpaidCommitmentsTotal
+        - spentThisMonth
+        - projectedRemaining
+        - subscriptionsCount

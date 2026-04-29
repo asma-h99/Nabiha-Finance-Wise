@@ -123,6 +123,72 @@ export interface MonthlyTrend {
   luxury: number;
 }
 
+export interface UserProfile {
+  monthlySalary: number;
+  /** ISO 4217 currency code (e.g. JOD, AED, SAR, USD) */
+  currency: string;
+  /** Day of month salary is received (1-31) */
+  payday: number;
+  updatedAt: string;
+}
+
+export interface UpdateUserProfileBody {
+  monthlySalary?: number;
+  currency?: string;
+  payday?: number;
+}
+
+export type BillingCycle = (typeof BillingCycle)[keyof typeof BillingCycle];
+
+export const BillingCycle = {
+  monthly: "monthly",
+  yearly: "yearly",
+} as const;
+
+export interface Subscription {
+  id: number;
+  name: string;
+  amount: number;
+  billingCycle: BillingCycle;
+  color?: string | null;
+  icon?: string | null;
+  renewsOnDay?: number | null;
+  notes?: string | null;
+  createdAt: string;
+}
+
+export interface CreateSubscriptionBody {
+  name: string;
+  amount: number;
+  billingCycle: BillingCycle;
+  color?: string | null;
+  icon?: string | null;
+  renewsOnDay?: number | null;
+  notes?: string | null;
+}
+
+export interface UpdateSubscriptionBody {
+  name?: string;
+  amount?: number;
+  billingCycle?: BillingCycle;
+  color?: string | null;
+  icon?: string | null;
+  renewsOnDay?: number | null;
+  notes?: string | null;
+}
+
+export interface BalanceSummary {
+  currency: string;
+  monthlySalary: number;
+  subscriptionsMonthly: number;
+  commitmentsTotal: number;
+  unpaidCommitmentsTotal: number;
+  spentThisMonth: number;
+  /** Salary minus subscriptions, unpaid commitments, and ad-hoc spend so far this month */
+  projectedRemaining: number;
+  subscriptionsCount: number;
+}
+
 export type ListExpensesParams = {
   categoryId?: number;
   priority?: Priority;

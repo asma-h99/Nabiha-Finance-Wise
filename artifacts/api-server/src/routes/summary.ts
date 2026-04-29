@@ -1,5 +1,12 @@
 import { Router } from "express";
-import { db, expensesTable, categoriesTable, commitmentsTable } from "@workspace/db";
+import {
+  db,
+  expensesTable,
+  categoriesTable,
+  commitmentsTable,
+  subscriptionsTable,
+  userProfileTable,
+} from "@workspace/db";
 import {
   GetDashboardSummaryQueryParams,
   GetPriorityBreakdownQueryParams,
@@ -151,6 +158,48 @@ router.get("/summary/category-breakdown", async (req, res) => {
   }));
 
   res.json(result);
+});
+
+router.get("/summary/balance", async (_req, res) => {
+  const month = getCurrentMonth();
+
+  const [profile] = await db.select().from(userProfileTable);
+  const monthlySalary = Number(profile?.monthlySalary ?? 0);
+  const currency = profile?.currency ?? "JOD";
+
+  const subs = await db.select().from(subscriptionsTable);
+  const subscriptionsMonthly = subs.reduce((acc, s) => {
+    const amt = Number(s.amount);
+    return acc + (s.billingCycle === "yearly" ? amt / 12 : amt);
+  }, 0);
+
+  const commitments = await db.select().from(commitmentsTable);
+  const commitmentsTotal = commitments.reduce((acc, c) => acc + Number(c.amount), 0);
+  const unpaidCommitmentsTotal = commitments
+    .filter((c) => !c.isPaid)
+    .reduce((acc, c) => acc + Number(c.amount), 0);
+
+  const [spent] = await db
+    .select({
+      total: sql<string>`COALESCE(SUM(CAST(${expensesTable.amount} AS DECIMAL)), 0)`,
+    })
+    .from(expensesTable)
+    .where(sql`${expensesTable.date} LIKE ${month + "%"}`);
+  const spentThisMonth = Number(spent?.total ?? 0);
+
+  const projectedRemaining =
+    monthlySalary - subscriptionsMonthly - unpaidCommitmentsTotal - spentThisMonth;
+
+  res.json({
+    currency,
+    monthlySalary,
+    subscriptionsMonthly: Math.round(subscriptionsMonthly * 1000) / 1000,
+    commitmentsTotal,
+    unpaidCommitmentsTotal,
+    spentThisMonth,
+    projectedRemaining: Math.round(projectedRemaining * 1000) / 1000,
+    subscriptionsCount: subs.length,
+  });
 });
 
 router.get("/summary/monthly-trend", async (_req, res) => {
