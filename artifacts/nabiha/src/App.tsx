@@ -47,12 +47,12 @@ const clerkAppearance = {
     logoImageUrl: `${window.location.origin}${basePath}/logo.svg`,
   },
   variables: {
-    colorPrimary: "#6C63FF",
+    colorPrimary: "#1B7E63",
     colorForeground: "#1a1a2e",
     colorMutedForeground: "#6b7280",
     colorDanger: "#ef4444",
     colorBackground: "#ffffff",
-    colorInput: "#f8f7ff",
+    colorInput: "#f0faf6",
     colorInputForeground: "#1a1a2e",
     colorNeutral: "#e5e7eb",
     fontFamily: "'Cairo', 'Tajawal', system-ui, sans-serif",
@@ -65,21 +65,21 @@ const clerkAppearance = {
     footer: "!shadow-none !border-0 !bg-transparent !rounded-none",
     headerTitle: "text-2xl font-bold text-[#1a1a2e]",
     headerSubtitle: "text-sm text-[#6b7280]",
-    socialButtonsBlockButton: "border border-[#e5e7eb] hover:bg-[#f8f7ff] rounded-xl h-12",
+    socialButtonsBlockButton: "border border-[#e5e7eb] hover:bg-[#f0faf6] rounded-xl h-12",
     socialButtonsBlockButtonText: "text-[#1a1a2e] font-semibold",
     formFieldLabel: "text-[#1a1a2e] font-semibold text-sm",
-    formFieldInput: "bg-[#f8f7ff] border border-[#e5e7eb] rounded-xl h-12 px-4 text-[#1a1a2e]",
-    formButtonPrimary: "bg-[#6C63FF] hover:bg-[#5a52e6] text-white font-semibold h-12 rounded-xl shadow-md",
+    formFieldInput: "bg-[#f0faf6] border border-[#e5e7eb] rounded-xl h-12 px-4 text-[#1a1a2e]",
+    formButtonPrimary: "bg-[#1B7E63] hover:bg-[#15604B] text-white font-semibold h-12 rounded-xl shadow-md",
     footerAction: "pt-2",
-    footerActionLink: "text-[#6C63FF] hover:text-[#5a52e6] font-semibold",
+    footerActionLink: "text-[#1B7E63] hover:text-[#15604B] font-semibold",
     footerActionText: "text-[#6b7280]",
     dividerLine: "bg-[#e5e7eb]",
     dividerText: "text-[#6b7280] text-xs",
-    identityPreviewEditButton: "text-[#6C63FF] hover:text-[#5a52e6]",
+    identityPreviewEditButton: "text-[#1B7E63] hover:text-[#15604B]",
     formFieldSuccessText: "text-emerald-600",
     alert: "bg-red-50 border border-red-200 rounded-xl",
     alertText: "text-red-700",
-    otpCodeFieldInput: "bg-[#f8f7ff] border border-[#e5e7eb] rounded-xl text-[#1a1a2e]",
+    otpCodeFieldInput: "bg-[#f0faf6] border border-[#e5e7eb] rounded-xl text-[#1a1a2e]",
     formFieldRow: "space-y-1.5",
     main: "gap-5",
     logoBox: "justify-center mb-2",
@@ -111,7 +111,7 @@ function ClerkQueryClientCacheInvalidator() {
 
 function SignInPage() {
   return (
-    <div dir="ltr" className="flex min-h-[100dvh] items-center justify-center bg-gradient-to-br from-[#f8f7ff] via-white to-[#fff5f0] px-4 py-10">
+    <div dir="ltr" className="flex min-h-[100dvh] items-center justify-center bg-gradient-to-br from-[#f0faf6] via-white to-[#fffbf0] px-4 py-10">
       <SignIn
         routing="path"
         path={`${basePath}/sign-in`}
@@ -124,7 +124,7 @@ function SignInPage() {
 
 function SignUpPage() {
   return (
-    <div dir="ltr" className="flex min-h-[100dvh] items-center justify-center bg-gradient-to-br from-[#f8f7ff] via-white to-[#fff5f0] px-4 py-10">
+    <div dir="ltr" className="flex min-h-[100dvh] items-center justify-center bg-gradient-to-br from-[#f0faf6] via-white to-[#fffbf0] px-4 py-10">
       <SignUp
         routing="path"
         path={`${basePath}/sign-up`}
@@ -137,7 +137,7 @@ function SignUpPage() {
 
 function Landing() {
   return (
-    <div dir="rtl" className="min-h-[100dvh] bg-gradient-to-br from-[#f8f7ff] via-white to-[#fff5f0] text-foreground">
+    <div dir="rtl" className="min-h-[100dvh] bg-gradient-to-br from-[#f0faf6] via-white to-[#fffbf0] text-foreground">
       <header className="max-w-6xl mx-auto px-6 py-6 flex items-center justify-between">
         <div className="flex items-center gap-3">
           <img src={logoImage} alt="نَبِيهَة" className="w-12 h-12 rounded-full border-2 border-primary/20 object-cover" />

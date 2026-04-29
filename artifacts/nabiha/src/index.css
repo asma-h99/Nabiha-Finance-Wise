@@ -92,51 +92,51 @@
   --card-border: 245 20% 92%;
 
   --sidebar: 0 0% 100%;
-  --sidebar-foreground: 245 25% 25%;
-  --sidebar-border: 245 20% 92%;
-  --sidebar-primary: 244 100% 69%;
+  --sidebar-foreground: 200 20% 22%;
+  --sidebar-border: 165 20% 90%;
+  --sidebar-primary: 162 65% 30%;
   --sidebar-primary-foreground: 0 0% 100%;
-  --sidebar-accent: 244 100% 97%;
-  --sidebar-accent-foreground: 244 60% 35%;
-  --sidebar-ring: 244 100% 69%;
+  --sidebar-accent: 162 50% 95%;
+  --sidebar-accent-foreground: 162 60% 22%;
+  --sidebar-ring: 162 65% 30%;
 
   --popover: 0 0% 100%;
   --popover-foreground: 245 30% 15%;
   --popover-border: 245 20% 92%;
 
-  /* Brand Primary — #6C63FF Indigo Purple */
-  --primary: 244 100% 69%;
+  /* Brand Primary — Deep Emerald (trust, money, growth) */
+  --primary: 162 65% 30%;
   --primary-foreground: 0 0% 100%;
 
   /* Soft secondary */
-  --secondary: 245 30% 96%;
-  --secondary-foreground: 245 30% 25%;
+  --secondary: 165 25% 95%;
+  --secondary-foreground: 200 20% 22%;
 
-  --muted: 245 20% 95%;
-  --muted-foreground: 245 10% 50%;
+  --muted: 165 15% 95%;
+  --muted-foreground: 200 10% 45%;
 
-  /* Brand Accent — Warm orange (mascot identity) */
-  --accent: 18 95% 60%;
-  --accent-foreground: 0 0% 100%;
+  /* Brand Accent — Warm gold (premium fintech feel) */
+  --accent: 38 92% 52%;
+  --accent-foreground: 200 30% 15%;
 
   /* Semantic states */
-  --success: 152 65% 42%;
+  --success: 158 70% 38%;
   --success-foreground: 0 0% 100%;
   --warning: 38 95% 55%;
-  --warning-foreground: 0 0% 100%;
+  --warning-foreground: 200 30% 15%;
 
-  --destructive: 0 84% 60%;
+  --destructive: 0 75% 55%;
   --destructive-foreground: 0 0% 100%;
 
-  --input: 245 20% 92%;
-  --ring: 244 100% 69%;
+  --input: 165 20% 92%;
+  --ring: 162 65% 30%;
 
-  /* Chart palette — purple, orange, green, blue, gold */
-  --chart-1: 244 100% 69%;
-  --chart-2: 18 95% 60%;
-  --chart-3: 152 65% 42%;
-  --chart-4: 210 90% 56%;
-  --chart-5: 38 95% 55%;
+  /* Chart palette — emerald, gold, navy, warm-orange (mascot), muted purple */
+  --chart-1: 162 65% 30%;
+  --chart-2: 38 92% 52%;
+  --chart-3: 210 70% 45%;
+  --chart-4: 18 85% 60%;
+  --chart-5: 250 30% 55%;
 
   --app-font-sans: 'Cairo', 'Tajawal', system-ui, sans-serif;
   --app-font-serif: 'Cairo', Georgia, serif;
@@ -163,40 +163,40 @@
 }
 
 .dark {
-  --background: 180 20% 10%;
-  --foreground: 40 20% 90%;
-  --border: 180 20% 20%;
-  --card: 180 20% 13%;
-  --card-foreground: 40 20% 90%;
-  --card-border: 180 20% 20%;
-  --sidebar: 180 20% 12%;
-  --sidebar-foreground: 40 20% 90%;
-  --sidebar-border: 180 20% 20%;
-  --sidebar-primary: 179 40% 45%;
-  --sidebar-primary-foreground: 180 20% 10%;
-  --sidebar-accent: 180 20% 20%;
-  --sidebar-accent-foreground: 40 20% 90%;
-  --sidebar-ring: 179 40% 45%;
-  --popover: 180 20% 13%;
-  --popover-foreground: 40 20% 90%;
-  --popover-border: 180 20% 20%;
-  --primary: 179 40% 45%;
-  --primary-foreground: 180 20% 10%;
-  --secondary: 180 20% 20%;
-  --secondary-foreground: 40 20% 90%;
-  --muted: 180 20% 20%;
-  --muted-foreground: 180 10% 60%;
-  --accent: 15 75% 55%;
-  --accent-foreground: 180 20% 10%;
-  --destructive: 0 60% 50%;
-  --destructive-foreground: 40 20% 90%;
-  --input: 180 20% 25%;
-  --ring: 179 40% 45%;
-  --chart-1: 179 40% 45%;
-  --chart-2: 15 75% 55%;
-  --chart-3: 40 70% 50%;
-  --chart-4: 200 40% 50%;
-  --chart-5: 320 40% 50%;
+  --background: 200 25% 9%;
+  --foreground: 165 15% 92%;
+  --border: 200 20% 20%;
+  --card: 200 25% 12%;
+  --card-foreground: 165 15% 92%;
+  --card-border: 200 20% 20%;
+  --sidebar: 200 25% 11%;
+  --sidebar-foreground: 165 15% 92%;
+  --sidebar-border: 200 20% 20%;
+  --sidebar-primary: 162 55% 45%;
+  --sidebar-primary-foreground: 200 30% 8%;
+  --sidebar-accent: 200 20% 18%;
+  --sidebar-accent-foreground: 165 15% 92%;
+  --sidebar-ring: 162 55% 45%;
+  --popover: 200 25% 12%;
+  --popover-foreground: 165 15% 92%;
+  --popover-border: 200 20% 20%;
+  --primary: 162 55% 45%;
+  --primary-foreground: 200 30% 8%;
+  --secondary: 200 20% 18%;
+  --secondary-foreground: 165 15% 92%;
+  --muted: 200 20% 18%;
+  --muted-foreground: 200 10% 60%;
+  --accent: 38 88% 55%;
+  --accent-foreground: 200 30% 8%;
+  --destructive: 0 65% 50%;
+  --destructive-foreground: 165 15% 92%;
+  --input: 200 20% 22%;
+  --ring: 162 55% 45%;
+  --chart-1: 162 55% 45%;
+  --chart-2: 38 88% 55%;
+  --chart-3: 210 65% 55%;
+  --chart-4: 18 80% 60%;
+  --chart-5: 250 35% 65%;
 }
 
 @layer base {
