@@ -13,6 +13,8 @@ import * as z from "zod";
 import { CalendarClock, Plus, Trash2, CheckCircle2, Circle, AlertCircle, Clock } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useDisplayCurrency } from "@/contexts/CurrencyContext";
+import { getCurrency } from "@/lib/currency";
 
 import seriousMascot from "@assets/Gemini_Generated_Image_fn3x3wfn3x3wfn3x_1777144269396.png";
 
@@ -26,6 +28,7 @@ const formSchema = z.object({
 export default function Commitments() {
   const queryClient = useQueryClient();
   const { toast } = useToast();
+  const { format, baseCurrency } = useDisplayCurrency();
   const { data: commitments, isLoading } = useListCommitments();
   
   const createCommitment = useCreateCommitment({
@@ -125,7 +128,7 @@ export default function Commitments() {
                     name="amount"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>المبلغ (ر.س)</FormLabel>
+                        <FormLabel>المبلغ ({getCurrency(baseCurrency).symbol})</FormLabel>
                         <FormControl>
                           <Input type="number" placeholder="0.00" className="h-12 rounded-xl bg-background" {...field} />
                         </FormControl>
@@ -194,7 +197,7 @@ export default function Commitments() {
                         {commitment.title}
                       </h3>
                       <div className="text-2xl font-black mt-2 text-primary">
-                        {commitment.amount.toLocaleString()} <span className="text-sm font-normal text-muted-foreground">ر.س</span>
+                        {format(commitment.amount, baseCurrency)}
                       </div>
                     </div>
                     <div className="text-right">

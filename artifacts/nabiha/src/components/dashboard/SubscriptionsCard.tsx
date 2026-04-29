@@ -27,6 +27,7 @@ import {
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Plus, Trash2, Repeat } from "lucide-react";
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip as RechartsTooltip } from "recharts";
+import { useDisplayCurrency } from "@/contexts/CurrencyContext";
 import { formatMoney } from "@/lib/currency";
 import { useToast } from "@/hooks/use-toast";
 
@@ -49,7 +50,8 @@ export function SubscriptionsCard() {
   const qc = useQueryClient();
   const { toast } = useToast();
 
-  const currency = profile?.currency ?? "JOD";
+  const { format, convert, displayCurrency, baseCurrency } = useDisplayCurrency();
+  void profile;
 
   const [open, setOpen] = useState(false);
   const [name, setName] = useState("");
@@ -61,15 +63,19 @@ export function SubscriptionsCard() {
 
   const { chartData, monthlyTotal } = useMemo(() => {
     const list = subs ?? [];
-    const data = list.map((s, i) => ({
-      name: s.name,
-      monthly: s.billingCycle === "yearly" ? Number(s.amount) / 12 : Number(s.amount),
-      color: s.color || PALETTE[i % PALETTE.length],
-      id: s.id,
-    }));
+    const data = list.map((s, i) => {
+      const monthlyBase =
+        s.billingCycle === "yearly" ? Number(s.amount) / 12 : Number(s.amount);
+      return {
+        name: s.name,
+        monthly: convert(monthlyBase, baseCurrency),
+        color: s.color || PALETTE[i % PALETTE.length],
+        id: s.id,
+      };
+    });
     const total = data.reduce((acc, d) => acc + d.monthly, 0);
     return { chartData: data, monthlyTotal: total };
-  }, [subs]);
+  }, [subs, convert, baseCurrency]);
 
   async function refreshAll() {
     await Promise.all([
@@ -129,7 +135,7 @@ export function SubscriptionsCard() {
           <CardDescription className="mt-1">
             {isEmpty
               ? "ضيفي اشتراكاتك حتى نبيهة تذكرك بالتجديدات"
-              : `${subs.length} اشتراك • ${formatMoney(monthlyTotal, currency)} / شهر`}
+              : `${subs.length} اشتراك • ${formatMoney(monthlyTotal, displayCurrency)} / شهر`}
           </CardDescription>
         </div>
         <Dialog open={open} onOpenChange={setOpen}>
@@ -232,7 +238,7 @@ export function SubscriptionsCard() {
                     ))}
                   </Pie>
                   <RechartsTooltip
-                    formatter={(value: number) => [formatMoney(value, currency), "شهرياً"]}
+                    formatter={(value: number) => [formatMoney(value, displayCurrency), "شهرياً"]}
                     contentStyle={{
                       borderRadius: "12px",
                       border: "none",
@@ -245,7 +251,7 @@ export function SubscriptionsCard() {
               <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
                 <div className="text-xs text-muted-foreground">المجموع</div>
                 <div className="text-xl font-extrabold text-foreground" data-testid="text-subs-total">
-                  {formatMoney(monthlyTotal, currency)}
+                  {formatMoney(monthlyTotal, displayCurrency)}
                 </div>
                 <div className="text-[10px] text-muted-foreground mt-0.5">/ شهر</div>
               </div>
@@ -266,7 +272,7 @@ export function SubscriptionsCard() {
                     <div className="flex-1 min-w-0">
                       <div className="font-semibold text-sm text-foreground truncate">{sub.name}</div>
                       <div className="text-xs text-muted-foreground">
-                        {formatMoney(s.monthly, currency)} / شهر
+                        {formatMoney(s.monthly, displayCurrency)} / شهر
                         {sub.billingCycle === "yearly" && " (سنوي)"}
                         {sub.renewsOnDay ? ` • يوم ${sub.renewsOnDay}` : ""}
                       </div>

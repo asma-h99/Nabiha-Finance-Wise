@@ -7,7 +7,8 @@ Arabic-first financial awareness and expense management web application. The mas
 ## Features
 
 - **Auth (Clerk)**: Email/password + Gmail sign-in. Public landing at `/`, sign-in at `/sign-in`, protected app at `/app/*`.
-- **Salary & Currency profile**: Set monthly salary, currency (15 Arab + USD/EUR, default JOD), and payday. Currencies JOD/KWD/BHD/OMR rendered with 3 decimals end-to-end.
+- **Salary & Currency profile**: Set monthly salary, currency (17 Arab + USD/EUR/GBP, default JOD), and payday. Currencies JOD/KWD/BHD/OMR/LYD rendered with 3 decimals end-to-end.
+- **Global currency switcher**: Header dropdown (`CurrencySwitcher`) lets users pick a display currency. All money in the app — dashboard cards, charts (axes + tooltips), expenses, commitments, subscriptions — converts on the fly via `CurrencyContext` (`format`, `convert`) using static FX rates in `src/lib/currency.ts`. Selection persists in `localStorage` (`nabiha:displayCurrency`, default `JOD`). Form input labels show the user's *base* (profile) currency symbol since amounts are stored in that currency. A static-FX disclaimer is shown in the popover.
 - **Balance card**: Projected remaining = salary − monthly subscriptions − unpaid commitments − this month's expenses, with healthy/warning/critical states.
 - **Subscriptions tracker**: Donut chart + add/delete (with confirmation) for monthly/yearly subscriptions, with renewal day.
 - **Dashboard (لوحة التحكم)**: Monthly spending overview, priority breakdown charts, category distribution, monthly trend.

@@ -14,6 +14,8 @@ import Dashboard from "@/pages/Dashboard";
 import Expenses from "@/pages/Expenses";
 import Commitments from "@/pages/Commitments";
 import Categories from "@/pages/Categories";
+import { CurrencyProvider } from "@/contexts/CurrencyContext";
+import { CurrencySwitcher } from "@/components/CurrencySwitcher";
 
 import logoImage from "@assets/Gemini_Generated_Image_j4skn9j4skn9j4sk_1777144269396.png";
 
@@ -222,9 +224,10 @@ function AppShell() {
   return (
     <Layout
       headerExtra={
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap justify-end">
+          <CurrencySwitcher />
           {user && (
-            <span className="hidden sm:inline text-sm text-muted-foreground font-medium">
+            <span className="hidden md:inline text-sm text-muted-foreground font-medium">
               {user.firstName || user.username || user.primaryEmailAddress?.emailAddress}
             </span>
           )}
@@ -304,6 +307,7 @@ function ClerkAppRouter() {
     >
       <QueryClientProvider client={queryClient}>
         <ClerkQueryClientCacheInvalidator />
+        <CurrencyProvider>
         <TooltipProvider>
           <Switch>
             <Route path="/" component={HomeRedirect} />
@@ -315,6 +319,7 @@ function ClerkAppRouter() {
           </Switch>
           <Toaster />
         </TooltipProvider>
+        </CurrencyProvider>
       </QueryClientProvider>
     </ClerkProvider>
   );

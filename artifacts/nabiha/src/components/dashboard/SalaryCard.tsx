@@ -8,7 +8,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogTrigger } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { CURRENCIES, formatMoney, getCurrency } from "@/lib/currency";
+import { CURRENCIES, getCurrency } from "@/lib/currency";
+import { useDisplayCurrency } from "@/contexts/CurrencyContext";
 import { Wallet, Pencil, Calendar } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
@@ -17,6 +18,7 @@ export function SalaryCard() {
   const update = useUpdateUserProfile();
   const qc = useQueryClient();
   const { toast } = useToast();
+  const { format, baseCurrency } = useDisplayCurrency();
 
   const [open, setOpen] = useState(false);
   const [salary, setSalary] = useState("");
@@ -35,7 +37,7 @@ export function SalaryCard() {
     return <Skeleton className="h-44 w-full rounded-3xl" />;
   }
 
-  const cur = getCurrency(profile?.currency ?? "JOD");
+  const cur = getCurrency(baseCurrency);
   const salaryValue = profile?.monthlySalary ?? 0;
   const isUnset = salaryValue === 0;
 
@@ -150,7 +152,7 @@ export function SalaryCard() {
         ) : (
           <>
             <div className="text-3xl md:text-4xl font-extrabold mb-2 tracking-tight" data-testid="text-salary-amount">
-              {formatMoney(salaryValue, cur.code)}
+              {format(salaryValue, cur.code)}
             </div>
             <div className="flex items-center gap-2 text-sm opacity-90">
               <Calendar className="w-4 h-4" />

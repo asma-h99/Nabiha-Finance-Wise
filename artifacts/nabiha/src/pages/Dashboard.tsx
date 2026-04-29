@@ -27,7 +27,9 @@ import happyMascot from "@assets/Gemini_Generated_Image_d3nzkdd3nzkdd3nz_1777144
 import { SalaryCard } from "@/components/dashboard/SalaryCard";
 import { BalanceCard } from "@/components/dashboard/BalanceCard";
 import { SubscriptionsCard } from "@/components/dashboard/SubscriptionsCard";
+import { useDisplayCurrency } from "@/contexts/CurrencyContext";
 import { formatMoney } from "@/lib/currency";
+import { useMemo } from "react";
 
 const COLORS = [
   "hsl(var(--primary))",
@@ -56,7 +58,28 @@ export default function Dashboard() {
   const { data: categoryData, isLoading: loadingCategory } = useGetCategoryBreakdown({ month: currentMonth });
   const { data: trendData, isLoading: loadingTrend } = useGetMonthlyTrend();
 
-  const currency = profile?.currency ?? "JOD";
+  const { format, convert, displayCurrency, baseCurrency } = useDisplayCurrency();
+
+  // Pre-convert chart values into the display currency so axes/bars match tooltips.
+  const priorityChart = useMemo(
+    () => (priorityData ?? []).map((d) => ({ ...d, total: convert(d.total, baseCurrency) })),
+    [priorityData, convert, baseCurrency],
+  );
+  const categoryChart = useMemo(
+    () => (categoryData ?? []).map((d) => ({ ...d, total: convert(d.total, baseCurrency) })),
+    [categoryData, convert, baseCurrency],
+  );
+  const trendChart = useMemo(
+    () =>
+      (trendData ?? []).map((d) => ({
+        ...d,
+        total: convert(d.total ?? 0, baseCurrency),
+        essential: convert(d.essential ?? 0, baseCurrency),
+        important: convert(d.important ?? 0, baseCurrency),
+        luxury: convert(d.luxury ?? 0, baseCurrency),
+      })),
+    [trendData, convert, baseCurrency],
+  );
 
   if (loadingSummary) {
     return (
@@ -114,12 +137,12 @@ export default function Dashboard() {
           </CardHeader>
           <CardContent>
             <div className="text-3xl font-bold text-foreground mb-1">
-              {formatMoney(summary?.totalThisMonth || 0, currency)}
+              {format(summary?.totalThisMonth || 0, baseCurrency)}
             </div>
             <div className={`text-sm flex items-center gap-1 mt-2 font-medium ${isOverspending ? "text-destructive" : "text-emerald-600"}`}>
               {isOverspending ? <TrendingUp className="w-4 h-4" /> : <TrendingDown className="w-4 h-4" />}
               <span>
-                {formatMoney(Math.abs((summary?.totalThisMonth || 0) - (summary?.totalLastMonth || 0)), currency)}{" "}
+                {format(Math.abs((summary?.totalThisMonth || 0) - (summary?.totalLastMonth || 0)), baseCurrency)}{" "}
                 {isOverspending ? " أكثر من الشهر الماضي" : " أقل من الشهر الماضي"}
               </span>
             </div>
@@ -161,7 +184,7 @@ export default function Dashboard() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-foreground mb-1">
-              {formatMoney(summary?.commitmentsTotal || 0, currency)}
+              {format(summary?.commitmentsTotal || 0, baseCurrency)}
             </div>
             <div className="text-sm text-muted-foreground mt-2">
               منها {summary?.unpaidCommitmentsCount} بانتظار الدفع
@@ -181,11 +204,11 @@ export default function Dashboard() {
           <CardContent className="flex-1 flex flex-col justify-center items-center p-6 min-h-[300px]">
             {loadingPriority ? (
               <Skeleton className="w-full h-full rounded-full" />
-            ) : priorityData && priorityData.length > 0 ? (
+            ) : priorityChart.length > 0 ? (
               <ResponsiveContainer width="100%" height={250}>
                 <PieChart>
                   <Pie
-                    data={priorityData}
+                    data={priorityChart}
                     cx="50%"
                     cy="50%"
                     innerRadius={70}
@@ -194,12 +217,12 @@ export default function Dashboard() {
                     dataKey="total"
                     nameKey="priority"
                   >
-                    {priorityData.map((entry, index) => (
+                    {priorityChart.map((entry, index) => (
                       <Cell key={`cell-${index}`} fill={PRIORITY_COLORS[entry.priority as keyof typeof PRIORITY_COLORS] || COLORS[0]} stroke="transparent" />
                     ))}
                   </Pie>
                   <RechartsTooltip
-                    formatter={(value: number) => [formatMoney(value, currency), "المبلغ"]}
+                    formatter={(value: number) => [formatMoney(value, displayCurrency), "المبلغ"]}
                     labelFormatter={(label: string) => PRIORITY_LABELS[label as keyof typeof PRIORITY_LABELS] || label}
                     contentStyle={{ borderRadius: "12px", border: "none", boxShadow: "0 10px 15px -3px rgb(0 0 0 / 0.1)" }}
                   />
@@ -224,19 +247,19 @@ export default function Dashboard() {
           <CardContent className="flex-1 flex flex-col justify-center p-6 min-h-[300px]">
             {loadingCategory ? (
               <Skeleton className="w-full h-full rounded-2xl" />
-            ) : categoryData && categoryData.length > 0 ? (
+            ) : categoryChart.length > 0 ? (
               <ResponsiveContainer width="100%" height={250}>
-                <BarChart data={categoryData} layout="vertical" margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
+                <BarChart data={categoryChart} layout="vertical" margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
                   <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="hsl(var(--border))" />
                   <XAxis type="number" hide />
                   <YAxis dataKey="categoryName" type="category" axisLine={false} tickLine={false} width={80} style={{ fontFamily: "var(--font-sans)", fontSize: "0.875rem", fill: "hsl(var(--foreground))" }} />
                   <RechartsTooltip
                     cursor={{ fill: "transparent" }}
-                    formatter={(value: number) => [formatMoney(value, currency), "المبلغ"]}
+                    formatter={(value: number) => [formatMoney(value, displayCurrency), "المبلغ"]}
                     contentStyle={{ borderRadius: "12px", border: "none", boxShadow: "0 10px 15px -3px rgb(0 0 0 / 0.1)" }}
                   />
                   <Bar dataKey="total" radius={[0, 4, 4, 0]} barSize={24}>
-                    {categoryData.map((entry, index) => (
+                    {categoryChart.map((entry, index) => (
                       <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                     ))}
                   </Bar>
@@ -257,15 +280,15 @@ export default function Dashboard() {
           <CardContent className="flex-1 flex flex-col justify-center p-6 min-h-[300px]">
             {loadingTrend ? (
               <Skeleton className="w-full h-full rounded-2xl" />
-            ) : trendData && trendData.length > 0 ? (
+            ) : trendChart.length > 0 ? (
               <ResponsiveContainer width="100%" height={300}>
-                <LineChart data={trendData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+                <LineChart data={trendChart} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
                   <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" />
                   <XAxis dataKey="month" axisLine={false} tickLine={false} tickMargin={10} style={{ fontFamily: "var(--font-sans)", fontSize: "0.875rem", fill: "hsl(var(--foreground))" }} />
                   <YAxis axisLine={false} tickLine={false} style={{ fontFamily: "var(--font-sans)", fontSize: "0.875rem", fill: "hsl(var(--foreground))" }} />
                   <RechartsTooltip
                     formatter={(value: number, name: string) => [
-                      formatMoney(value, currency),
+                      formatMoney(value, displayCurrency),
                       name === "total" ? "الإجمالي" : PRIORITY_LABELS[name as keyof typeof PRIORITY_LABELS] || name,
                     ]}
                     contentStyle={{ borderRadius: "12px", border: "none", boxShadow: "0 10px 15px -3px rgb(0 0 0 / 0.1)" }}

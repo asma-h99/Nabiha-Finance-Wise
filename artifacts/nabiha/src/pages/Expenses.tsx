@@ -20,7 +20,9 @@ import * as z from "zod";
 import { Receipt, Plus, Trash2, CalendarIcon, Hash, Search, Filter } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
-import { format } from "date-fns";
+import { format as formatDate } from "date-fns";
+import { useDisplayCurrency } from "@/contexts/CurrencyContext";
+import { getCurrency } from "@/lib/currency";
 
 import smilingMascot from "@assets/Gemini_Generated_Image_7vmi4u7vmi4u7vmi_1777144269396.png";
 
@@ -42,6 +44,7 @@ const PRIORITY_LABELS = {
 export default function Expenses() {
   const queryClient = useQueryClient();
   const { toast } = useToast();
+  const { format, baseCurrency } = useDisplayCurrency();
   
   const [filterPriority, setFilterPriority] = useState<string>("all");
   const [filterMonth, setFilterMonth] = useState<string>(new Date().toISOString().slice(0, 7));
@@ -148,7 +151,7 @@ export default function Expenses() {
                     name="amount"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>المبلغ (ر.س)</FormLabel>
+                        <FormLabel>المبلغ ({getCurrency(baseCurrency).symbol})</FormLabel>
                         <FormControl>
                           <Input type="number" step="0.01" className="h-12 rounded-xl bg-background text-lg font-semibold" {...field} />
                         </FormControl>
@@ -285,15 +288,15 @@ export default function Expenses() {
                 <CardContent className="p-4 flex items-center justify-between">
                   <div className="flex items-center gap-4">
                     <div className="hidden sm:flex flex-col items-center justify-center w-14 h-14 bg-secondary/50 rounded-xl border border-border/50">
-                      <span className="text-xs font-medium text-muted-foreground">{format(new Date(expense.date), 'MMM')}</span>
-                      <span className="text-lg font-bold text-foreground">{format(new Date(expense.date), 'dd')}</span>
+                      <span className="text-xs font-medium text-muted-foreground">{formatDate(new Date(expense.date), 'MMM')}</span>
+                      <span className="text-lg font-bold text-foreground">{formatDate(new Date(expense.date), 'dd')}</span>
                     </div>
                     
                     <div>
                       <h3 className="text-lg font-bold text-foreground">{expense.title}</h3>
                       <div className="flex flex-wrap items-center gap-2 mt-1">
                         <span className="sm:hidden text-xs text-muted-foreground ml-1">
-                          {format(new Date(expense.date), 'yyyy-MM-dd')}
+                          {formatDate(new Date(expense.date), 'yyyy-MM-dd')}
                         </span>
                         
                         <Badge variant="outline" className={`rounded-lg border font-normal ${priorityInfo.color}`}>
@@ -313,7 +316,7 @@ export default function Expenses() {
                   <div className="flex items-center gap-4">
                     <div className="text-left">
                       <div className="text-xl font-black text-foreground">
-                        {expense.amount.toLocaleString()} <span className="text-sm font-normal text-muted-foreground">ر.س</span>
+                        {format(expense.amount, baseCurrency)}
                       </div>
                     </div>
                     
