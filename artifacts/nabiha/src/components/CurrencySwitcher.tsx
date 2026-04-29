@@ -1,11 +1,10 @@
-import { Coins, Check } from "lucide-react";
+import { Check } from "lucide-react";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { CURRENCIES, getCurrency } from "@/lib/currency";
 import { useDisplayCurrency } from "@/contexts/CurrencyContext";
 import { useState } from "react";
@@ -16,8 +15,10 @@ export function CurrencySwitcher({ className }: { className?: string }) {
   const [open, setOpen] = useState(false);
   const current = getCurrency(displayCurrency);
 
-  const arab = CURRENCIES.filter((c) => c.isArab);
-  const intl = CURRENCIES.filter((c) => !c.isArab);
+  const ordered = [
+    ...CURRENCIES.filter((c) => c.isArab),
+    ...CURRENCIES.filter((c) => !c.isArab),
+  ];
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -33,7 +34,12 @@ export function CurrencySwitcher({ className }: { className?: string }) {
           data-testid="button-currency-switcher"
           aria-label="اختر عملة العرض"
         >
-          <Coins className="w-4 h-4 text-primary" />
+          <span
+            dir="ltr"
+            className="inline-flex items-center justify-center min-w-[1.25rem] h-5 px-1 rounded-md bg-primary/10 text-primary text-[11px] font-bold leading-none"
+          >
+            {current.symbol}
+          </span>
           <span className="text-sm leading-none font-bold tracking-wide">{current.code}</span>
         </Button>
       </PopoverTrigger>
@@ -52,44 +58,30 @@ export function CurrencySwitcher({ className }: { className?: string }) {
             ملاحظة: أسعار الصرف تقريبية وثابتة، وليست أسعاراً لحظية.
           </div>
         </div>
-        <ScrollArea className="h-[60vh] sm:h-[380px]">
-          <div className="p-2">
-            <div className="px-2 pt-1 pb-1.5 text-[11px] font-bold text-muted-foreground uppercase tracking-wide">
-              العملات العربية
-            </div>
-            <ul role="listbox" className="space-y-0.5">
-              {arab.map((c) => (
-                <CurrencyRow
-                  key={c.code}
-                  code={c.code}
-                  englishName={c.englishName}
-                  selected={c.code === displayCurrency}
-                  onSelect={() => {
-                    setDisplayCurrency(c.code);
-                    setOpen(false);
-                  }}
-                />
-              ))}
-            </ul>
-            <div className="px-2 pt-3 pb-1.5 text-[11px] font-bold text-muted-foreground uppercase tracking-wide">
-              عملات عالمية
-            </div>
-            <ul role="listbox" className="space-y-0.5">
-              {intl.map((c) => (
-                <CurrencyRow
-                  key={c.code}
-                  code={c.code}
-                  englishName={c.englishName}
-                  selected={c.code === displayCurrency}
-                  onSelect={() => {
-                    setDisplayCurrency(c.code);
-                    setOpen(false);
-                  }}
-                />
-              ))}
-            </ul>
-          </div>
-        </ScrollArea>
+        <div
+          className={cn(
+            "h-[60vh] sm:h-[380px] overflow-y-scroll p-2 [scrollbar-gutter:stable]",
+            "[scrollbar-width:thin] [scrollbar-color:hsl(var(--border))_transparent]",
+            "[&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar]:bg-transparent",
+            "[&::-webkit-scrollbar-thumb]:bg-border [&::-webkit-scrollbar-thumb]:rounded-full",
+            "[&::-webkit-scrollbar-thumb:hover]:bg-muted-foreground/40",
+          )}
+        >
+          <ul role="listbox" className="space-y-0.5">
+            {ordered.map((c) => (
+              <CurrencyRow
+                key={c.code}
+                code={c.code}
+                englishName={c.englishName}
+                selected={c.code === displayCurrency}
+                onSelect={() => {
+                  setDisplayCurrency(c.code);
+                  setOpen(false);
+                }}
+              />
+            ))}
+          </ul>
+        </div>
       </PopoverContent>
     </Popover>
   );
