@@ -121,13 +121,13 @@ export default function Notifications() {
             const meta = TYPE_ICONS[n.type] ?? TYPE_ICONS.info;
             const Icon = meta.icon;
             const ctaLabel =
-              n.link?.startsWith("/subscriptions")
+              n.link?.startsWith("/app/subscriptions")
                 ? "افتح الاشتراكات"
-                : n.link?.startsWith("/calendar")
+                : n.link?.startsWith("/app/calendar")
                   ? "افتح التقويم"
-                  : n.link?.startsWith("/commitments")
+                  : n.link?.startsWith("/app/commitments")
                     ? "افتح الالتزامات"
-                    : n.link?.startsWith("/simulator")
+                    : n.link?.startsWith("/app/simulator")
                       ? "افتح المحاكي"
                       : "افتح";
             const handleOpen = () => {

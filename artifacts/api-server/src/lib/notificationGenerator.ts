@@ -110,7 +110,7 @@ export async function generateUpcomingNotifications(userId: string): Promise<voi
       title: "تجديد اشتراك قادم",
       message,
       type: days === 0 ? "warning" : "info",
-      link: "/subscriptions",
+      link: "/app/subscriptions",
     });
   }
 
@@ -133,7 +133,7 @@ export async function generateUpcomingNotifications(userId: string): Promise<voi
       title: "التزام مستحق قريباً",
       message,
       type: days === 0 ? "warning" : "info",
-      link: "/commitments",
+      link: "/app/commitments",
     });
   }
 
@@ -172,7 +172,7 @@ export async function generateUpcomingNotifications(userId: string): Promise<voi
             ? "تجاوزت دخلك هذا الشهر — راجع مصاريفك واشتراكاتك"
             : "اقترب رصيدك المتاح من النفاد لهذا الشهر",
         type: leftover < 0 ? "danger" : "warning",
-        link: "/dashboard",
+        link: "/app",
       });
     }
   }
