@@ -44,6 +44,7 @@ import {
   Trash2,
   Repeat,
   CalendarClock,
+  CreditCard,
   Bell,
   Pencil,
   ArrowRight,
@@ -594,11 +595,45 @@ export default function Calendar() {
                         {items.length}
                       </Badge>
                     </div>
-                    <p className="text-sm text-muted-foreground mb-2">
-                      {items.length === 0
-                        ? "لا توجد مناسبات"
-                        : `${items.length} مناسبة`}
-                    </p>
+                    {/* Compact source-icon strip — up to 6 items per spec */}
+                    <div className="flex items-center gap-1 mb-2 min-h-[20px]">
+                      {items.length === 0 ? (
+                        <span className="text-xs text-muted-foreground">
+                          لا توجد مناسبات
+                        </span>
+                      ) : (
+                        <>
+                          {items.slice(0, 6).map((it, idx) => {
+                            const SrcIcon =
+                              it.source === "subscription"
+                                ? Repeat
+                                : it.source === "commitment"
+                                  ? CreditCard
+                                  : CalendarDays;
+                            const tone =
+                              it.source === "subscription"
+                                ? "bg-purple-100 text-purple-700"
+                                : it.source === "commitment"
+                                  ? "bg-orange-100 text-orange-700"
+                                  : "bg-blue-100 text-blue-700";
+                            return (
+                              <span
+                                key={`${it.source}-${idx}`}
+                                title={it.title}
+                                className={`w-5 h-5 rounded-full ${tone} flex items-center justify-center`}
+                              >
+                                <SrcIcon className="w-3 h-3" />
+                              </span>
+                            );
+                          })}
+                          {items.length > 6 && (
+                            <span className="text-[10px] text-muted-foreground pr-1">
+                              +{items.length - 6}
+                            </span>
+                          )}
+                        </>
+                      )}
+                    </div>
                     {total > 0 && (
                       <p className="text-sm font-semibold text-primary">
                         {formatAmount(total, currency)}

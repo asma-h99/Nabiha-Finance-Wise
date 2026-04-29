@@ -16,10 +16,12 @@ import {
   Info,
   CreditCard,
   TrendingUp,
+  ArrowLeft,
   type LucideIcon,
 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { ar } from "date-fns/locale";
+import { useLocation } from "wouter";
 
 const TYPE_ICONS: Record<string, { icon: LucideIcon; color: string; bg: string }> = {
   info: {
@@ -47,6 +49,7 @@ const TYPE_ICONS: Record<string, { icon: LucideIcon; color: string; bg: string }
 export default function Notifications() {
   const { data: notifications, isLoading } = useListNotifications();
   const qc = useQueryClient();
+  const [, navigate] = useLocation();
   const markRead = useMarkNotificationRead({
     mutation: {
       onSuccess: () => {
@@ -117,13 +120,30 @@ export default function Notifications() {
           {notifications.map((n) => {
             const meta = TYPE_ICONS[n.type] ?? TYPE_ICONS.info;
             const Icon = meta.icon;
+            const ctaLabel =
+              n.link?.startsWith("/subscriptions")
+                ? "افتح الاشتراكات"
+                : n.link?.startsWith("/calendar")
+                  ? "افتح التقويم"
+                  : n.link?.startsWith("/commitments")
+                    ? "افتح الالتزامات"
+                    : n.link?.startsWith("/simulator")
+                      ? "افتح المحاكي"
+                      : "افتح";
+            const handleOpen = () => {
+              if (!n.isRead) markRead.mutate({ id: n.id });
+              if (n.link) navigate(n.link);
+            };
             return (
               <Card
                 key={n.id}
-                className={`rounded-2xl transition-all hover:shadow-md cursor-pointer ${
+                className={`rounded-2xl transition-all hover:shadow-md ${n.link ? "cursor-pointer" : ""} ${
                   !n.isRead ? "border-primary/30 bg-primary/5" : ""
                 }`}
-                onClick={() => !n.isRead && markRead.mutate({ id: n.id })}
+                onClick={() => {
+                  if (n.link) handleOpen();
+                  else if (!n.isRead) markRead.mutate({ id: n.id });
+                }}
                 data-testid={`notification-${n.id}`}
               >
                 <CardContent className="p-5 flex items-start gap-4">
@@ -144,12 +164,29 @@ export default function Notifications() {
                     <p className="text-sm text-muted-foreground mt-1">
                       {n.message}
                     </p>
-                    <p className="text-xs text-muted-foreground mt-2">
-                      {formatDistanceToNow(new Date(n.createdAt), {
-                        addSuffix: true,
-                        locale: ar,
-                      })}
-                    </p>
+                    <div className="flex items-center justify-between gap-2 mt-2">
+                      <p className="text-xs text-muted-foreground">
+                        {formatDistanceToNow(new Date(n.createdAt), {
+                          addSuffix: true,
+                          locale: ar,
+                        })}
+                      </p>
+                      {n.link && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-7 px-2 text-primary hover:text-primary gap-1"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleOpen();
+                          }}
+                          data-testid={`btn-open-${n.id}`}
+                        >
+                          {ctaLabel}
+                          <ArrowLeft className="w-3.5 h-3.5" />
+                        </Button>
+                      )}
+                    </div>
                   </div>
                 </CardContent>
               </Card>
