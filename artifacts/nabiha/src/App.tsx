@@ -188,8 +188,8 @@ function Landing() {
 
           <div className="order-1 lg:order-2 flex justify-center">
             <div className="relative">
-              <div className="absolute inset-0 bg-primary/20 rounded-full blur-3xl" />
-              <img src={logoImage} alt="نَبِيهَة" className="relative w-72 h-72 md:w-96 md:h-96 rounded-full object-cover border-8 border-white shadow-2xl" />
+              <div className="absolute inset-0 bg-primary/20 rounded-full blur-2xl" />
+              <img src={logoImage} alt="نَبِيهَة" className="relative w-48 h-48 md:w-64 md:h-64 rounded-full object-cover border-4 border-white shadow-xl" />
             </div>
           </div>
         </section>
