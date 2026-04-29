@@ -7,8 +7,8 @@
   </defs>
   <g transform="translate(8,12)">
     <circle cx="28" cy="28" r="26" fill="url(#g)"/>
-    <text x="28" y="38" font-family="Cairo, sans-serif" font-weight="800" font-size="28" fill="#fff" text-anchor="middle">ن</text>
+    <text x="28" y="38" font-family="'IBM Plex Sans Arabic', 'Readex Pro', sans-serif" font-weight="700" font-size="28" fill="#fff" text-anchor="middle">ن</text>
   </g>
-  <text x="72" y="42" font-family="Cairo, sans-serif" font-weight="800" font-size="28" fill="#1a1a2e">نَبِيهَة</text>
-  <text x="72" y="62" font-family="Cairo, sans-serif" font-weight="500" font-size="11" fill="#1B7E63">Financial Intelligence</text>
+  <text x="72" y="42" font-family="'IBM Plex Sans Arabic', 'Readex Pro', sans-serif" font-weight="700" font-size="28" fill="#1a1a2e">نَبِيهَة</text>
+  <text x="72" y="62" font-family="'IBM Plex Sans Arabic', 'Readex Pro', sans-serif" font-weight="500" font-size="11" fill="#1B7E63">Financial Intelligence</text>
 </svg>

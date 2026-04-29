@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;800;900&family=Tajawal:wght@300;400;500;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Readex+Pro:wght@400;500;600;700&display=swap');
 @layer theme, base, clerk, components, utilities;
 @import "tailwindcss";
 @import '@clerk/themes/shadcn.css';
@@ -138,9 +138,9 @@
   --chart-4: 18 85% 60%;
   --chart-5: 250 30% 55%;
 
-  --app-font-sans: 'Cairo', 'Tajawal', system-ui, sans-serif;
-  --app-font-serif: 'Cairo', Georgia, serif;
-  --app-font-mono: 'Tajawal', Menlo, monospace;
+  --app-font-sans: 'IBM Plex Sans Arabic', 'Readex Pro', system-ui, sans-serif;
+  --app-font-serif: 'IBM Plex Sans Arabic', 'Readex Pro', system-ui, sans-serif;
+  --app-font-mono: 'IBM Plex Mono', ui-monospace, Menlo, monospace;
   --radius: 1rem;
   
   --tracking-normal: 0em;
@@ -206,5 +206,15 @@
 
   body {
     @apply font-sans antialiased bg-background text-foreground;
+    font-feature-settings: "kern", "liga", "calt";
+  }
+
+  .tabular-nums,
+  .font-mono,
+  [data-amount],
+  table td,
+  table th {
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: "tnum", "lnum";
   }
 }
