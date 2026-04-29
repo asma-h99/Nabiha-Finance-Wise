@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;800;900&family=Tajawal:wght@300;400;500;700;800&display=swap');
 @import "tailwindcss";
 @import "tw-animate-css";
 @plugin "@tailwindcss/typography";
@@ -69,7 +69,7 @@
 }
 
 
-/* LIGHT MODE */
+/* LIGHT MODE — Nabiha Financial Intelligence Design System */
 :root {
   --button-outline: rgba(0,0,0, .10);
   --badge-outline: rgba(0,0,0, .05);
@@ -79,59 +79,66 @@
   --elevate-1: rgba(0,0,0, .03);
   --elevate-2: rgba(0,0,0, .08);
 
-  /* Warm Beige/Cream background */
-  --background: 40 33% 96%;
-  --foreground: 180 20% 15%;
+  /* Soft neutral background — modern fintech */
+  --background: 250 33% 98%;
+  --foreground: 245 30% 15%;
 
-  --border: 40 20% 85%;
-  
+  --border: 245 20% 92%;
+
   --card: 0 0% 100%;
-  --card-foreground: 180 20% 15%;
-  --card-border: 40 20% 85%;
+  --card-foreground: 245 30% 15%;
+  --card-border: 245 20% 92%;
 
-  --sidebar: 40 33% 96%;
-  --sidebar-foreground: 180 20% 15%;
-  --sidebar-border: 40 20% 85%;
-  --sidebar-primary: 179 50% 36%;
+  --sidebar: 0 0% 100%;
+  --sidebar-foreground: 245 25% 25%;
+  --sidebar-border: 245 20% 92%;
+  --sidebar-primary: 244 100% 69%;
   --sidebar-primary-foreground: 0 0% 100%;
-  --sidebar-accent: 40 40% 90%;
-  --sidebar-accent-foreground: 180 20% 15%;
-  --sidebar-ring: 179 50% 36%;
+  --sidebar-accent: 244 100% 97%;
+  --sidebar-accent-foreground: 244 60% 35%;
+  --sidebar-ring: 244 100% 69%;
 
   --popover: 0 0% 100%;
-  --popover-foreground: 180 20% 15%;
-  --popover-border: 40 20% 85%;
+  --popover-foreground: 245 30% 15%;
+  --popover-border: 245 20% 92%;
 
-  /* Teal Primary */
-  --primary: 179 50% 36%;
+  /* Brand Primary — #6C63FF Indigo Purple */
+  --primary: 244 100% 69%;
   --primary-foreground: 0 0% 100%;
 
   /* Soft secondary */
-  --secondary: 40 20% 90%;
-  --secondary-foreground: 180 20% 15%;
+  --secondary: 245 30% 96%;
+  --secondary-foreground: 245 30% 25%;
 
-  --muted: 40 10% 90%;
-  --muted-foreground: 180 10% 45%;
+  --muted: 245 20% 95%;
+  --muted-foreground: 245 10% 50%;
 
-  /* Warm Orange-Red Accent */
-  --accent: 15 85% 60%;
+  /* Brand Accent — Warm orange (mascot identity) */
+  --accent: 18 95% 60%;
   --accent-foreground: 0 0% 100%;
+
+  /* Semantic states */
+  --success: 152 65% 42%;
+  --success-foreground: 0 0% 100%;
+  --warning: 38 95% 55%;
+  --warning-foreground: 0 0% 100%;
 
   --destructive: 0 84% 60%;
   --destructive-foreground: 0 0% 100%;
 
-  --input: 40 20% 85%;
-  --ring: 179 50% 36%;
-  
-  --chart-1: 179 50% 36%;
-  --chart-2: 15 85% 60%;
-  --chart-3: 40 80% 60%;
-  --chart-4: 200 40% 50%;
-  --chart-5: 320 40% 50%;
+  --input: 245 20% 92%;
+  --ring: 244 100% 69%;
 
-  --app-font-sans: 'IBM Plex Sans Arabic', sans-serif;
-  --app-font-serif: Georgia, serif;
-  --app-font-mono: Menlo, monospace;
+  /* Chart palette — purple, orange, green, blue, gold */
+  --chart-1: 244 100% 69%;
+  --chart-2: 18 95% 60%;
+  --chart-3: 152 65% 42%;
+  --chart-4: 210 90% 56%;
+  --chart-5: 38 95% 55%;
+
+  --app-font-sans: 'Cairo', 'Tajawal', system-ui, sans-serif;
+  --app-font-serif: 'Cairo', Georgia, serif;
+  --app-font-mono: 'Tajawal', Menlo, monospace;
   --radius: 1rem;
   
   --tracking-normal: 0em;
