@@ -18,7 +18,7 @@ export function SalaryCard() {
   const update = useUpdateUserProfile();
   const qc = useQueryClient();
   const { toast } = useToast();
-  const { format, baseCurrency } = useDisplayCurrency();
+  const { format, baseCurrency, displayCurrency, setDisplayCurrency } = useDisplayCurrency();
 
   const [open, setOpen] = useState(false);
   const [salary, setSalary] = useState("");
@@ -60,6 +60,9 @@ export function SalaryCard() {
       qc.invalidateQueries({ queryKey: getGetUserProfileQueryKey() }),
       qc.invalidateQueries({ queryKey: getGetBalanceSummaryQueryKey() }),
     ]);
+    // Also sync the global display currency so the header switcher and every
+    // card immediately reflect the user's new currency choice.
+    setDisplayCurrency(currency);
     toast({ title: "تم تحديث الراتب" });
     setOpen(false);
   }
@@ -151,8 +154,12 @@ export function SalaryCard() {
           </div>
         ) : (
           <>
-            <div className="text-3xl md:text-4xl font-extrabold mb-2 tracking-tight" data-testid="text-salary-amount">
+            <div className="text-3xl md:text-4xl font-extrabold mb-1 tracking-tight" data-testid="text-salary-amount">
               {format(salaryValue, cur.code)}
+            </div>
+            <div className="text-xs opacity-80 mb-2" data-testid="text-salary-currency-name">
+              {getCurrency(displayCurrency).arabicName}
+              <span className="opacity-70"> ({displayCurrency})</span>
             </div>
             <div className="flex items-center gap-2 text-sm opacity-90">
               <Calendar className="w-4 h-4" />
