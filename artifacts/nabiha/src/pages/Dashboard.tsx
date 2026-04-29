@@ -9,9 +9,6 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Skeleton } from "@/components/ui/skeleton";
 import { AlertCircle, Wallet, Target, Info, Sparkles, TrendingUp, TrendingDown } from "lucide-react";
 import {
-  PieChart,
-  Pie,
-  Cell,
   ResponsiveContainer,
   LineChart,
   Line,
@@ -22,11 +19,13 @@ import {
   Legend,
   BarChart,
   Bar,
+  Cell,
 } from "recharts";
 import happyMascot from "@assets/Gemini_Generated_Image_d3nzkdd3nzkdd3nz_1777144269395.png";
 import { SalaryCard } from "@/components/dashboard/SalaryCard";
 import { BalanceCard } from "@/components/dashboard/BalanceCard";
 import { FinancialCalendarCard } from "@/components/dashboard/FinancialCalendarCard";
+import { CommitmentsBreakdownCard } from "@/components/dashboard/CommitmentsBreakdownCard";
 import { useDisplayCurrency } from "@/contexts/CurrencyContext";
 import { formatMoney } from "@/lib/currency";
 import { useMemo } from "react";
@@ -188,47 +187,7 @@ export default function Dashboard() {
       {/* Charts Row */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Priority Breakdown */}
-        <Card className="rounded-3xl border-none shadow-md bg-card/60 backdrop-blur-sm overflow-hidden flex flex-col">
-          <CardHeader className="pb-0">
-            <CardTitle className="text-lg">توزيع الأولويات</CardTitle>
-            <CardDescription>كيف توزع صرفياتك؟</CardDescription>
-          </CardHeader>
-          <CardContent className="flex-1 flex flex-col justify-center items-center p-6 min-h-[300px]">
-            {loadingPriority ? (
-              <Skeleton className="w-full h-full rounded-full" />
-            ) : priorityChart.length > 0 ? (
-              <ResponsiveContainer width="100%" height={250}>
-                <PieChart>
-                  <Pie
-                    data={priorityChart}
-                    cx="50%"
-                    cy="50%"
-                    innerRadius={70}
-                    outerRadius={90}
-                    paddingAngle={5}
-                    dataKey="total"
-                    nameKey="priority"
-                  >
-                    {priorityChart.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={PRIORITY_COLORS[entry.priority as keyof typeof PRIORITY_COLORS] || COLORS[0]} stroke="transparent" />
-                    ))}
-                  </Pie>
-                  <RechartsTooltip
-                    formatter={(value: number) => [formatMoney(value, displayCurrency), "المبلغ"]}
-                    labelFormatter={(label: string) => PRIORITY_LABELS[label as keyof typeof PRIORITY_LABELS] || label}
-                    contentStyle={{ borderRadius: "12px", border: "none", boxShadow: "0 10px 15px -3px rgb(0 0 0 / 0.1)" }}
-                  />
-                  <Legend
-                    formatter={(value) => <span className="text-foreground font-medium pr-2">{PRIORITY_LABELS[value as keyof typeof PRIORITY_LABELS] || value}</span>}
-                    iconType="circle"
-                  />
-                </PieChart>
-              </ResponsiveContainer>
-            ) : (
-              <div className="text-muted-foreground text-center">لا توجد بيانات كافية</div>
-            )}
-          </CardContent>
-        </Card>
+        <CommitmentsBreakdownCard />
 
         {/* Category Breakdown */}
         <Card className="rounded-3xl border-none shadow-md bg-card/60 backdrop-blur-sm overflow-hidden flex flex-col">

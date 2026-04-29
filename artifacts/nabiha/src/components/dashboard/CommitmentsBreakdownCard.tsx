@@ -1,0 +1,258 @@
+import { useListCommitments, useGetUserProfile } from "@workspace/api-client-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
+import { useDisplayCurrency } from "@/contexts/CurrencyContext";
+import {
+  PieChart,
+  Pie,
+  Cell,
+  ResponsiveContainer,
+  Tooltip as RechartsTooltip,
+} from "recharts";
+import {
+  Home,
+  Zap,
+  Droplets,
+  Wifi,
+  Phone,
+  Car,
+  Landmark,
+  Shield,
+  GraduationCap,
+  Heart,
+  Dumbbell,
+  CircleDollarSign,
+  ChevronLeft,
+  type LucideIcon,
+} from "lucide-react";
+
+const SLICE_COLORS = [
+  "#ef4444",
+  "#3b82f6",
+  "#22c55e",
+  "#f59e0b",
+  "#06b6d4",
+  "#ec4899",
+  "#84cc16",
+  "#f97316",
+  "#6366f1",
+  "#14b8a6",
+];
+const REMAINING_COLOR = "#a78bfa";
+
+const ICON_COLORS = [
+  { bg: "bg-red-100",     text: "text-red-700"     },
+  { bg: "bg-blue-100",    text: "text-blue-700"    },
+  { bg: "bg-green-100",   text: "text-green-700"   },
+  { bg: "bg-amber-100",   text: "text-amber-700"   },
+  { bg: "bg-cyan-100",    text: "text-cyan-700"    },
+  { bg: "bg-pink-100",    text: "text-pink-700"    },
+  { bg: "bg-lime-100",    text: "text-lime-700"    },
+  { bg: "bg-orange-100",  text: "text-orange-700"  },
+  { bg: "bg-indigo-100",  text: "text-indigo-700"  },
+  { bg: "bg-teal-100",    text: "text-teal-700"    },
+];
+
+function getIcon(title: string): LucideIcon {
+  if (/إيجار|rent|منزل|بيت|شقة/i.test(title)) return Home;
+  if (/كهرب|electric|ضوء/i.test(title)) return Zap;
+  if (/ماء|water|مياه/i.test(title)) return Droplets;
+  if (/انترنت|internet|wifi|نت|شبكة/i.test(title)) return Wifi;
+  if (/هاتف|phone|جوال|موبايل|اتصال/i.test(title)) return Phone;
+  if (/سيارة|car|مواصلات|بنزين|وقود/i.test(title)) return Car;
+  if (/قرض|loan|بنك|bank|تمويل|أقساط/i.test(title)) return Landmark;
+  if (/تأمين|insurance/i.test(title)) return Shield;
+  if (/مدرسة|school|تعليم|جامعة|رسوم/i.test(title)) return GraduationCap;
+  if (/صحة|health|طب|doctor|مستشفى/i.test(title)) return Heart;
+  if (/نادي|gym|رياضة|fitness/i.test(title)) return Dumbbell;
+  return CircleDollarSign;
+}
+
+interface CustomLabelProps {
+  cx: number;
+  cy: number;
+  midAngle: number;
+  innerRadius: number;
+  outerRadius: number;
+  percent: number;
+  name: string;
+}
+
+function CustomLabel({ cx, cy, midAngle, innerRadius, outerRadius, percent, name }: CustomLabelProps) {
+  if (percent < 0.04) return null;
+  const RADIAN = Math.PI / 180;
+  const radius = innerRadius + (outerRadius - innerRadius) * 0.52;
+  const x = cx + radius * Math.cos(-midAngle * RADIAN);
+  const y = cy + radius * Math.sin(-midAngle * RADIAN);
+  const shortName = name.length > 10 ? name.slice(0, 9) + "…" : name;
+  const pctText = `${(percent * 100).toFixed(0)}%`;
+
+  return (
+    <text
+      x={x}
+      y={y}
+      fill="white"
+      textAnchor="middle"
+      dominantBaseline="central"
+      fontSize={10}
+      fontWeight="bold"
+    >
+      <tspan x={x} dy="-0.65em">{shortName}</tspan>
+      <tspan x={x} dy="1.3em">{pctText}</tspan>
+    </text>
+  );
+}
+
+export function CommitmentsBreakdownCard() {
+  const { data: commitments, isLoading: loadingC } = useListCommitments();
+  const { data: profile, isLoading: loadingP } = useGetUserProfile();
+  const { format, baseCurrency } = useDisplayCurrency();
+
+  if (loadingC || loadingP) {
+    return <Skeleton className="h-[560px] w-full rounded-3xl" />;
+  }
+
+  const salary = profile?.monthlySalary ?? 0;
+  const list = (commitments ?? []).slice().sort((a, b) => a.dueDay - b.dueDay);
+  const totalCommitments = list.reduce((s, c) => s + Number(c.amount), 0);
+  const remaining = Math.max(0, salary - totalCommitments);
+
+  const pieData = [
+    ...list.map((c, idx) => ({
+      id: c.id,
+      name: c.title,
+      value: Number(c.amount),
+      color: SLICE_COLORS[idx % SLICE_COLORS.length],
+    })),
+    {
+      id: "remaining",
+      name: "المتبقي",
+      value: remaining,
+      color: REMAINING_COLOR,
+    },
+  ];
+
+  const isEmpty = list.length === 0 || salary === 0;
+
+  return (
+    <Card className="rounded-3xl border-none shadow-md bg-card/60 backdrop-blur-sm overflow-hidden flex flex-col" data-testid="card-commitments-breakdown">
+      <CardHeader className="pb-0">
+        <CardTitle className="text-base font-bold">التوزيع المالي للالتزامات</CardTitle>
+      </CardHeader>
+
+      <CardContent className="flex-1 p-4 space-y-4">
+        {isEmpty ? (
+          <div className="flex flex-col items-center justify-center py-12 text-muted-foreground text-sm text-center gap-2">
+            <CircleDollarSign className="w-10 h-10 opacity-20" />
+            <p>أضف راتبك والتزاماتك لترى التوزيع</p>
+          </div>
+        ) : (
+          <>
+            {/* Donut chart */}
+            <div className="relative" style={{ height: 260 }}>
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={pieData}
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={78}
+                    outerRadius={118}
+                    paddingAngle={2}
+                    dataKey="value"
+                    nameKey="name"
+                    labelLine={false}
+                    label={(props) => <CustomLabel {...props} />}
+                    startAngle={90}
+                    endAngle={-270}
+                  >
+                    {pieData.map((entry) => (
+                      <Cell
+                        key={entry.id}
+                        fill={entry.color}
+                        stroke="white"
+                        strokeWidth={2}
+                      />
+                    ))}
+                  </Pie>
+                  <RechartsTooltip
+                    formatter={(value: number, name: string) => [
+                      format(value, baseCurrency),
+                      name,
+                    ]}
+                    contentStyle={{
+                      borderRadius: "12px",
+                      border: "none",
+                      boxShadow: "0 10px 15px -3px rgb(0 0 0 / 0.1)",
+                      direction: "rtl",
+                    }}
+                  />
+                </PieChart>
+              </ResponsiveContainer>
+
+              {/* Center label */}
+              <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none" dir="rtl">
+                <span className="text-[11px] text-muted-foreground font-medium">الراتب الأصلي</span>
+                <span className="text-xl font-extrabold text-foreground leading-tight">
+                  {format(salary, baseCurrency)}
+                </span>
+              </div>
+            </div>
+
+            {/* Legend rows */}
+            <div className="space-y-2" dir="rtl">
+              {list.map((c, idx) => {
+                const Icon = getIcon(c.title);
+                const sliceColor = SLICE_COLORS[idx % SLICE_COLORS.length];
+                const iconColor = ICON_COLORS[idx % ICON_COLORS.length];
+                const pct = salary > 0 ? ((Number(c.amount) / salary) * 100).toFixed(0) : "0";
+
+                return (
+                  <div
+                    key={c.id}
+                    className="flex items-center gap-2.5 px-3 py-2.5 rounded-2xl border border-border/60 bg-background/70 hover:border-border transition-colors"
+                    data-testid={`row-breakdown-${c.id}`}
+                  >
+                    {/* Colored dot */}
+                    <span
+                      className="w-3 h-3 rounded-full shrink-0"
+                      style={{ backgroundColor: sliceColor }}
+                    />
+                    {/* Icon */}
+                    <span className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 ${iconColor.bg} ${iconColor.text}`}>
+                      <Icon className="w-4 h-4" />
+                    </span>
+                    {/* Name + pct */}
+                    <span className="flex-1 font-medium text-sm text-foreground truncate">
+                      {c.title}
+                    </span>
+                    <span className="text-xs text-muted-foreground font-bold">{pct}%</span>
+                    <ChevronLeft className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
+                    {/* Amount */}
+                    <span className="font-bold text-sm text-foreground tabular-nums shrink-0">
+                      {format(Number(c.amount), baseCurrency)}
+                    </span>
+                  </div>
+                );
+              })}
+
+              {/* Total commitments */}
+              <div className="flex items-center gap-2.5 px-3 py-2.5 rounded-2xl border border-border bg-muted/30" data-testid="row-total-commitments">
+                <span className="w-3 h-3 rounded-full bg-foreground shrink-0" />
+                <span className="flex-1 font-bold text-sm text-foreground">إجمالي الالتزامات</span>
+                <span className="font-bold text-sm tabular-nums">{format(totalCommitments, baseCurrency)}</span>
+              </div>
+
+              {/* Remaining */}
+              <div className="flex items-center gap-2.5 px-3 py-2.5 rounded-2xl border border-violet-200 bg-violet-50/60" data-testid="row-remaining">
+                <span className="w-3 h-3 rounded-full shrink-0" style={{ backgroundColor: REMAINING_COLOR }} />
+                <span className="flex-1 font-bold text-sm text-violet-700">الراتب المتبقي</span>
+                <span className="font-bold text-sm text-violet-700 tabular-nums">{format(remaining, baseCurrency)}</span>
+              </div>
+            </div>
+          </>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
