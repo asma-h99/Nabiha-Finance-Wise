@@ -145,7 +145,7 @@ function Landing() {
           <img src={logoImage} alt="نَبِيهَة" className="w-12 h-12 rounded-full border-2 border-primary/20 object-cover" />
           <div>
             <h1 className="text-xl font-extrabold text-primary">نَبِيهَة</h1>
-            <p className="text-xs text-muted-foreground">رفيقتك المالية الذكية</p>
+            <p className="text-xs text-muted-foreground">رفيقك المالي الذكي</p>
           </div>
         </div>
         <div className="flex items-center gap-2">
@@ -166,12 +166,12 @@ function Landing() {
               <span className="text-primary">مع نبيهة الزمان</span>
             </h2>
             <p className="text-lg text-muted-foreground leading-relaxed">
-              تابعي راتبك واشتراكاتك، وخططي لمستقبلك المالي بثقة. نبيهة بتساعدك تعرفي وين بيروح كل دينار، وبتنبهك قبل ما تتورطي بأي قرض.
+              تابع راتبك واشتراكاتك، وخطط لمستقبلك المالي بثقة. نبيهة بتساعدك تعرف وين بيروح كل دينار، وبتنبهك قبل ما تتورط بأي قرض.
             </p>
             <div className="flex flex-wrap gap-3 pt-2">
               <Link href="/sign-up">
                 <Button size="lg" className="rounded-2xl font-bold bg-primary text-primary-foreground hover:bg-primary/90 shadow-lg h-14 px-8 text-base" data-testid="button-cta-signup">
-                  ابدأي مع نبيهة <ArrowLeft className="w-5 h-5 mr-2" />
+                  ابدأ مع نبيهة <ArrowLeft className="w-5 h-5 mr-2" />
                 </Button>
               </Link>
               <Link href="/sign-in">
@@ -196,10 +196,10 @@ function Landing() {
 
         <section className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-20">
           {[
-            { icon: Wallet, title: "إدارة الراتب", desc: "حدّدي راتبك وعملتك وتتبعي رصيدك بكل لحظة" },
-            { icon: PieChart, title: "تتبع الاشتراكات", desc: "شوفي كم بياكلوا اشتراكاتك من راتبك بمخطط واضح" },
+            { icon: Wallet, title: "إدارة الراتب", desc: "حدّد راتبك وعملتك وتتبع رصيدك بكل لحظة" },
+            { icon: PieChart, title: "تتبع الاشتراكات", desc: "شوف كم بياكلوا اشتراكاتك من راتبك بمخطط واضح" },
             { icon: Calendar, title: "تقويم مالي", desc: "كل التزاماتك ومناسباتك بمكان واحد لكل السنة" },
-            { icon: ShieldCheck, title: "محاكي القروض", desc: "احسبي قبل ما تقترضي وعرفي إذا القرض آمن" },
+            { icon: ShieldCheck, title: "محاكي القروض", desc: "احسب قبل ما تقترض واعرف إذا القرض آمن" },
           ].map((f) => (
             <div key={f.title} className="bg-white rounded-2xl p-5 border border-border shadow-sm hover:shadow-md transition-all">
               <div className="w-11 h-11 rounded-xl bg-primary/10 text-primary flex items-center justify-center mb-3">
@@ -292,13 +292,13 @@ function ClerkAppRouter() {
         signIn: {
           start: {
             title: "أهلاً بعودتك",
-            subtitle: "سجلي دخولك للمتابعة مع نَبِيهَة",
+            subtitle: "سجّل دخولك للمتابعة مع نَبِيهَة",
           },
         },
         signUp: {
           start: {
-            title: "أنشئي حسابك",
-            subtitle: "ابدأي رحلتك مع الذكاء المالي",
+            title: "أنشئ حسابك",
+            subtitle: "ابدأ رحلتك مع الذكاء المالي",
           },
         },
       }}

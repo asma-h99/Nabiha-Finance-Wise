@@ -34,7 +34,7 @@ export function BalanceCard() {
     stateColor = "text-amber-600";
     stateBg = "bg-amber-50 border-amber-200";
     stateIcon = TrendingDown;
-    stateLabel = "خفّفي شوي، باقي قليل";
+    stateLabel = "خفّف شوي، باقي قليل";
   }
 
   const StateIcon = stateIcon;

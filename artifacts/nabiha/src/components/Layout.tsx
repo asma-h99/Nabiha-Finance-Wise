@@ -9,9 +9,9 @@ import logoImage from "@assets/Gemini_Generated_Image_j4skn9j4skn9j4sk_177714426
 
 const navItems = [
   { href: "/app", label: "لوحة التحكم", icon: LayoutDashboard, hint: "نظرة شاملة على راتبك ومصاريفك" },
-  { href: "/app/expenses", label: "المصاريف", icon: Receipt, hint: "سجّلي مصاريفك حسب الأولوية" },
+  { href: "/app/expenses", label: "المصاريف", icon: Receipt, hint: "سجّل مصاريفك حسب الأولوية" },
   { href: "/app/commitments", label: "الالتزامات", icon: CalendarClock, hint: "إيجار، فواتير، أقساط" },
-  { href: "/app/categories", label: "الفئات", icon: Tags, hint: "نظّمي مصاريفك بفئات خاصة" },
+  { href: "/app/categories", label: "الفئات", icon: Tags, hint: "نظّم مصاريفك بفئات خاصة" },
 ];
 
 export default function Layout({
@@ -43,7 +43,7 @@ export default function Layout({
           </div>
           <div className="text-center">
             <h2 className="text-xl font-extrabold text-primary tracking-tight">نَبِيهَة</h2>
-            <p className="text-xs text-muted-foreground mt-0.5">رفيقتك المالية الذكية</p>
+            <p className="text-xs text-muted-foreground mt-0.5">رفيقك المالي الذكي</p>
           </div>
         </div>
       </div>
@@ -129,7 +129,7 @@ export default function Layout({
         >
           <SheetTitle className="sr-only">قائمة التنقل</SheetTitle>
           <SheetDescription className="sr-only">
-            تنقّلي بين أقسام نَبِيهَة: لوحة التحكم، المصاريف، الالتزامات، والفئات.
+            تنقّل بين أقسام نَبِيهَة: لوحة التحكم، المصاريف، الالتزامات، والفئات.
           </SheetDescription>
           <NavContent onNavigate={() => setMobileOpen(false)} />
         </SheetContent>

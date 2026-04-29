@@ -31,7 +31,7 @@ export function CurrencySwitcher({ className }: { className?: string }) {
             className,
           )}
           data-testid="button-currency-switcher"
-          aria-label="اختاري عملة العرض"
+          aria-label="اختر عملة العرض"
         >
           <Coins className="w-4 h-4 text-primary" />
           <span className="text-base leading-none">{current.symbol}</span>

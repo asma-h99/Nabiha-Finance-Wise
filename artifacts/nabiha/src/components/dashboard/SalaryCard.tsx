@@ -46,7 +46,7 @@ export function SalaryCard() {
     const amount = parseFloat(salary);
     const day = parseInt(payday, 10);
     if (Number.isNaN(amount) || amount < 0) {
-      toast({ title: "أدخلي راتب صحيح", variant: "destructive" });
+      toast({ title: "أدخل راتب صحيح", variant: "destructive" });
       return;
     }
     if (Number.isNaN(day) || day < 1 || day > 31) {
@@ -141,7 +141,7 @@ export function SalaryCard() {
       <CardContent className="relative z-10">
         {isUnset ? (
           <div className="space-y-2">
-            <p className="text-sm opacity-90">حدّدي راتبك حتى نبيهة تساعدك تخططي صح</p>
+            <p className="text-sm opacity-90">حدّد راتبك حتى نبيهة تساعدك تخطط صح</p>
             <Button
               variant="secondary"
               size="sm"
@@ -149,7 +149,7 @@ export function SalaryCard() {
               onClick={() => setOpen(true)}
               data-testid="button-set-salary"
             >
-              أدخلي راتبك
+              أدخل راتبك
             </Button>
           </div>
         ) : (

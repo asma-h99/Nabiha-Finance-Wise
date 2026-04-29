@@ -134,7 +134,7 @@ export function SubscriptionsCard() {
           </CardTitle>
           <CardDescription className="mt-1">
             {isEmpty
-              ? "ضيفي اشتراكاتك حتى نبيهة تذكرك بالتجديدات"
+              ? "أضف اشتراكاتك حتى نبيهة تذكرك بالتجديدات"
               : `${subs.length} اشتراك • ${formatMoney(monthlyTotal, displayCurrency)} / شهر`}
           </CardDescription>
         </div>
@@ -299,8 +299,8 @@ export function SubscriptionsCard() {
             <AlertDialogTitle>حذف الاشتراك؟</AlertDialogTitle>
             <AlertDialogDescription>
               {deletingSub
-                ? `هل أنتِ متأكدة من حذف "${deletingSub.name}"؟ ما رح تقدري ترجعيه.`
-                : "هل أنتِ متأكدة؟"}
+                ? `هل أنت متأكد من حذف "${deletingSub.name}"؟ ما رح تقدر ترجعه.`
+                : "هل أنت متأكد؟"}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
