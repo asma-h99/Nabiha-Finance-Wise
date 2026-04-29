@@ -26,32 +26,36 @@ import {
   type LucideIcon,
 } from "lucide-react";
 
+// Financial-grade palette: emerald brand → gold accent → professional blues/teals/slates
 const SLICE_COLORS = [
-  "#ef4444",
-  "#3b82f6",
-  "#22c55e",
-  "#f59e0b",
-  "#06b6d4",
-  "#ec4899",
-  "#84cc16",
-  "#f97316",
-  "#6366f1",
-  "#14b8a6",
+  "#1B7E63", // brand emerald
+  "#f59e0b", // warm gold
+  "#2563eb", // royal blue
+  "#0891b2", // ocean teal
+  "#7c3aed", // deep violet
+  "#d97706", // amber
+  "#059669", // forest green
+  "#1e40af", // navy
+  "#0f766e", // dark teal
+  "#4f46e5", // indigo
 ];
-const REMAINING_COLOR = "#a78bfa";
+const REMAINING_COLOR = "#94a3b8"; // professional slate for "remaining"
 
 const ICON_COLORS = [
-  { bg: "bg-red-100",     text: "text-red-700"     },
-  { bg: "bg-blue-100",    text: "text-blue-700"    },
-  { bg: "bg-green-100",   text: "text-green-700"   },
+  { bg: "bg-emerald-100", text: "text-emerald-700" },
   { bg: "bg-amber-100",   text: "text-amber-700"   },
+  { bg: "bg-blue-100",    text: "text-blue-700"    },
   { bg: "bg-cyan-100",    text: "text-cyan-700"    },
-  { bg: "bg-pink-100",    text: "text-pink-700"    },
-  { bg: "bg-lime-100",    text: "text-lime-700"    },
+  { bg: "bg-violet-100",  text: "text-violet-700"  },
   { bg: "bg-orange-100",  text: "text-orange-700"  },
-  { bg: "bg-indigo-100",  text: "text-indigo-700"  },
   { bg: "bg-teal-100",    text: "text-teal-700"    },
+  { bg: "bg-indigo-100",  text: "text-indigo-700"  },
+  { bg: "bg-sky-100",     text: "text-sky-700"     },
+  { bg: "bg-purple-100",  text: "text-purple-700"  },
 ];
+
+// Commitments matching this pattern are excluded from the pie (e.g. rent)
+const PIE_EXCLUDE_PATTERN = /إيجار|rent|شقة|منزل|بيت/i;
 
 function getIcon(title: string): LucideIcon {
   if (/إيجار|rent|منزل|بيت|شقة/i.test(title)) return Home;
@@ -114,11 +118,13 @@ export function CommitmentsBreakdownCard() {
 
   const salary = profile?.monthlySalary ?? 0;
   const list = (commitments ?? []).slice().sort((a, b) => a.dueDay - b.dueDay);
+  // Exclude rent/housing from the pie visualization (still counted in totals)
+  const pieList = list.filter((c) => !PIE_EXCLUDE_PATTERN.test(c.title));
   const totalCommitments = list.reduce((s, c) => s + Number(c.amount), 0);
   const remaining = Math.max(0, salary - totalCommitments);
 
   const pieData = [
-    ...list.map((c, idx) => ({
+    ...pieList.map((c, idx) => ({
       id: c.id,
       name: c.title,
       value: Number(c.amount),
@@ -201,7 +207,7 @@ export function CommitmentsBreakdownCard() {
 
             {/* Legend rows */}
             <div className="space-y-2" dir="rtl">
-              {list.map((c, idx) => {
+              {pieList.map((c, idx) => {
                 const Icon = getIcon(c.title);
                 const sliceColor = SLICE_COLORS[idx % SLICE_COLORS.length];
                 const iconColor = ICON_COLORS[idx % ICON_COLORS.length];
@@ -244,10 +250,10 @@ export function CommitmentsBreakdownCard() {
               </div>
 
               {/* Remaining */}
-              <div className="flex items-center gap-2.5 px-3 py-2.5 rounded-2xl border border-violet-200 bg-violet-50/60" data-testid="row-remaining">
+              <div className="flex items-center gap-2.5 px-3 py-2.5 rounded-2xl border border-slate-200 bg-slate-50/60" data-testid="row-remaining">
                 <span className="w-3 h-3 rounded-full shrink-0" style={{ backgroundColor: REMAINING_COLOR }} />
-                <span className="flex-1 font-bold text-sm text-violet-700">الراتب المتبقي</span>
-                <span className="font-bold text-sm text-violet-700 tabular-nums">{format(remaining, baseCurrency)}</span>
+                <span className="flex-1 font-bold text-sm text-slate-600">الراتب المتبقي</span>
+                <span className="font-bold text-sm text-slate-600 tabular-nums">{format(remaining, baseCurrency)}</span>
               </div>
             </div>
           </>
