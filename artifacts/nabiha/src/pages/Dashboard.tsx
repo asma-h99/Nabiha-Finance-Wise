@@ -127,21 +127,21 @@ export default function Dashboard() {
         <BalanceCard />
         <SalaryCard />
         <Card className="rounded-3xl border-none shadow-md bg-card/60 backdrop-blur-sm" data-testid="card-this-month">
-          <CardHeader className="pb-2 flex flex-row items-center justify-between">
-            <CardTitle className="text-sm font-medium text-muted-foreground">صرفياتي هذا الشهر</CardTitle>
-            <div className="p-2 bg-primary/10 text-primary rounded-xl">
-              <Wallet className="w-5 h-5" />
-            </div>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground flex items-center justify-center gap-2">
+              <Wallet className="w-4 h-4 text-primary" />
+              صرفياتي هذا الشهر
+            </CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold text-foreground mb-1">
+          <CardContent className="flex flex-col items-center text-center">
+            <div className="text-xl md:text-2xl font-bold text-foreground mb-1">
               {format(summary?.totalThisMonth || 0, baseCurrency)}
             </div>
-            <div className={`text-sm flex items-center gap-1 mt-2 font-medium ${isOverspending ? "text-destructive" : "text-emerald-600"}`}>
-              {isOverspending ? <TrendingUp className="w-4 h-4" /> : <TrendingDown className="w-4 h-4" />}
+            <div className={`text-xs flex items-center gap-1 mt-2 font-medium ${isOverspending ? "text-destructive" : "text-emerald-600"}`}>
+              {isOverspending ? <TrendingUp className="w-3.5 h-3.5" /> : <TrendingDown className="w-3.5 h-3.5" />}
               <span>
                 {format(Math.abs((summary?.totalThisMonth || 0) - (summary?.totalLastMonth || 0)), baseCurrency)}{" "}
-                {isOverspending ? " أكثر من الشهر الماضي" : " أقل من الشهر الماضي"}
+                {isOverspending ? "أكثر من الشهر الماضي" : "أقل من الشهر الماضي"}
               </span>
             </div>
           </CardContent>
@@ -154,35 +154,35 @@ export default function Dashboard() {
       {/* Secondary KPIs */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
         <Card className="rounded-3xl border-none shadow-md bg-card/60 backdrop-blur-sm">
-          <CardHeader className="pb-2 flex flex-row items-center justify-between">
-            <CardTitle className="text-sm font-medium text-muted-foreground">الفئة الأكثر استهلاكاً</CardTitle>
-            <div className="p-2 bg-accent/10 text-accent rounded-xl">
-              <Target className="w-5 h-5" />
-            </div>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground flex items-center justify-center gap-2">
+              <Target className="w-4 h-4 text-accent" />
+              الفئة الأكثر استهلاكاً
+            </CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-foreground mb-1 truncate">
+          <CardContent className="flex flex-col items-center text-center">
+            <div className="text-xl font-bold text-foreground mb-1 truncate max-w-full">
               {summary?.topCategory || "لا يوجد"}
             </div>
-            <div className="text-sm text-muted-foreground mt-2 flex items-center gap-1">
-              <Sparkles className="w-4 h-4 text-accent" />
+            <div className="text-xs text-muted-foreground mt-2 flex items-center gap-1">
+              <Sparkles className="w-3.5 h-3.5 text-accent" />
               <span>انتبه لهذه الفئة!</span>
             </div>
           </CardContent>
         </Card>
 
         <Card className="rounded-3xl border-none shadow-md bg-card/60 backdrop-blur-sm">
-          <CardHeader className="pb-2 flex flex-row items-center justify-between">
-            <CardTitle className="text-sm font-medium text-muted-foreground">إجمالي الالتزامات</CardTitle>
-            <div className="p-2 bg-chart-3/10 text-chart-3 rounded-xl">
-              <Info className="w-5 h-5" />
-            </div>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground flex items-center justify-center gap-2">
+              <Info className="w-4 h-4 text-chart-3" />
+              إجمالي الالتزامات
+            </CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-foreground mb-1">
+          <CardContent className="flex flex-col items-center text-center">
+            <div className="text-xl font-bold text-foreground mb-1">
               {format(summary?.commitmentsTotal || 0, baseCurrency)}
             </div>
-            <div className="text-sm text-muted-foreground mt-2">
+            <div className="text-xs text-muted-foreground mt-2">
               منها {summary?.unpaidCommitmentsCount} بانتظار الدفع
             </div>
           </CardContent>

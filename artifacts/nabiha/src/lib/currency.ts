@@ -37,7 +37,9 @@ export function getCurrency(code: string): CurrencyOption {
 }
 
 export function getDecimals(code: string): number {
-  return ["JOD", "KWD", "BHD", "OMR", "LYD"].includes(code) ? 3 : 2;
+  // Cap at 2 decimal places for display — even 3-decimal currencies (JOD, KWD…) show 2.
+  void code;
+  return 2;
 }
 
 // Approximate exchange rates relative to 1 USD (snapshot for in-app display only).

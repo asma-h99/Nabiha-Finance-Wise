@@ -138,7 +138,7 @@ export function SalaryCard() {
           </DialogContent>
         </Dialog>
       </CardHeader>
-      <CardContent className="relative z-10">
+      <CardContent className="relative z-10 flex flex-col items-center text-center">
         {isUnset ? (
           <div className="space-y-2">
             <p className="text-sm opacity-90">حدّد راتبك حتى نبيهة تساعدك تخطط صح</p>
@@ -154,11 +154,11 @@ export function SalaryCard() {
           </div>
         ) : (
           <>
-            <div className="text-3xl md:text-4xl font-extrabold mb-2 tracking-tight" data-testid="text-salary-amount">
+            <div className="text-xl md:text-2xl font-extrabold mb-1.5 tracking-tight" data-testid="text-salary-amount">
               {format(salaryValue, cur.code)}
             </div>
-            <div className="flex items-center gap-2 text-sm opacity-90">
-              <Calendar className="w-4 h-4" />
+            <div className="flex items-center gap-1.5 text-xs opacity-90">
+              <Calendar className="w-3.5 h-3.5" />
               <span>يوم {profile?.payday} من كل شهر</span>
             </div>
           </>

@@ -40,15 +40,15 @@ export function BalanceCard() {
 
   return (
     <Card className="rounded-3xl border-none shadow-md bg-card/60 backdrop-blur-sm" data-testid="card-balance">
-      <CardHeader className="pb-2 flex flex-row items-center justify-between">
-        <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+      <CardHeader className="pb-2">
+        <CardTitle className="text-sm font-medium text-muted-foreground flex items-center justify-center gap-2">
           <TrendingUp className="w-4 h-4" />
           المتوقع المتبقي هذا الشهر
         </CardTitle>
       </CardHeader>
-      <CardContent className="space-y-3">
+      <CardContent className="space-y-3 flex flex-col items-center text-center">
         <div
-          className={`text-3xl md:text-4xl font-extrabold tracking-tight ${
+          className={`text-xl md:text-2xl font-extrabold tracking-tight ${
             isCritical ? "text-destructive" : "text-foreground"
           }`}
           data-testid="text-balance-remaining"
@@ -56,8 +56,8 @@ export function BalanceCard() {
           {format(remaining, data.currency)}
         </div>
         {salary > 0 && (
-          <div className="space-y-1.5">
-            <div className="h-2.5 w-full rounded-full bg-muted overflow-hidden">
+          <div className="space-y-1.5 w-full">
+            <div className="h-2 w-full rounded-full bg-muted overflow-hidden">
               <div
                 className={`h-full rounded-full transition-all duration-500 ${
                   isCritical ? "bg-destructive" : isWarning ? "bg-amber-500" : "bg-primary"
@@ -71,8 +71,8 @@ export function BalanceCard() {
             </div>
           </div>
         )}
-        <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-xl text-sm font-medium border ${stateBg} ${stateColor}`} data-testid="badge-balance-state">
-          <StateIcon className="w-4 h-4" />
+        <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-medium border ${stateBg} ${stateColor}`} data-testid="badge-balance-state">
+          <StateIcon className="w-3.5 h-3.5" />
           {stateLabel}
         </div>
       </CardContent>
