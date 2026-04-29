@@ -30,12 +30,15 @@ import { useDisplayCurrency } from "@/contexts/CurrencyContext";
 import { formatMoney } from "@/lib/currency";
 import { useMemo } from "react";
 
+// Brand-aligned palette for all charts
 const COLORS = [
-  "hsl(var(--primary))",
-  "hsl(var(--accent))",
-  "hsl(var(--chart-3))",
-  "hsl(var(--chart-4))",
-  "hsl(var(--chart-5))",
+  "#f59e0b", // warm gold
+  "#0d9488", // teal
+  "#1e40af", // navy
+  "#d97706", // amber
+  "#7c3aed", // violet
+  "#0891b2", // ocean blue
+  "#059669", // forest green
 ];
 const PRIORITY_COLORS = {
   essential: "hsl(var(--destructive))",
@@ -171,15 +174,18 @@ export default function Dashboard() {
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground flex items-center justify-center gap-2">
               <Info className="w-4 h-4 text-chart-3" />
-              إجمالي الالتزامات
+              نسبة الالتزامات من الراتب
             </CardTitle>
           </CardHeader>
           <CardContent className="flex flex-col items-center text-center">
             <div className="text-xl font-bold text-foreground mb-1">
-              {format(summary?.commitmentsTotal || 0, baseCurrency)}
+              {profile?.monthlySalary && summary?.commitmentsTotal
+                ? `${Math.min(100, Math.round((summary.commitmentsTotal / profile.monthlySalary) * 100))}%`
+                : "—"}
             </div>
-            <div className="text-xs text-muted-foreground mt-2">
-              منها {summary?.unpaidCommitmentsCount} بانتظار الدفع
+            <div className="text-xs text-muted-foreground mt-2 flex items-center gap-1">
+              <Sparkles className="w-3.5 h-3.5 text-accent" />
+              <span>يُنصح ألا تتجاوز 50% من الراتب</span>
             </div>
           </CardContent>
         </Card>
@@ -192,32 +198,94 @@ export default function Dashboard() {
         {/* Category Breakdown */}
         <Card className="rounded-3xl border-none shadow-md bg-card/60 backdrop-blur-sm overflow-hidden flex flex-col">
           <CardHeader className="pb-0">
-            <CardTitle className="text-lg">توزيع الفئات</CardTitle>
-            <CardDescription>أين تذهب أموالك؟</CardDescription>
+            <CardTitle className="text-base font-bold">الإنفاق حسب الفئة</CardTitle>
+            <CardDescription className="text-xs text-muted-foreground">أين تذهب صرفياتك الشهرية؟</CardDescription>
           </CardHeader>
-          <CardContent className="flex-1 flex flex-col justify-center p-6 min-h-[300px]">
+
+          <CardContent className="flex-1 p-4 space-y-4">
             {loadingCategory ? (
-              <Skeleton className="w-full h-full rounded-2xl" />
+              <Skeleton className="w-full h-[300px] rounded-2xl" />
             ) : categoryChart.length > 0 ? (
-              <ResponsiveContainer width="100%" height={250}>
-                <BarChart data={categoryChart} layout="vertical" margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
-                  <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="hsl(var(--border))" />
-                  <XAxis type="number" hide />
-                  <YAxis dataKey="categoryName" type="category" axisLine={false} tickLine={false} width={80} style={{ fontFamily: "var(--font-sans)", fontSize: "0.875rem", fill: "hsl(var(--foreground))" }} />
-                  <RechartsTooltip
-                    cursor={{ fill: "transparent" }}
-                    formatter={(value: number) => [formatMoney(value, displayCurrency), "المبلغ"]}
-                    contentStyle={{ borderRadius: "12px", border: "none", boxShadow: "0 10px 15px -3px rgb(0 0 0 / 0.1)" }}
-                  />
-                  <Bar dataKey="total" radius={[0, 4, 4, 0]} barSize={24}>
-                    {categoryChart.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                    ))}
-                  </Bar>
-                </BarChart>
-              </ResponsiveContainer>
+              <>
+                {/* Horizontal bar chart */}
+                <div style={{ height: 260 }}>
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart
+                      data={categoryChart}
+                      layout="vertical"
+                      margin={{ top: 4, right: 16, left: 4, bottom: 4 }}
+                      barCategoryGap="30%"
+                    >
+                      <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="hsl(var(--border) / 0.5)" />
+                      <XAxis
+                        type="number"
+                        hide
+                      />
+                      <YAxis
+                        dataKey="categoryName"
+                        type="category"
+                        axisLine={false}
+                        tickLine={false}
+                        width={72}
+                        tick={{ fontSize: 12, fill: "hsl(var(--foreground))", fontFamily: "var(--font-sans)" }}
+                      />
+                      <RechartsTooltip
+                        cursor={{ fill: "hsl(var(--muted) / 0.3)" }}
+                        formatter={(value: number) => [formatMoney(value, displayCurrency), "الإنفاق"]}
+                        contentStyle={{
+                          borderRadius: "12px",
+                          border: "none",
+                          boxShadow: "0 10px 15px -3px rgb(0 0 0 / 0.1)",
+                          direction: "rtl",
+                        }}
+                      />
+                      <Bar dataKey="total" radius={[0, 6, 6, 0]} barSize={20}>
+                        {categoryChart.map((_entry, index) => (
+                          <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                        ))}
+                      </Bar>
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+
+                {/* Summary legend rows */}
+                <div className="space-y-2" dir="rtl">
+                  {categoryChart.slice(0, 4).map((entry, index) => {
+                    const totalSpend = categoryChart.reduce((s, e) => s + e.total, 0);
+                    const pct = totalSpend > 0 ? Math.round((entry.total / totalSpend) * 100) : 0;
+                    return (
+                      <div
+                        key={entry.categoryName}
+                        className="flex items-center gap-2.5 px-3 py-2 rounded-2xl border border-border/60 bg-background/70"
+                      >
+                        <span
+                          className="w-3 h-3 rounded-full shrink-0"
+                          style={{ backgroundColor: COLORS[index % COLORS.length] }}
+                        />
+                        <span className="flex-1 text-sm font-medium text-foreground truncate">{entry.categoryName}</span>
+                        <span className="text-xs text-muted-foreground font-bold tabular-nums">{pct}%</span>
+                        <span className="font-bold text-sm tabular-nums shrink-0">
+                          {formatMoney(entry.total, displayCurrency)}
+                        </span>
+                      </div>
+                    );
+                  })}
+
+                  {/* Total spending row */}
+                  <div className="flex items-center gap-2.5 px-3 py-2.5 rounded-2xl border border-border bg-muted/30">
+                    <span className="w-3 h-3 rounded-full bg-foreground shrink-0" />
+                    <span className="flex-1 font-bold text-sm text-foreground">إجمالي الإنفاق</span>
+                    <span className="font-bold text-sm tabular-nums">
+                      {formatMoney(categoryChart.reduce((s, e) => s + e.total, 0), displayCurrency)}
+                    </span>
+                  </div>
+                </div>
+              </>
             ) : (
-              <div className="text-muted-foreground text-center">لا توجد بيانات كافية</div>
+              <div className="flex flex-col items-center justify-center py-12 text-muted-foreground text-sm text-center gap-2">
+                <Wallet className="w-10 h-10 opacity-20" />
+                <p>لا توجد صرفيات مسجّلة لهذا الشهر</p>
+              </div>
             )}
           </CardContent>
         </Card>
