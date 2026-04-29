@@ -40,15 +40,15 @@ export function BalanceCard() {
 
   return (
     <Card className="rounded-3xl border-none shadow-md bg-card/60 backdrop-blur-sm" data-testid="card-balance">
-      <CardHeader className="pb-2">
-        <CardTitle className="text-sm font-medium text-muted-foreground flex items-center justify-center gap-2">
-          <TrendingUp className="w-4 h-4" />
+      <CardHeader className="pb-1 pt-4 px-4">
+        <CardTitle className="text-xs font-medium text-muted-foreground flex items-center justify-center gap-1.5">
+          <TrendingUp className="w-3.5 h-3.5" />
           المتوقع المتبقي هذا الشهر
         </CardTitle>
       </CardHeader>
-      <CardContent className="space-y-3 flex flex-col items-center text-center">
+      <CardContent className="px-4 pb-4 flex flex-col items-center text-center gap-2">
         <div
-          className={`text-xl md:text-2xl font-extrabold tracking-tight ${
+          className={`text-xl font-extrabold tracking-tight ${
             isCritical ? "text-destructive" : "text-foreground"
           }`}
           data-testid="text-balance-remaining"
@@ -56,23 +56,17 @@ export function BalanceCard() {
           {format(remaining, data.currency)}
         </div>
         {salary > 0 && (
-          <div className="space-y-1.5 w-full">
-            <div className="h-2 w-full rounded-full bg-muted overflow-hidden">
-              <div
-                className={`h-full rounded-full transition-all duration-500 ${
-                  isCritical ? "bg-destructive" : isWarning ? "bg-amber-500" : "bg-primary"
-                }`}
-                style={{ width: `${usedPercent}%` }}
-              />
-            </div>
-            <div className="flex justify-between text-xs text-muted-foreground">
-              <span>صرف: {format(outflow, data.currency)}</span>
-              <span>راتب: {format(salary, data.currency)}</span>
-            </div>
+          <div className="h-1.5 w-full rounded-full bg-muted overflow-hidden">
+            <div
+              className={`h-full rounded-full transition-all duration-500 ${
+                isCritical ? "bg-destructive" : isWarning ? "bg-amber-500" : "bg-primary"
+              }`}
+              style={{ width: `${usedPercent}%` }}
+            />
           </div>
         )}
-        <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-medium border ${stateBg} ${stateColor}`} data-testid="badge-balance-state">
-          <StateIcon className="w-3.5 h-3.5" />
+        <div className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-xs font-medium border ${stateBg} ${stateColor}`} data-testid="badge-balance-state">
+          <StateIcon className="w-3 h-3" />
           {stateLabel}
         </div>
       </CardContent>

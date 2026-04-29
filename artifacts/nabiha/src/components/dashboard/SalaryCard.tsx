@@ -70,9 +70,9 @@ export function SalaryCard() {
   return (
     <Card className="rounded-3xl border-none shadow-md bg-gradient-to-br from-primary to-primary/80 text-primary-foreground overflow-hidden relative" data-testid="card-salary">
       <div className="absolute -left-10 -bottom-10 w-40 h-40 bg-white/10 rounded-full blur-2xl pointer-events-none" />
-      <CardHeader className="pb-2 relative z-10">
-        <CardTitle className="text-sm font-medium opacity-90 flex items-center justify-center gap-2">
-          <Wallet className="w-4 h-4" />
+      <CardHeader className="pb-1 pt-4 px-4 relative z-10">
+        <CardTitle className="text-xs font-medium opacity-90 flex items-center justify-center gap-1.5">
+          <Wallet className="w-3.5 h-3.5" />
           راتبي الشهري
         </CardTitle>
         <Dialog open={open} onOpenChange={setOpen}>
@@ -138,14 +138,14 @@ export function SalaryCard() {
           </DialogContent>
         </Dialog>
       </CardHeader>
-      <CardContent className="relative z-10 flex flex-col items-center text-center">
+      <CardContent className="px-4 pb-4 relative z-10 flex flex-col items-center text-center gap-2">
         {isUnset ? (
           <div className="space-y-2">
-            <p className="text-sm opacity-90">حدّد راتبك حتى نبيهة تساعدك تخطط صح</p>
+            <p className="text-xs opacity-90">حدّد راتبك حتى نبيهة تساعدك تخطط صح</p>
             <Button
               variant="secondary"
               size="sm"
-              className="rounded-xl mt-2"
+              className="rounded-xl"
               onClick={() => setOpen(true)}
               data-testid="button-set-salary"
             >
@@ -154,11 +154,11 @@ export function SalaryCard() {
           </div>
         ) : (
           <>
-            <div className="text-xl md:text-2xl font-extrabold mb-1.5 tracking-tight" data-testid="text-salary-amount">
+            <div className="text-xl font-extrabold tracking-tight" data-testid="text-salary-amount">
               {format(salaryValue, cur.code)}
             </div>
-            <div className="flex items-center gap-1.5 text-xs opacity-90">
-              <Calendar className="w-3.5 h-3.5" />
+            <div className="flex items-center gap-1.5 text-xs opacity-80">
+              <Calendar className="w-3 h-3" />
               <span>يوم {profile?.payday} من كل شهر</span>
             </div>
           </>

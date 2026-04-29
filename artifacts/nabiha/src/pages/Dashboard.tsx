@@ -127,22 +127,19 @@ export default function Dashboard() {
         <BalanceCard />
         <SalaryCard />
         <Card className="rounded-3xl border-none shadow-md bg-card/60 backdrop-blur-sm" data-testid="card-this-month">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground flex items-center justify-center gap-2">
-              <Wallet className="w-4 h-4 text-primary" />
+          <CardHeader className="pb-1 pt-4 px-4">
+            <CardTitle className="text-xs font-medium text-muted-foreground flex items-center justify-center gap-1.5">
+              <Wallet className="w-3.5 h-3.5 text-primary" />
               صرفياتي هذا الشهر
             </CardTitle>
           </CardHeader>
-          <CardContent className="flex flex-col items-center text-center">
-            <div className="text-xl md:text-2xl font-bold text-foreground mb-1">
+          <CardContent className="px-4 pb-4 flex flex-col items-center text-center gap-2">
+            <div className="text-xl font-bold text-foreground">
               {format(summary?.totalThisMonth || 0, baseCurrency)}
             </div>
-            <div className={`text-xs flex items-center gap-1 mt-2 font-medium ${isOverspending ? "text-destructive" : "text-emerald-600"}`}>
-              {isOverspending ? <TrendingUp className="w-3.5 h-3.5" /> : <TrendingDown className="w-3.5 h-3.5" />}
-              <span>
-                {format(Math.abs((summary?.totalThisMonth || 0) - (summary?.totalLastMonth || 0)), baseCurrency)}{" "}
-                {isOverspending ? "أكثر من الشهر الماضي" : "أقل من الشهر الماضي"}
-              </span>
+            <div className={`text-xs flex items-center gap-1 font-medium ${isOverspending ? "text-destructive" : "text-emerald-600"}`}>
+              {isOverspending ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
+              <span>{isOverspending ? "أكثر" : "أقل"} من الشهر الماضي</span>
             </div>
           </CardContent>
         </Card>
