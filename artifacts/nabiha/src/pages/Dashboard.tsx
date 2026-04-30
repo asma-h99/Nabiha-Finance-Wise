@@ -30,15 +30,15 @@ import { useDisplayCurrency } from "@/contexts/CurrencyContext";
 import { formatMoney } from "@/lib/currency";
 import { useMemo } from "react";
 
-// Brand-aligned palette for all charts
+// Cohesive financial palette anchored to brand emerald with warm gold accents
 const COLORS = [
-  "#f59e0b", // warm gold
+  "#1B7E63", // brand emerald
   "#0d9488", // teal
-  "#1e40af", // navy
-  "#d97706", // amber
-  "#7c3aed", // violet
-  "#0891b2", // ocean blue
-  "#059669", // forest green
+  "#10b981", // mint
+  "#f59e0b", // warm gold (accent)
+  "#047857", // forest
+  "#0891b2", // ocean
+  "#84cc16", // lime sage
 ];
 const PRIORITY_COLORS = {
   essential: "hsl(var(--destructive))",
@@ -190,12 +190,11 @@ export default function Dashboard() {
           </CardContent>
         </Card>
       </div>
-      {/* Charts Row */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Priority Breakdown */}
-        <CommitmentsBreakdownCard />
-
-        {/* Category Breakdown */}
+      {/* Charts Row — in RTL the first grid item appears on visual RIGHT,
+          so we render Category Breakdown first and CommitmentsBreakdown second
+          to put the donut on the visual LEFT and the bar chart on the visual RIGHT. */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {/* Category Breakdown — visual RIGHT */}
         <Card className="rounded-3xl border-none shadow-md bg-card/60 backdrop-blur-sm overflow-hidden flex flex-col">
           <CardHeader className="pb-0">
             <CardTitle className="text-base font-bold">الإنفاق حسب الفئة</CardTitle>
@@ -289,6 +288,9 @@ export default function Dashboard() {
             )}
           </CardContent>
         </Card>
+
+        {/* Commitments Breakdown — visual LEFT */}
+        <CommitmentsBreakdownCard />
 
         {/* Monthly Trend */}
         <Card className="rounded-3xl border-none shadow-md bg-card/60 backdrop-blur-sm overflow-hidden flex flex-col lg:col-span-2">

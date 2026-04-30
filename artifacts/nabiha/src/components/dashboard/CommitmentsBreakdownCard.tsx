@@ -26,32 +26,32 @@ import {
   type LucideIcon,
 } from "lucide-react";
 
-// Cohesive financial palette anchored to brand emerald + warm gold
+// Cohesive financial palette: brand emerald family + warm gold accent
 const SLICE_COLORS = [
-  "#f59e0b", // warm gold  (accent 1)
-  "#0d9488", // teal        (adjacent to brand emerald)
-  "#1e40af", // navy blue   (trust / finance)
-  "#d97706", // amber       (warm accent)
-  "#7c3aed", // deep violet (premium)
-  "#0891b2", // ocean blue  (cool accent)
-  "#059669", // medium green
-  "#4f46e5", // indigo
-  "#0f766e", // dark teal
-  "#9333ea", // purple
+  "#0d9488", // teal
+  "#10b981", // mint
+  "#f59e0b", // warm gold (accent)
+  "#047857", // forest green
+  "#0891b2", // ocean
+  "#84cc16", // lime sage
+  "#14b8a6", // bright teal
+  "#059669", // medium emerald
+  "#0e7490", // deep cyan
+  "#65a30d", // olive
 ];
-const REMAINING_COLOR = "#1B7E63"; // brand emerald for the remaining slice
+const REMAINING_COLOR = "#1B7E63"; // brand emerald reserved for the remaining slice
 
 const ICON_COLORS = [
+  { bg: "bg-teal-100",    text: "text-teal-700"    },
   { bg: "bg-emerald-100", text: "text-emerald-700" },
   { bg: "bg-amber-100",   text: "text-amber-700"   },
-  { bg: "bg-blue-100",    text: "text-blue-700"    },
+  { bg: "bg-green-100",   text: "text-green-700"   },
   { bg: "bg-cyan-100",    text: "text-cyan-700"    },
-  { bg: "bg-violet-100",  text: "text-violet-700"  },
-  { bg: "bg-orange-100",  text: "text-orange-700"  },
+  { bg: "bg-lime-100",    text: "text-lime-700"    },
   { bg: "bg-teal-100",    text: "text-teal-700"    },
-  { bg: "bg-indigo-100",  text: "text-indigo-700"  },
+  { bg: "bg-emerald-100", text: "text-emerald-700" },
   { bg: "bg-sky-100",     text: "text-sky-700"     },
-  { bg: "bg-purple-100",  text: "text-purple-700"  },
+  { bg: "bg-green-100",   text: "text-green-700"   },
 ];
 
 function getIcon(title: string): LucideIcon {
