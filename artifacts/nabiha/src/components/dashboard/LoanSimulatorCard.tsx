@@ -6,26 +6,32 @@ import { useDisplayCurrency } from "@/contexts/CurrencyContext";
 import { PieChart, Pie, Cell } from "recharts";
 import { Landmark, Sparkles } from "lucide-react";
 
-/* ─── Gauge config ─────────────────────────────────────────────── */
-// 5 equal segments: red → orange → yellow → lime → green
+/* ─── Gauge palette — brand-aligned ───────────────────────────────
+   red (danger) → orange → brand-gold → teal → brand-emerald (safe)   */
 const GAUGE_SEGMENTS = [
-  { value: 20, color: "#ef4444" },
-  { value: 20, color: "#f97316" },
-  { value: 20, color: "#eab308" },
-  { value: 20, color: "#84cc16" },
-  { value: 20, color: "#22c55e" },
+  { value: 20, color: "#ef4444" },   // منخفض جداً
+  { value: 20, color: "#f97316" },   // منخفض
+  { value: 20, color: "#f59e0b" },   // متوسط  (brand accent gold)
+  { value: 20, color: "#0d9488" },   // جيد    (teal)
+  { value: 20, color: "#1B7E63" },   // عالٍ   (brand emerald)
 ];
 
-// Fixed gauge dimensions – both PieChart and SVG needle use these exact values
-const G_W = 240;   // total width of the gauge canvas
-const G_H = 135;   // total height (only the top semicircle is visible)
-const G_CX = 120;  // x of the donut centre (horizontally centred)
-const G_CY = 128;  // y of the donut centre – sits just below the visible arc
-const G_OUTER = 100;
-const G_INNER = 56;
-const G_NEEDLE = 88; // needle length (between inner and outer radii)
+/* ─── Fixed gauge canvas ──────────────────────────────────────────
+   Both PieChart and SVG needle share EXACTLY these pixel dimensions.
+   Any change here must be reflected in both.                        */
+const G_W  = 200;   // canvas width
+const G_H  = 110;   // canvas height (only top arc is visible)
+const G_CX = 100;   // donut centre x
+const G_CY = 106;   // donut centre y (near bottom of canvas)
+const G_OR = 92;    // outer radius
+const G_IR = 50;    // inner radius
+const G_NL = 80;    // needle length (falls inside the ring)
 
-/* ─── Score calculation (0–100) ────────────────────────────────── */
+/* ─── Score 0-100 ─────────────────────────────────────────────────
+   Three weighted factors:
+     50 pts  Affordability  – how comfortably the monthly payment fits disposable income
+     30 pts  Debt ratio     – total fixed obligations vs salary after adding the loan
+     20 pts  Savings buffer – savings as a multiple of monthly salary                */
 function calcScore(
   salary: number,
   commitmentsTotal: number,
@@ -36,117 +42,102 @@ function calcScore(
   durationMonths: number
 ): number {
   if (!salary || !durationMonths || loanAmount <= 0) return 0;
+  const pmt = loanAmount / durationMonths;
 
-  const monthlyPayment = loanAmount / durationMonths;
-  const disposable = projectedRemaining; // can be negative (already in deficit)
+  // 1. Affordability (50 pts)
+  const disposable = projectedRemaining;
+  const afford = disposable > 0 ? Math.max(0, 1 - pmt / disposable) : 0;
 
-  // ── 1. Affordability (50 pts): how comfortably can monthly payment be covered?
-  //      Full marks if payment ≤ 30% of disposable; 0 if disposable ≤ 0 or payment ≥ disposable
-  let affordability = 0;
-  if (disposable > 0) {
-    affordability = Math.max(0, 1 - monthlyPayment / disposable);
-  }
+  // 2. Debt ratio after loan (30 pts); 0 pts when ratio ≥ 55%
+  const totalFixed = commitmentsTotal + subscriptionsMonthly + pmt;
+  const debtRatio  = totalFixed / Math.max(salary, 1);
+  const debt = Math.max(0, (0.55 - debtRatio) / 0.55);
 
-  // ── 2. Total debt ratio after loan (30 pts): total fixed obligations vs salary
-  //      < 35% = great, ≥ 55% = 0 pts
-  const totalFixed = commitmentsTotal + subscriptionsMonthly + monthlyPayment;
-  const debtRatio = totalFixed / Math.max(salary, 1);
-  const debtScore = Math.max(0, (0.55 - debtRatio) / 0.55); // linear: 0.55→0, 0→1
+  // 3. Savings buffer (20 pts); full at ≥ 3 months salary
+  const savings = Math.min(1, totalSavings / Math.max(salary * 3, 1));
 
-  // ── 3. Savings buffer (20 pts): savings ≥ 3 months salary = full marks
-  const savingsScore = Math.min(1, totalSavings / Math.max(salary * 3, 1));
-
-  const raw = affordability * 50 + debtScore * 30 + savingsScore * 20;
-  return Math.round(Math.min(100, Math.max(0, raw)));
+  return Math.round(Math.min(100, Math.max(0, afford * 50 + debt * 30 + savings * 20)));
 }
 
-/* ─── Eligibility labels aligned with gauge colour bands ────────── */
-// Gauge segments: 0-20 red, 20-40 orange, 40-60 yellow, 60-80 lime, 80-100 green
-// Labels: < 40 = low (red zone), 40–70 = medium (yellow zone), > 70 = high (green zone)
-function getEligibilityInfo(score: number) {
-  if (score >= 70)
-    return { label: "مؤهليتك عالية", color: "#22c55e", bgColor: "bg-green-50 border-green-200" };
-  if (score >= 40)
-    return { label: "مؤهليتك متوسطة", color: "#eab308", bgColor: "bg-yellow-50 border-yellow-200" };
-  return { label: "مؤهليتك منخفضة", color: "#ef4444", bgColor: "bg-red-50 border-red-100" };
+/* ─── Eligibility label – colours match gauge bands ───────────────
+   < 40  → منخفضة  (red / orange zone)
+   40-69 → متوسطة  (gold zone)
+   ≥ 70  → عالية   (teal / emerald zone)                           */
+function eligibilityInfo(score: number) {
+  if (score >= 70) return { label: "مؤهليتك عالية",    color: "#1B7E63", bg: "bg-emerald-50/80 border-emerald-200" };
+  if (score >= 40) return { label: "مؤهليتك متوسطة",  color: "#d97706", bg: "bg-amber-50/80  border-amber-200"   };
+  return              { label: "مؤهليتك منخفضة",  color: "#dc2626", bg: "bg-red-50/80    border-red-200"     };
 }
 
-/* ─── Needle position ──────────────────────────────────────────── */
-// score 0 → angle 180° (left, red); score 100 → angle 0° (right, green)
-// Standard math convention, then flip y for SVG
-function needleCoords(score: number) {
-  const angleDeg = 180 - (score / 100) * 180;
-  const angleRad = (angleDeg * Math.PI) / 180;
+/* ─── Needle tip (standard math → SVG coord) ─────────────────────
+   score 0 → left (red); score 100 → right (emerald)               */
+function needleTip(score: number) {
+  const rad = ((180 - (score / 100) * 180) * Math.PI) / 180;
   return {
-    x: G_CX + G_NEEDLE * Math.cos(angleRad),
-    y: G_CY - G_NEEDLE * Math.sin(angleRad), // minus = SVG y-flip
+    x: G_CX + G_NL * Math.cos(rad),
+    y: G_CY - G_NL * Math.sin(rad),
   };
 }
 
-/* ─── Component ─────────────────────────────────────────────────── */
+/* ─── Component ──────────────────────────────────────────────────── */
 export function LoanSimulatorCard() {
-  const { data: balance, isLoading: loadingB } = useGetBalanceSummary();
-  const { data: savings, isLoading: loadingS } = useGetAccumulatedSavings();
-  const { format, baseCurrency } = useDisplayCurrency();
+  const { data: balance, isLoading: lb } = useGetBalanceSummary();
+  const { data: savings, isLoading: ls } = useGetAccumulatedSavings();
+  const { format, baseCurrency }         = useDisplayCurrency();
 
-  const [loanAmount, setLoanAmount] = useState(5000);
-  const [durationMonths, setDurationMonths] = useState(24);
+  const [loanAmount,    setLoanAmount]    = useState(5_000);
+  const [durationMonths, setDuration]     = useState(24);
 
-  const salary               = balance?.monthlySalary          ?? 0;
-  const commitmentsTotal     = balance?.commitmentsTotal        ?? 0;
-  const subscriptionsMonthly = balance?.subscriptionsMonthly    ?? 0;
-  const projectedRemaining   = balance?.projectedRemaining      ?? 0;
-  const totalSavings         = savings?.totalSavings            ?? 0;
+  const salary    = balance?.monthlySalary       ?? 0;
+  const cTotal    = balance?.commitmentsTotal     ?? 0;
+  const subsMo    = balance?.subscriptionsMonthly ?? 0;
+  const projected = balance?.projectedRemaining   ?? 0;
+  const saved     = savings?.totalSavings         ?? 0;
 
   const score = useMemo(
-    () => calcScore(salary, commitmentsTotal, subscriptionsMonthly, projectedRemaining, totalSavings, loanAmount, durationMonths),
-    [salary, commitmentsTotal, subscriptionsMonthly, projectedRemaining, totalSavings, loanAmount, durationMonths]
+    () => calcScore(salary, cTotal, subsMo, projected, saved, loanAmount, durationMonths),
+    [salary, cTotal, subsMo, projected, saved, loanAmount, durationMonths]
   );
 
-  const monthlyPayment = loanAmount / Math.max(durationMonths, 1);
-  const disposable     = Math.max(0, projectedRemaining);
-  const paymentPct     = disposable > 0 ? Math.round((monthlyPayment / disposable) * 100) : null;
-  const eligibility    = getEligibilityInfo(score);
-  const needle         = needleCoords(score);
-  const hasSalary      = salary > 0;
+  const pmt        = loanAmount / Math.max(durationMonths, 1);
+  const disposable = Math.max(0, projected);
+  const pctOfDisp  = disposable > 0 ? Math.round((pmt / disposable) * 100) : null;
+  const info       = eligibilityInfo(score);
+  const tip        = needleTip(score);
+  const hasSalary  = salary > 0;
 
-  if (loadingB || loadingS) {
-    return <Skeleton className="h-full w-full min-h-[360px] rounded-3xl" />;
-  }
+  if (lb || ls) return <Skeleton className="h-full w-full min-h-[340px] rounded-3xl" />;
 
   return (
     <Card
       className="rounded-3xl border-none shadow-md bg-card/60 backdrop-blur-sm overflow-hidden flex flex-col h-full"
       dir="rtl"
     >
-      <CardHeader className="pb-0">
-        <CardTitle className="text-base font-bold flex items-center gap-2">
-          <Landmark className="w-4 h-4 text-primary" />
+      <CardHeader className="pb-2 pt-4 px-4">
+        <CardTitle className="text-sm font-bold flex items-center gap-2 text-foreground">
+          <Landmark className="w-3.5 h-3.5 text-primary shrink-0" />
           محاكي القدرة على الاقتراض
         </CardTitle>
       </CardHeader>
 
-      <CardContent className="flex-1 p-4 flex flex-col gap-3">
+      <CardContent className="flex-1 px-4 pb-4 pt-0 flex flex-col gap-2">
         {!hasSalary ? (
-          <div className="flex-1 flex flex-col items-center justify-center text-center gap-2 py-8 text-muted-foreground text-sm">
-            <Landmark className="w-10 h-10 opacity-20" />
-            <p>أضف راتبك الشهري في الإعدادات لتفعيل المحاكي</p>
+          <div className="flex-1 flex flex-col items-center justify-center text-center gap-2 text-muted-foreground text-sm">
+            <Landmark className="w-8 h-8 opacity-20" />
+            <p className="text-xs">أضف راتبك في الإعدادات لتفعيل المحاكي</p>
           </div>
         ) : (
           <>
-            {/* ── Gauge: fixed-width wrapper so needle SVG shares the same coordinate origin ── */}
-            <div
-              className="mx-auto"
-              style={{ position: "relative", width: G_W, height: G_H }}
-            >
-              {/* Recharts half-donut */}
-              <PieChart width={G_W} height={G_H + 10} style={{ overflow: "visible" }}>
+            {/* ── Gauge ─────────────────────────────────────────────── */}
+            <div className="mx-auto" style={{ position: "relative", width: G_W, height: G_H }}>
+              {/* Half-donut */}
+              <PieChart width={G_W} height={G_H + 8} style={{ overflow: "visible" }}>
                 <Pie
                   data={GAUGE_SEGMENTS}
                   startAngle={180}
                   endAngle={0}
-                  innerRadius={G_INNER}
-                  outerRadius={G_OUTER}
+                  innerRadius={G_IR}
+                  outerRadius={G_OR}
                   dataKey="value"
                   cx={G_CX}
                   cy={G_CY}
@@ -154,139 +145,117 @@ export function LoanSimulatorCard() {
                   paddingAngle={1}
                   strokeWidth={0}
                 >
-                  {GAUGE_SEGMENTS.map((seg, i) => (
-                    <Cell key={i} fill={seg.color} />
-                  ))}
+                  {GAUGE_SEGMENTS.map((s, i) => <Cell key={i} fill={s.color} />)}
                 </Pie>
               </PieChart>
 
-              {/* Needle – same coordinate space as PieChart (G_CX, G_CY) */}
+              {/* Needle overlay – same origin as PieChart (G_CX, G_CY) */}
               <svg
                 width={G_W}
-                height={G_H + 10}
+                height={G_H + 8}
                 style={{ position: "absolute", top: 0, left: 0, pointerEvents: "none", overflow: "visible" }}
               >
-                {/* Needle line */}
+                {/* Needle */}
                 <line
-                  x1={G_CX}
-                  y1={G_CY}
-                  x2={needle.x.toFixed(2)}
-                  y2={needle.y.toFixed(2)}
+                  x1={G_CX} y1={G_CY}
+                  x2={tip.x.toFixed(2)} y2={tip.y.toFixed(2)}
                   stroke="hsl(var(--foreground))"
-                  strokeWidth={3.5}
+                  strokeWidth={3}
                   strokeLinecap="round"
                 />
-                {/* Pivot dot */}
-                <circle cx={G_CX} cy={G_CY} r={7} fill="hsl(var(--foreground))" />
-                {/* Score label at the centre of the donut */}
+                {/* Pivot */}
+                <circle cx={G_CX} cy={G_CY} r={6} fill="hsl(var(--foreground))" />
+
+                {/* Score inside the ring hole */}
                 <text
-                  x={G_CX}
-                  y={G_CY - G_INNER + 4}
-                  textAnchor="middle"
-                  dominantBaseline="middle"
-                  fontSize={13}
-                  fontWeight="700"
+                  x={G_CX} y={G_CY - G_IR + 8}
+                  textAnchor="middle" dominantBaseline="middle"
+                  fontSize={15} fontWeight="800"
                   fill="hsl(var(--foreground))"
                 >
                   {score}
                 </text>
                 <text
-                  x={G_CX}
-                  y={G_CY - G_INNER + 18}
-                  textAnchor="middle"
-                  dominantBaseline="middle"
-                  fontSize={9}
+                  x={G_CX} y={G_CY - G_IR + 22}
+                  textAnchor="middle" dominantBaseline="middle"
+                  fontSize={8}
                   fill="hsl(var(--muted-foreground))"
                 >
                   / 100
                 </text>
 
-                {/* Low / High labels at the ends of the arc */}
-                <text x={8} y={G_CY + 4} textAnchor="middle" fontSize={10} fill="#ef4444" fontWeight="600">منخفض</text>
-                <text x={G_W - 8} y={G_CY + 4} textAnchor="middle" fontSize={10} fill="#22c55e" fontWeight="600">عالٍ</text>
+                {/* Arc endpoint labels */}
+                <text x={6}       y={G_CY + 3} textAnchor="middle" fontSize={9} fill="#ef4444" fontWeight="700">منخفض</text>
+                <text x={G_W - 6} y={G_CY + 3} textAnchor="middle" fontSize={9} fill="#1B7E63" fontWeight="700">عالٍ</text>
               </svg>
             </div>
 
-            {/* Eligibility label */}
+            {/* ── Eligibility badge ──────────────────────────────────── */}
             <div
-              className={`text-center text-sm font-bold py-1.5 px-3 rounded-2xl border ${eligibility.bgColor}`}
-              style={{ color: eligibility.color }}
+              className={`text-center text-xs font-bold py-1 px-3 rounded-xl border ${info.bg}`}
+              style={{ color: info.color }}
             >
-              {eligibility.label}
+              {info.label}
             </div>
 
-            {/* Monthly payment insight */}
-            <div className="text-center text-xs text-muted-foreground flex items-center justify-center gap-1 flex-wrap">
-              <Sparkles className="w-3 h-3 text-accent shrink-0" />
+            {/* ── Monthly payment insight ────────────────────────────── */}
+            <div className="text-center text-[11px] text-muted-foreground flex items-center justify-center gap-1 flex-wrap leading-tight">
+              <Sparkles className="w-2.5 h-2.5 text-accent shrink-0" />
               <span>
-                القسط الشهري:{" "}
-                <span className="font-semibold text-foreground">{format(monthlyPayment, baseCurrency)}</span>
-                {paymentPct !== null && (
-                  <span className="text-muted-foreground"> — {paymentPct}% من دخلك المتاح</span>
-                )}
-                {projectedRemaining <= 0 && (
-                  <span className="text-red-500"> · دخلك المتاح سلبي حالياً</span>
-                )}
+                القسط:{" "}
+                <span className="font-semibold text-foreground">{format(pmt, baseCurrency)}</span>
+                {pctOfDisp !== null && <span> — {pctOfDisp}% من دخلك المتاح</span>}
+                {projected <= 0 && <span className="text-red-500"> · دخلك المتاح سلبي</span>}
               </span>
             </div>
 
-            {/* Sliders */}
-            <div className="space-y-3 pt-1">
+            {/* ── Sliders ────────────────────────────────────────────── */}
+            <div className="space-y-2.5">
               {/* Loan Amount */}
-              <div className="space-y-1.5">
+              <div className="space-y-1">
                 <div className="flex justify-between items-center">
-                  <span className="text-xs text-muted-foreground">مقدار القرض</span>
-                  <span className="text-sm font-bold text-foreground tabular-nums">
+                  <span className="text-[11px] text-muted-foreground">مقدار القرض</span>
+                  <span className="text-xs font-bold text-foreground tabular-nums">
                     {format(loanAmount, baseCurrency)}
                   </span>
                 </div>
                 <input
-                  type="range"
-                  min={500}
-                  max={100000}
-                  step={500}
+                  type="range" min={500} max={100000} step={500}
                   value={loanAmount}
                   onChange={(e) => setLoanAmount(Number(e.target.value))}
-                  className="w-full h-2 rounded-full appearance-none cursor-pointer accent-primary"
+                  className="w-full h-1.5 rounded-full appearance-none cursor-pointer accent-primary"
                   dir="ltr"
                 />
-                <div className="flex justify-between text-[10px] text-muted-foreground/60">
-                  <span>500</span>
-                  <span>100,000</span>
+                <div className="flex justify-between text-[9px] text-muted-foreground/50">
+                  <span>500</span><span>100,000</span>
                 </div>
               </div>
 
               {/* Duration */}
-              <div className="space-y-1.5">
+              <div className="space-y-1">
                 <div className="flex justify-between items-center">
-                  <span className="text-xs text-muted-foreground">المدة</span>
-                  <span className="text-sm font-bold text-foreground">
-                    {durationMonths} شهر
-                  </span>
+                  <span className="text-[11px] text-muted-foreground">المدة</span>
+                  <span className="text-xs font-bold text-foreground">{durationMonths} شهر</span>
                 </div>
                 <input
-                  type="range"
-                  min={6}
-                  max={120}
-                  step={6}
+                  type="range" min={6} max={120} step={6}
                   value={durationMonths}
-                  onChange={(e) => setDurationMonths(Number(e.target.value))}
-                  className="w-full h-2 rounded-full appearance-none cursor-pointer accent-primary"
+                  onChange={(e) => setDuration(Number(e.target.value))}
+                  className="w-full h-1.5 rounded-full appearance-none cursor-pointer accent-primary"
                   dir="ltr"
                 />
-                <div className="flex justify-between text-[10px] text-muted-foreground/60">
-                  <span>6 أشهر</span>
-                  <span>120 شهر</span>
+                <div className="flex justify-between text-[9px] text-muted-foreground/50">
+                  <span>6 أشهر</span><span>120 شهر</span>
                 </div>
               </div>
             </div>
 
-            {/* Suggestion */}
+            {/* ── Suggestion ────────────────────────────────────────── */}
             {score < 40 && (
-              <div className="text-xs text-muted-foreground bg-muted/40 rounded-2xl px-3 py-2 text-center">
-                💡 {projectedRemaining <= 0
-                  ? "نفقاتك الحالية تتجاوز دخلك — راجع ميزانيتك أولاً"
-                  : "جرّب تمديد المدة أو تخفيض مبلغ القرض لتحسين المؤهلية"}
+              <div className="text-[10px] text-muted-foreground bg-muted/40 rounded-xl px-2.5 py-1.5 text-center leading-snug">
+                {projected <= 0
+                  ? "💡 نفقاتك تتجاوز دخلك — راجع ميزانيتك أولاً"
+                  : "💡 جرّب تمديد المدة أو تخفيض مبلغ القرض"}
               </div>
             )}
           </>

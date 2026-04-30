@@ -185,9 +185,9 @@ export default function Dashboard() {
       </div>
 
       {/* Monthly Trend + Loan Simulator side by side */}
-      <div className="grid grid-cols-2 gap-6 items-stretch" dir="ltr">
-        {/* LEFT: Monthly Trend chart */}
-        <Card className="rounded-3xl border-none shadow-md bg-card/60 backdrop-blur-sm overflow-hidden flex flex-col" dir="rtl">
+      <div className="grid grid-cols-3 gap-6 items-stretch" dir="ltr">
+        {/* LEFT: Monthly Trend chart (wider – 2/3) */}
+        <Card className="col-span-2 rounded-3xl border-none shadow-md bg-card/60 backdrop-blur-sm overflow-hidden flex flex-col" dir="rtl">
           <CardHeader className="pb-0">
             <CardTitle className="text-lg">النمط الشهري</CardTitle>
             <CardDescription>تتبع صرفياتك خلال الأشهر الماضية</CardDescription>
