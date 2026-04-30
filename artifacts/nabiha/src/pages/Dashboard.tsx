@@ -126,8 +126,8 @@ export default function Dashboard() {
       <div className="grid grid-cols-1 gap-6">
         <FinancialCalendarCard />
       </div>
-      {/* CommitmentsBreakdown (left, 2/3) + stat mini-cards (right, 1/3) */}
-      <div className="grid grid-cols-3 gap-6">
+      {/* CommitmentsBreakdown (left, 3/4) + stat mini-cards (right, 1/4) */}
+      <div className="grid grid-cols-4 gap-6">
         {/* Right column: two stat cards stacked (DOM-first = visual right in RTL) */}
         <div className="flex flex-col gap-4">
           <Card className="rounded-3xl border-none shadow-md bg-card/60 backdrop-blur-sm flex-1">
@@ -169,8 +169,8 @@ export default function Dashboard() {
           </Card>
         </div>
 
-        {/* Left column: CommitmentsBreakdownCard (takes 2/3 of the row) */}
-        <div className="col-span-2">
+        {/* Left column: CommitmentsBreakdownCard (takes 3/4 of the row) */}
+        <div className="col-span-3">
           <CommitmentsBreakdownCard />
         </div>
       </div>
