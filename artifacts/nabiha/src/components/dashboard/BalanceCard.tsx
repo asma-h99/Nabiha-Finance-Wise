@@ -40,15 +40,15 @@ export function BalanceCard() {
 
   return (
     <Card className="rounded-3xl border-none shadow-md bg-card/60 backdrop-blur-sm" data-testid="card-balance">
-      <CardHeader className="pb-1 pt-4 px-4">
-        <CardTitle className="text-xs font-medium text-muted-foreground flex items-center justify-center gap-1.5">
-          <TrendingUp className="w-3.5 h-3.5" />
+      <CardHeader className="pb-0 pt-3 px-3">
+        <CardTitle className="text-[10px] font-medium text-muted-foreground flex items-center justify-center gap-1">
+          <TrendingUp className="w-3 h-3" />
           المتوقع المتبقي هذا الشهر
         </CardTitle>
       </CardHeader>
-      <CardContent className="px-4 pb-4 flex flex-col items-center text-center gap-2">
+      <CardContent className="px-3 pb-3 flex flex-col items-center text-center gap-1.5">
         <div
-          className={`text-xl font-extrabold tracking-tight ${
+          className={`text-base font-extrabold tracking-tight tabular-nums ${
             isCritical ? "text-destructive" : "text-foreground"
           }`}
           data-testid="text-balance-remaining"
@@ -56,7 +56,7 @@ export function BalanceCard() {
           {format(remaining, data.currency)}
         </div>
         {salary > 0 && (
-          <div className="h-1.5 w-full rounded-full bg-muted overflow-hidden">
+          <div className="h-1 w-full rounded-full bg-muted overflow-hidden">
             <div
               className={`h-full rounded-full transition-all duration-500 ${
                 isCritical ? "bg-destructive" : isWarning ? "bg-amber-500" : "bg-primary"
@@ -65,7 +65,7 @@ export function BalanceCard() {
             />
           </div>
         )}
-        <div className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-xs font-medium border ${stateBg} ${stateColor}`} data-testid="badge-balance-state">
+        <div className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-xl text-[10px] font-medium border ${stateBg} ${stateColor}`} data-testid="badge-balance-state">
           <StateIcon className="w-3 h-3" />
           {stateLabel}
         </div>

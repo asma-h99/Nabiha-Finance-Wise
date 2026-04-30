@@ -36,16 +36,16 @@ export function SavingsCard() {
       className="rounded-3xl border-none shadow-md bg-card/60 backdrop-blur-sm"
       data-testid="card-savings"
     >
-      <CardHeader className="pb-1 pt-4 px-4">
-        <CardTitle className="text-xs font-medium text-muted-foreground flex items-center justify-center gap-1.5">
-          <TrendingUp className="w-3.5 h-3.5 text-primary" />
+      <CardHeader className="pb-0 pt-3 px-3">
+        <CardTitle className="text-[10px] font-medium text-muted-foreground flex items-center justify-center gap-1">
+          <TrendingUp className="w-3 h-3 text-primary" />
           المدخرات المتراكمة
         </CardTitle>
       </CardHeader>
 
-      <CardContent className="px-4 pb-4 flex flex-col items-center text-center gap-2">
+      <CardContent className="px-3 pb-3 flex flex-col items-center text-center gap-1.5">
         <div
-          className={`text-xl font-extrabold tracking-tight ${
+          className={`text-base font-extrabold tracking-tight tabular-nums ${
             isPositive ? "text-primary" : "text-destructive"
           }`}
           data-testid="text-total-savings"
@@ -54,14 +54,14 @@ export function SavingsCard() {
           {format(totalSavings, currency)}
         </div>
 
-        <div className="w-full grid grid-cols-2 gap-2">
-          <div className="flex flex-col items-center bg-secondary/40 rounded-2xl p-2 border border-border/40">
-            <div className="flex items-center gap-1 text-[10px] text-muted-foreground mb-0.5">
-              <History className="w-3 h-3" />
-              <span>أشهر سابقة</span>
+        <div className="w-full grid grid-cols-2 gap-1">
+          <div className="flex flex-col items-center bg-secondary/40 rounded-xl p-1.5 border border-border/40">
+            <div className="flex items-center gap-0.5 text-[9px] text-muted-foreground mb-0.5">
+              <History className="w-2.5 h-2.5" />
+              <span>سابقة</span>
             </div>
             <span
-              className={`text-sm font-bold ${
+              className={`text-[11px] font-bold tabular-nums ${
                 previousMonthsSavings >= 0 ? "text-primary" : "text-destructive"
               }`}
             >
@@ -70,20 +70,20 @@ export function SavingsCard() {
             </span>
           </div>
 
-          <div className="flex flex-col items-center bg-secondary/40 rounded-2xl p-2 border border-border/40">
-            <div className="flex items-center gap-1 text-[10px] text-muted-foreground mb-0.5">
-              <CalendarDays className="w-3 h-3" />
+          <div className="flex flex-col items-center bg-secondary/40 rounded-xl p-1.5 border border-border/40">
+            <div className="flex items-center gap-0.5 text-[9px] text-muted-foreground mb-0.5">
+              <CalendarDays className="w-2.5 h-2.5" />
               <span>هذا الشهر</span>
             </div>
             <span
-              className={`text-sm font-bold flex items-center gap-0.5 ${
+              className={`text-[11px] font-bold flex items-center gap-0.5 tabular-nums ${
                 currentMonthSavings >= 0 ? "text-emerald-600" : "text-destructive"
               }`}
             >
               {currentMonthSavings >= 0 ? (
-                <ArrowUp className="w-3 h-3" />
+                <ArrowUp className="w-2.5 h-2.5" />
               ) : (
-                <ArrowDown className="w-3 h-3" />
+                <ArrowDown className="w-2.5 h-2.5" />
               )}
               {Math.abs(currentMonthSavings) > 0
                 ? format(Math.abs(currentMonthSavings), currency)
@@ -92,7 +92,7 @@ export function SavingsCard() {
           </div>
         </div>
 
-        <p className={`text-[10px] font-medium ${isPositive ? "text-muted-foreground" : "text-destructive"}`}>
+        <p className={`text-[9px] font-medium leading-tight ${isPositive ? "text-muted-foreground" : "text-destructive"}`}>
           {subtitle}
         </p>
       </CardContent>

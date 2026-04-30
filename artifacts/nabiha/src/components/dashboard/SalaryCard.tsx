@@ -70,9 +70,9 @@ export function SalaryCard() {
   return (
     <Card className="rounded-3xl border-none shadow-md bg-gradient-to-br from-primary to-primary/80 text-primary-foreground overflow-hidden relative" data-testid="card-salary">
       <div className="absolute -left-10 -bottom-10 w-40 h-40 bg-white/10 rounded-full blur-2xl pointer-events-none" />
-      <CardHeader className="pb-1 pt-4 px-4 relative z-10">
-        <CardTitle className="text-xs font-medium opacity-90 flex items-center justify-center gap-1.5">
-          <Wallet className="w-3.5 h-3.5" />
+      <CardHeader className="pb-0 pt-3 px-3 relative z-10">
+        <CardTitle className="text-[10px] font-medium opacity-90 flex items-center justify-center gap-1">
+          <Wallet className="w-3 h-3" />
           راتبي الشهري
         </CardTitle>
         <Dialog open={open} onOpenChange={setOpen}>
@@ -138,14 +138,14 @@ export function SalaryCard() {
           </DialogContent>
         </Dialog>
       </CardHeader>
-      <CardContent className="px-4 pb-4 relative z-10 flex flex-col items-center text-center gap-2">
+      <CardContent className="px-3 pb-3 relative z-10 flex flex-col items-center text-center gap-1.5">
         {isUnset ? (
-          <div className="space-y-2">
-            <p className="text-xs opacity-90">حدّد راتبك حتى نبيهة تساعدك تخطط صح</p>
+          <div className="space-y-1.5">
+            <p className="text-[10px] opacity-90">حدّد راتبك حتى نبيهة تساعدك تخطط صح</p>
             <Button
               variant="secondary"
               size="sm"
-              className="rounded-xl"
+              className="rounded-xl text-xs h-7"
               onClick={() => setOpen(true)}
               data-testid="button-set-salary"
             >
@@ -154,10 +154,10 @@ export function SalaryCard() {
           </div>
         ) : (
           <>
-            <div className="text-xl font-extrabold tracking-tight" data-testid="text-salary-amount">
+            <div className="text-base font-extrabold tracking-tight tabular-nums" data-testid="text-salary-amount">
               {format(salaryValue, cur.code)}
             </div>
-            <div className="flex items-center gap-1.5 text-xs opacity-80">
+            <div className="flex items-center gap-1 text-[10px] opacity-80">
               <Calendar className="w-3 h-3" />
               <span>يوم {profile?.payday} من كل شهر</span>
             </div>

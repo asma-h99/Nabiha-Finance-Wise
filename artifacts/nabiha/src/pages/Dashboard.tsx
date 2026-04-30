@@ -126,21 +126,21 @@ export default function Dashboard() {
         </div>
       </div>
       {/* Money KPIs (right → left by importance): Balance, Savings, This Month, Salary */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
+      <div className="grid grid-cols-4 gap-2">
         <BalanceCard />
         <SavingsCard />
         <Card className="rounded-3xl border-none shadow-md bg-card/60 backdrop-blur-sm" data-testid="card-this-month">
-          <CardHeader className="pb-1 pt-4 px-4">
-            <CardTitle className="text-xs font-medium text-muted-foreground flex items-center justify-center gap-1.5">
-              <Wallet className="w-3.5 h-3.5 text-primary" />
+          <CardHeader className="pb-0 pt-3 px-3">
+            <CardTitle className="text-[10px] font-medium text-muted-foreground flex items-center justify-center gap-1">
+              <Wallet className="w-3 h-3 text-primary" />
               صرفياتي هذا الشهر
             </CardTitle>
           </CardHeader>
-          <CardContent className="px-4 pb-4 flex flex-col items-center text-center gap-2">
-            <div className="text-xl font-bold text-foreground">
+          <CardContent className="px-3 pb-3 flex flex-col items-center text-center gap-1.5">
+            <div className="text-base font-bold text-foreground tabular-nums">
               {format(summary?.totalThisMonth || 0, baseCurrency)}
             </div>
-            <div className={`text-xs flex items-center gap-1 font-medium ${isOverspending ? "text-destructive" : "text-emerald-600"}`}>
+            <div className={`text-[10px] flex items-center gap-0.5 font-medium ${isOverspending ? "text-destructive" : "text-emerald-600"}`}>
               {isOverspending ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
               <span>{isOverspending ? "أكثر" : "أقل"} من الشهر الماضي</span>
             </div>
