@@ -197,7 +197,7 @@ export default function Dashboard() {
               <Skeleton className="w-full h-full rounded-2xl" />
             ) : trendChart.length > 0 ? (
               <ResponsiveContainer width="100%" height={300}>
-                <LineChart data={trendChart} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+                <LineChart data={trendChart} margin={{ top: 20, right: 10, left: -10, bottom: 5 }}>
                   <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" />
                   <XAxis dataKey="month" axisLine={false} tickLine={false} tickMargin={10} style={{ fontFamily: "var(--font-sans)", fontSize: "0.875rem", fill: "hsl(var(--foreground))" }} />
                   <YAxis axisLine={false} tickLine={false} style={{ fontFamily: "var(--font-sans)", fontSize: "0.875rem", fill: "hsl(var(--foreground))" }} />
