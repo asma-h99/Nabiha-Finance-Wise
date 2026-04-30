@@ -1,6 +1,6 @@
 import React from "react";
 import { Link, useLocation } from "wouter";
-import { LayoutDashboard, Receipt, CalendarClock, Tags, Menu, Sparkles } from "lucide-react";
+import { LayoutDashboard, Receipt, CalendarClock, Menu, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -10,8 +10,7 @@ import logoImage from "@assets/Gemini_Generated_Image_j4skn9j4skn9j4sk_177714426
 const navItems = [
   { href: "/app", label: "لوحة التحكم", icon: LayoutDashboard, hint: "نظرة شاملة على راتبك ومصاريفك" },
   { href: "/app/expenses", label: "المصاريف", icon: Receipt, hint: "سجّل مصاريفك حسب الأولوية" },
-  { href: "/app/commitments", label: "الالتزامات", icon: CalendarClock, hint: "إيجار، فواتير، أقساط" },
-  { href: "/app/categories", label: "الفئات", icon: Tags, hint: "نظّم مصاريفك بفئات خاصة" },
+  { href: "/app/commitments", label: "الالتزامات والفئات", icon: CalendarClock, hint: "إيجار، فواتير، أقساط، وفئات" },
 ];
 
 export default function Layout({
@@ -129,7 +128,7 @@ export default function Layout({
         >
           <SheetTitle className="sr-only">قائمة التنقل</SheetTitle>
           <SheetDescription className="sr-only">
-            تنقّل بين أقسام نَبِيهَة: لوحة التحكم، المصاريف، الالتزامات، والفئات.
+            تنقّل بين أقسام نَبِيهَة: لوحة التحكم، المصاريف، والالتزامات والفئات.
           </SheetDescription>
           <NavContent onNavigate={() => setMobileOpen(false)} />
         </SheetContent>

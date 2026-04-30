@@ -13,7 +13,6 @@ import Layout from "@/components/Layout";
 import Dashboard from "@/pages/Dashboard";
 import Expenses from "@/pages/Expenses";
 import Commitments from "@/pages/Commitments";
-import Categories from "@/pages/Categories";
 import { CurrencyProvider } from "@/contexts/CurrencyContext";
 import { CurrencySwitcher } from "@/components/CurrencySwitcher";
 import { NotificationsBell } from "@/components/NotificationsBell";
@@ -247,7 +246,9 @@ function AppShell() {
         <Route path="/app" component={Dashboard} />
         <Route path="/app/expenses" component={Expenses} />
         <Route path="/app/commitments" component={Commitments} />
-        <Route path="/app/categories" component={Categories} />
+        <Route path="/app/categories">
+          <Redirect to="/app/commitments?tab=categories" />
+        </Route>
         <Route component={NotFound} />
       </Switch>
     </Layout>

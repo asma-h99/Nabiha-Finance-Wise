@@ -13,8 +13,7 @@ Arabic-first financial awareness and expense management web application. The mas
 - **Subscriptions tracker**: Donut chart + add/delete (with confirmation) for monthly/yearly subscriptions, with renewal day.
 - **Dashboard (لوحة التحكم)**: Monthly spending overview, priority breakdown charts, category distribution, monthly trend.
 - **Expenses (المصاريف)**: Track expenses with 3 priority levels: ضرورية, مهمة, كمالية.
-- **Commitments (الالتزامات)**: Personal obligations (rent, loans) with due dates and payment tracking.
-- **Categories (الفئات)**: Custom expense categories with color coding.
+- **Commitments & Categories (الالتزامات والفئات)**: Unified page at `/app/commitments` with two tabs. Tab 1 manages personal obligations (rent, loans) with due dates, payment tracking, in-card edit dialog, and a back-to-dashboard button. Tab 2 manages custom expense categories with color coding. Sidebar links here as a single entry; legacy `/app/categories` redirects to this page. Card styling: `max-w-xs`, centered text, `p-4` padding, `h-8` icon buttons, theme-consistent emerald primary + amber accent.
 
 ## Stack
 
