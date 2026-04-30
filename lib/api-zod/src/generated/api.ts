@@ -241,25 +241,78 @@ export const GetCategoryBreakdownResponse = zod.array(
 );
 
 /**
+ * @summary Send a test reminder email immediately to verify the connection
+ */
+export const sendTestNotificationBodyEmailMax = 320;
+
+export const sendTestNotificationBodyUserNameMax = 80;
+
+export const SendTestNotificationBody = zod.object({
+  email: zod.string().email().max(sendTestNotificationBodyEmailMax),
+  userName: zod.string().max(sendTestNotificationBodyUserNameMax).nullish(),
+});
+
+export const SendTestNotificationResponse = zod.object({
+  sent: zod.number(),
+  skipped: zod.number(),
+  message: zod.string(),
+});
+
+/**
+ * @summary Manually run the reminder scheduler (also runs automatically every hour)
+ */
+export const RunNotificationCheckResponse = zod.object({
+  sent: zod.number(),
+  skipped: zod.number(),
+  message: zod.string(),
+});
+
+/**
  * @summary Get current user's salary & currency profile
  */
+export const getUserProfileResponseNotificationEmailMax = 320;
+
+export const getUserProfileResponseUserNameMax = 80;
+
 export const GetUserProfileResponse = zod.object({
   monthlySalary: zod.number(),
   currency: zod
     .string()
     .describe("ISO 4217 currency code (e.g. JOD, AED, SAR, USD)"),
   payday: zod.number().describe("Day of month salary is received (1-31)"),
+  emailNotificationsEnabled: zod.boolean(),
+  notificationEmail: zod
+    .string()
+    .email()
+    .max(getUserProfileResponseNotificationEmailMax)
+    .nullable(),
+  userName: zod.string().max(getUserProfileResponseUserNameMax).nullable(),
   updatedAt: zod.coerce.date(),
 });
 
 /**
  * @summary Update salary, currency, or payday
  */
+export const updateUserProfileBodyNotificationEmailMax = 320;
+
+export const updateUserProfileBodyUserNameMax = 80;
+
 export const UpdateUserProfileBody = zod.object({
   monthlySalary: zod.number().optional(),
   currency: zod.string().optional(),
   payday: zod.number().optional(),
+  emailNotificationsEnabled: zod.boolean().optional(),
+  notificationEmail: zod
+    .string()
+    .email()
+    .max(updateUserProfileBodyNotificationEmailMax)
+    .nullish(),
+  userName: zod.string().max(updateUserProfileBodyUserNameMax).nullish(),
 });
+
+export const updateUserProfileResponseNotificationEmailMax = 320;
+
+export const updateUserProfileResponseUserNameMax = 80;
 
 export const UpdateUserProfileResponse = zod.object({
   monthlySalary: zod.number(),
@@ -267,6 +320,13 @@ export const UpdateUserProfileResponse = zod.object({
     .string()
     .describe("ISO 4217 currency code (e.g. JOD, AED, SAR, USD)"),
   payday: zod.number().describe("Day of month salary is received (1-31)"),
+  emailNotificationsEnabled: zod.boolean(),
+  notificationEmail: zod
+    .string()
+    .email()
+    .max(updateUserProfileResponseNotificationEmailMax)
+    .nullable(),
+  userName: zod.string().max(updateUserProfileResponseUserNameMax).nullable(),
   updatedAt: zod.coerce.date(),
 });
 

@@ -6,6 +6,7 @@ import commitmentsRouter from "./commitments";
 import summaryRouter from "./summary";
 import profileRouter from "./profile";
 import subscriptionsRouter from "./subscriptions";
+import notificationsRouter from "./notifications";
 
 const router: IRouter = Router();
 
@@ -16,5 +17,6 @@ router.use(commitmentsRouter);
 router.use(summaryRouter);
 router.use(profileRouter);
 router.use(subscriptionsRouter);
+router.use(notificationsRouter);
 
 export default router;

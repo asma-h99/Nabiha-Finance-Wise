@@ -20,6 +20,8 @@ tags:
     description: Dashboard summary and analytics
   - name: profile
     description: User salary and currency profile
+  - name: notifications
+    description: Email reminder notifications
   - name: subscriptions
     description: Recurring subscriptions tracker
 paths:
@@ -320,6 +322,38 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/CategoryBreakdown"
+
+  /notifications/test:
+    post:
+      operationId: sendTestNotification
+      tags: [notifications]
+      summary: Send a test reminder email immediately to verify the connection
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/NotificationTestBody"
+      responses:
+        "200":
+          description: Email sent
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NotificationRunResult"
+
+  /notifications/run:
+    post:
+      operationId: runNotificationCheck
+      tags: [notifications]
+      summary: Manually run the reminder scheduler (also runs automatically every hour)
+      responses:
+        "200":
+          description: Run completed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NotificationRunResult"
 
   /profile:
     get:
@@ -736,6 +770,15 @@ components:
         payday:
           type: integer
           description: Day of month salary is received (1-31)
+        emailNotificationsEnabled:
+          type: boolean
+        notificationEmail:
+          type: ["string", "null"]
+          format: email
+          maxLength: 320
+        userName:
+          type: ["string", "null"]
+          maxLength: 80
         updatedAt:
           type: string
           format: date-time
@@ -743,6 +786,9 @@ components:
         - monthlySalary
         - currency
         - payday
+        - emailNotificationsEnabled
+        - notificationEmail
+        - userName
         - updatedAt
 
     UpdateUserProfileBody:
@@ -754,6 +800,42 @@ components:
           type: string
         payday:
           type: integer
+        emailNotificationsEnabled:
+          type: boolean
+        notificationEmail:
+          type: ["string", "null"]
+          format: email
+          maxLength: 320
+        userName:
+          type: ["string", "null"]
+          maxLength: 80
+
+    NotificationTestBody:
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+          maxLength: 320
+        userName:
+          type: ["string", "null"]
+          maxLength: 80
+      required:
+        - email
+
+    NotificationRunResult:
+      type: object
+      properties:
+        sent:
+          type: integer
+        skipped:
+          type: integer
+        message:
+          type: string
+      required:
+        - sent
+        - skipped
+        - message
 
     BillingCycle:
       type: string

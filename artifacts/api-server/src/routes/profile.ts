@@ -20,14 +20,21 @@ async function ensureProfile() {
   return created;
 }
 
-router.get("/profile", async (_req, res) => {
-  const profile = await ensureProfile();
-  res.json({
+function serialize(profile: typeof userProfileTable.$inferSelect) {
+  return {
     monthlySalary: Number(profile.monthlySalary),
     currency: profile.currency,
     payday: profile.payday,
+    emailNotificationsEnabled: profile.emailNotificationsEnabled,
+    notificationEmail: profile.notificationEmail,
+    userName: profile.userName,
     updatedAt: profile.updatedAt,
-  });
+  };
+}
+
+router.get("/profile", async (_req, res) => {
+  const profile = await ensureProfile();
+  res.json(serialize(profile));
 });
 
 router.put("/profile", async (req, res) => {
@@ -42,6 +49,10 @@ router.put("/profile", async (req, res) => {
   if (body.monthlySalary !== undefined) updates.monthlySalary = String(body.monthlySalary);
   if (body.currency !== undefined) updates.currency = body.currency;
   if (body.payday !== undefined) updates.payday = body.payday;
+  if (body.emailNotificationsEnabled !== undefined)
+    updates.emailNotificationsEnabled = body.emailNotificationsEnabled;
+  if (body.notificationEmail !== undefined) updates.notificationEmail = body.notificationEmail;
+  if (body.userName !== undefined) updates.userName = body.userName;
 
   const [profile] = await db
     .update(userProfileTable)
@@ -49,12 +60,7 @@ router.put("/profile", async (req, res) => {
     .where(eq(userProfileTable.id, PROFILE_ID))
     .returning();
 
-  res.json({
-    monthlySalary: Number(profile.monthlySalary),
-    currency: profile.currency,
-    payday: profile.payday,
-    updatedAt: profile.updatedAt,
-  });
+  res.json(serialize(profile));
 });
 
 export default router;

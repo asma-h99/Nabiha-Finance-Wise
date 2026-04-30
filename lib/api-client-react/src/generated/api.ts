@@ -33,6 +33,8 @@ import type {
   HealthStatus,
   ListExpensesParams,
   MonthlyTrend,
+  NotificationRunResult,
+  NotificationTestBody,
   PriorityBreakdown,
   Subscription,
   UpdateCommitmentBody,
@@ -1446,6 +1448,173 @@ export function useGetCategoryBreakdown<
 
   return { ...query, queryKey: queryOptions.queryKey };
 }
+
+/**
+ * @summary Send a test reminder email immediately to verify the connection
+ */
+export const getSendTestNotificationUrl = () => {
+  return `/api/notifications/test`;
+};
+
+export const sendTestNotification = async (
+  notificationTestBody: NotificationTestBody,
+  options?: RequestInit,
+): Promise<NotificationRunResult> => {
+  return customFetch<NotificationRunResult>(getSendTestNotificationUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(notificationTestBody),
+  });
+};
+
+export const getSendTestNotificationMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof sendTestNotification>>,
+    TError,
+    { data: BodyType<NotificationTestBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof sendTestNotification>>,
+  TError,
+  { data: BodyType<NotificationTestBody> },
+  TContext
+> => {
+  const mutationKey = ["sendTestNotification"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof sendTestNotification>>,
+    { data: BodyType<NotificationTestBody> }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return sendTestNotification(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type SendTestNotificationMutationResult = NonNullable<
+  Awaited<ReturnType<typeof sendTestNotification>>
+>;
+export type SendTestNotificationMutationBody = BodyType<NotificationTestBody>;
+export type SendTestNotificationMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Send a test reminder email immediately to verify the connection
+ */
+export const useSendTestNotification = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof sendTestNotification>>,
+    TError,
+    { data: BodyType<NotificationTestBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof sendTestNotification>>,
+  TError,
+  { data: BodyType<NotificationTestBody> },
+  TContext
+> => {
+  return useMutation(getSendTestNotificationMutationOptions(options));
+};
+
+/**
+ * @summary Manually run the reminder scheduler (also runs automatically every hour)
+ */
+export const getRunNotificationCheckUrl = () => {
+  return `/api/notifications/run`;
+};
+
+export const runNotificationCheck = async (
+  options?: RequestInit,
+): Promise<NotificationRunResult> => {
+  return customFetch<NotificationRunResult>(getRunNotificationCheckUrl(), {
+    ...options,
+    method: "POST",
+  });
+};
+
+export const getRunNotificationCheckMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof runNotificationCheck>>,
+    TError,
+    void,
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof runNotificationCheck>>,
+  TError,
+  void,
+  TContext
+> => {
+  const mutationKey = ["runNotificationCheck"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof runNotificationCheck>>,
+    void
+  > = () => {
+    return runNotificationCheck(requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type RunNotificationCheckMutationResult = NonNullable<
+  Awaited<ReturnType<typeof runNotificationCheck>>
+>;
+
+export type RunNotificationCheckMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Manually run the reminder scheduler (also runs automatically every hour)
+ */
+export const useRunNotificationCheck = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof runNotificationCheck>>,
+    TError,
+    void,
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof runNotificationCheck>>,
+  TError,
+  void,
+  TContext
+> => {
+  return useMutation(getRunNotificationCheckMutationOptions(options));
+};
 
 /**
  * @summary Get current user's salary & currency profile

@@ -51,16 +51,27 @@ Arabic-first financial awareness and expense management web application. The mas
 - `GET /api/summary/category-breakdown` — breakdown by category
 - `GET /api/summary/monthly-trend` — 6-month trend
 - `GET /api/summary/balance` — projected remaining balance (currency-aware)
-- `GET/PUT /api/profile` — single-row user profile (salary, currency, payday)
+- `GET/PUT /api/profile` — single-row user profile (salary, currency, payday, email notifications, name)
 - `GET/POST /api/subscriptions`, `PUT/DELETE /api/subscriptions/:id` — subscriptions CRUD
+- `POST /api/notifications/test` — send a sample reminder email immediately
+- `POST /api/notifications/run` — manually trigger the reminder scheduler (also runs hourly in background)
 
 ## DB Schema
 
 - `categories` — expense categories (name, icon, color)
 - `expenses` — individual expenses (title, amount, priority, categoryId, date)
 - `commitments` — recurring financial obligations (title, amount, dueDay, isPaid)
-- `user_profile` — single row id=1 (monthlySalary numeric(14,3), currency, payday)
+- `user_profile` — single row id=1 (monthlySalary numeric(14,3), currency, payday, emailNotificationsEnabled, notificationEmail, userName)
 - `subscriptions` — recurring digital subscriptions (name, amount numeric(14,3), billingCycle, color, renewsOnDay)
+- `sent_reminders` — dedupe ledger for outbound 48-hour reminders (commitmentId, dueDateKey YYYY-MM-DD, sentAt)
+
+## Email reminders (Nabiha persona)
+
+- Provider: Resend (uses `RESEND_API_KEY`; `RESEND_FROM_EMAIL` optional override).
+- The api-server starts an in-process scheduler (`startReminderScheduler` in `lib/notifications.ts`) on boot that runs once after 30s and then hourly.
+- For each commitment, it computes the next monthly due date and sends a friendly Arabic email if that date is exactly 2 days away and no reminder has been sent yet for that `(commitmentId, dueDateKey)`.
+- Template lives in `artifacts/api-server/src/lib/email.ts` — RTL HTML, brand emerald palette, friendly Nabiha persona greeting using `userName`.
+- UI: `artifacts/nabiha/src/components/NotificationsBell.tsx` — bell icon mounted in `App.tsx` headerExtra (visual left in RTL). Opens a dialog to toggle, set the recipient email & name, and send a test email.
 
 Note: data model is currently single-user (no per-user filtering). Per-user migration deferred.
 

@@ -129,6 +129,17 @@ export interface UserProfile {
   currency: string;
   /** Day of month salary is received (1-31) */
   payday: number;
+  emailNotificationsEnabled: boolean;
+  /**
+   * @maxLength 320
+   * @nullable
+   */
+  notificationEmail: string | null;
+  /**
+   * @maxLength 80
+   * @nullable
+   */
+  userName: string | null;
   updatedAt: string;
 }
 
@@ -136,6 +147,33 @@ export interface UpdateUserProfileBody {
   monthlySalary?: number;
   currency?: string;
   payday?: number;
+  emailNotificationsEnabled?: boolean;
+  /**
+   * @maxLength 320
+   * @nullable
+   */
+  notificationEmail?: string | null;
+  /**
+   * @maxLength 80
+   * @nullable
+   */
+  userName?: string | null;
+}
+
+export interface NotificationTestBody {
+  /** @maxLength 320 */
+  email: string;
+  /**
+   * @maxLength 80
+   * @nullable
+   */
+  userName?: string | null;
+}
+
+export interface NotificationRunResult {
+  sent: number;
+  skipped: number;
+  message: string;
 }
 
 export type BillingCycle = (typeof BillingCycle)[keyof typeof BillingCycle];
