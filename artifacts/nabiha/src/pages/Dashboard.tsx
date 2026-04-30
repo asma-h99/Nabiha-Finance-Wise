@@ -23,6 +23,7 @@ import { BalanceCard } from "@/components/dashboard/BalanceCard";
 import { SavingsCard } from "@/components/dashboard/SavingsCard";
 import { FinancialCalendarCard } from "@/components/dashboard/FinancialCalendarCard";
 import { CommitmentsBreakdownCard } from "@/components/dashboard/CommitmentsBreakdownCard";
+import { LoanSimulatorCard } from "@/components/dashboard/LoanSimulatorCard";
 import { useDisplayCurrency } from "@/contexts/CurrencyContext";
 import { formatMoney } from "@/lib/currency";
 import { useMemo } from "react";
@@ -183,43 +184,49 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* Monthly Trend */}
-      <Card className="rounded-3xl border-none shadow-md bg-card/60 backdrop-blur-sm overflow-hidden flex flex-col">
-        <CardHeader className="pb-0">
-          <CardTitle className="text-lg">النمط الشهري</CardTitle>
-          <CardDescription>تتبع صرفياتك خلال الأشهر الماضية</CardDescription>
-        </CardHeader>
-        <CardContent className="flex-1 flex flex-col justify-center p-6 min-h-[300px]">
-          {loadingTrend ? (
-            <Skeleton className="w-full h-full rounded-2xl" />
-          ) : trendChart.length > 0 ? (
-            <ResponsiveContainer width="100%" height={300}>
-              <LineChart data={trendChart} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" />
-                <XAxis dataKey="month" axisLine={false} tickLine={false} tickMargin={10} style={{ fontFamily: "var(--font-sans)", fontSize: "0.875rem", fill: "hsl(var(--foreground))" }} />
-                <YAxis axisLine={false} tickLine={false} style={{ fontFamily: "var(--font-sans)", fontSize: "0.875rem", fill: "hsl(var(--foreground))" }} />
-                <RechartsTooltip
-                  formatter={(value: number, name: string) => [
-                    formatMoney(value, displayCurrency),
-                    name === "total" ? "الإجمالي" : PRIORITY_LABELS[name as keyof typeof PRIORITY_LABELS] || name,
-                  ]}
-                  contentStyle={{ borderRadius: "12px", border: "none", boxShadow: "0 10px 15px -3px rgb(0 0 0 / 0.1)" }}
-                />
-                <Legend
-                  formatter={(value) => <span className="text-foreground font-medium pr-2">{value === "total" ? "الإجمالي" : PRIORITY_LABELS[value as keyof typeof PRIORITY_LABELS] || value}</span>}
-                  iconType="circle"
-                />
-                <Line type="monotone" dataKey="total" stroke="hsl(var(--foreground))" strokeWidth={3} dot={{ r: 4, strokeWidth: 2 }} activeDot={{ r: 6 }} />
-                <Line type="monotone" dataKey="essential" stroke={PRIORITY_COLORS.essential} strokeWidth={2} dot={false} />
-                <Line type="monotone" dataKey="important" stroke={PRIORITY_COLORS.important} strokeWidth={2} dot={false} />
-                <Line type="monotone" dataKey="luxury" stroke={PRIORITY_COLORS.luxury} strokeWidth={2} dot={false} />
-              </LineChart>
-            </ResponsiveContainer>
-          ) : (
-            <div className="text-muted-foreground text-center">لا توجد بيانات كافية</div>
-          )}
-        </CardContent>
-      </Card>
+      {/* Monthly Trend + Loan Simulator side by side */}
+      <div className="grid grid-cols-2 gap-6 items-stretch" dir="ltr">
+        {/* LEFT: Monthly Trend chart */}
+        <Card className="rounded-3xl border-none shadow-md bg-card/60 backdrop-blur-sm overflow-hidden flex flex-col" dir="rtl">
+          <CardHeader className="pb-0">
+            <CardTitle className="text-lg">النمط الشهري</CardTitle>
+            <CardDescription>تتبع صرفياتك خلال الأشهر الماضية</CardDescription>
+          </CardHeader>
+          <CardContent className="flex-1 flex flex-col justify-center p-6 min-h-[340px]">
+            {loadingTrend ? (
+              <Skeleton className="w-full h-full rounded-2xl" />
+            ) : trendChart.length > 0 ? (
+              <ResponsiveContainer width="100%" height={300}>
+                <LineChart data={trendChart} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" />
+                  <XAxis dataKey="month" axisLine={false} tickLine={false} tickMargin={10} style={{ fontFamily: "var(--font-sans)", fontSize: "0.875rem", fill: "hsl(var(--foreground))" }} />
+                  <YAxis axisLine={false} tickLine={false} style={{ fontFamily: "var(--font-sans)", fontSize: "0.875rem", fill: "hsl(var(--foreground))" }} />
+                  <RechartsTooltip
+                    formatter={(value: number, name: string) => [
+                      formatMoney(value, displayCurrency),
+                      name === "total" ? "الإجمالي" : PRIORITY_LABELS[name as keyof typeof PRIORITY_LABELS] || name,
+                    ]}
+                    contentStyle={{ borderRadius: "12px", border: "none", boxShadow: "0 10px 15px -3px rgb(0 0 0 / 0.1)" }}
+                  />
+                  <Legend
+                    formatter={(value) => <span className="text-foreground font-medium pr-2">{value === "total" ? "الإجمالي" : PRIORITY_LABELS[value as keyof typeof PRIORITY_LABELS] || value}</span>}
+                    iconType="circle"
+                  />
+                  <Line type="monotone" dataKey="total" stroke="hsl(var(--foreground))" strokeWidth={3} dot={{ r: 4, strokeWidth: 2 }} activeDot={{ r: 6 }} />
+                  <Line type="monotone" dataKey="essential" stroke={PRIORITY_COLORS.essential} strokeWidth={2} dot={false} />
+                  <Line type="monotone" dataKey="important" stroke={PRIORITY_COLORS.important} strokeWidth={2} dot={false} />
+                  <Line type="monotone" dataKey="luxury" stroke={PRIORITY_COLORS.luxury} strokeWidth={2} dot={false} />
+                </LineChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className="text-muted-foreground text-center">لا توجد بيانات كافية</div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* RIGHT: Loan Simulator */}
+        <LoanSimulatorCard />
+      </div>
     </div>
   );
 }
