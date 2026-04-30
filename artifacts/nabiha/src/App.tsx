@@ -247,7 +247,7 @@ function AppShell() {
         <Route path="/app/expenses" component={Expenses} />
         <Route path="/app/commitments" component={Commitments} />
         <Route path="/app/categories">
-          <Redirect to="/app/commitments?tab=categories" />
+          <Redirect to="/app/commitments" />
         </Route>
         <Route component={NotFound} />
       </Switch>
