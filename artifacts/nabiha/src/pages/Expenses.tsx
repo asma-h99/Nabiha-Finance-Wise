@@ -1,10 +1,12 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { 
   useListExpenses, 
   useCreateExpense, 
-  useDeleteExpense, 
+  useDeleteExpense,
+  useUpdateExpense,
   useListCategories,
-  getListExpensesQueryKey 
+  getListExpensesQueryKey,
+  type Expense,
 } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
@@ -17,7 +19,7 @@ import { Badge } from "@/components/ui/badge";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
-import { Receipt, Plus, Trash2, CalendarIcon, Hash, Search, Filter } from "lucide-react";
+import { Receipt, Plus, Trash2, Pencil, Hash, Filter } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
 import { format as formatDate } from "date-fns";
@@ -35,11 +37,18 @@ const formSchema = z.object({
   notes: z.string().optional(),
 });
 
+type FormValues = z.infer<typeof formSchema>;
+
 const PRIORITY_LABELS = {
   essential: { label: "ضرورية", color: "bg-destructive/10 text-destructive border-destructive/20" },
   important: { label: "مهمة", color: "bg-chart-3/10 text-chart-3 border-chart-3/20" },
   luxury: { label: "كمالية", color: "bg-primary/10 text-primary border-primary/20" }
 };
+
+const DASHBOARD_KEYS = [
+  ['/api/dashboard/summary'],
+  ['/api/balance/summary'],
+];
 
 export default function Expenses() {
   const queryClient = useQueryClient();
@@ -48,6 +57,8 @@ export default function Expenses() {
   
   const [filterPriority, setFilterPriority] = useState<string>("all");
   const [filterMonth, setFilterMonth] = useState<string>(new Date().toISOString().slice(0, 7));
+  const [isCreateOpen, setIsCreateOpen] = useState(false);
+  const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
 
   const { data: expenses, isLoading } = useListExpenses({ 
     month: filterMonth,
@@ -56,22 +67,28 @@ export default function Expenses() {
   
   const { data: categories } = useListCategories();
 
+  const invalidateAll = () => {
+    queryClient.invalidateQueries({ queryKey: getListExpensesQueryKey() });
+    DASHBOARD_KEYS.forEach(key => queryClient.invalidateQueries({ queryKey: key as any }));
+  };
+
   const createExpense = useCreateExpense({
     mutation: {
       onSuccess: () => {
-        queryClient.invalidateQueries({ queryKey: getListExpensesQueryKey() });
-        // Invalidate dashboard too
-        queryClient.invalidateQueries({ queryKey: ['/api/dashboard/summary'] as any });
+        invalidateAll();
         toast({ title: "تم إضافة المصروف بنجاح" });
-        setIsOpen(false);
-        form.reset({
-          title: "",
-          amount: 0,
-          priority: "important",
-          categoryId: undefined,
-          date: new Date().toISOString().split("T")[0],
-          notes: "",
-        });
+        setIsCreateOpen(false);
+        createForm.reset(defaultValues);
+      },
+    }
+  });
+
+  const updateExpense = useUpdateExpense({
+    mutation: {
+      onSuccess: () => {
+        invalidateAll();
+        toast({ title: "تم تعديل المصروف بنجاح" });
+        setEditingExpense(null);
       },
     }
   });
@@ -79,29 +96,158 @@ export default function Expenses() {
   const deleteExpense = useDeleteExpense({
     mutation: {
       onSuccess: () => {
-        queryClient.invalidateQueries({ queryKey: getListExpensesQueryKey() });
+        invalidateAll();
         toast({ title: "تم الحذف بنجاح" });
       },
     }
   });
 
-  const [isOpen, setIsOpen] = useState(false);
+  const defaultValues: FormValues = {
+    title: "",
+    amount: 0,
+    priority: "important",
+    categoryId: undefined,
+    date: new Date().toISOString().split("T")[0],
+    notes: "",
+  };
 
-  const form = useForm<z.infer<typeof formSchema>>({
+  const createForm = useForm<FormValues>({
     resolver: zodResolver(formSchema),
-    defaultValues: {
-      title: "",
-      amount: 0,
-      priority: "important",
-      categoryId: undefined,
-      date: new Date().toISOString().split("T")[0],
-      notes: "",
-    },
+    defaultValues,
   });
 
-  const onSubmit = (values: z.infer<typeof formSchema>) => {
+  const editForm = useForm<FormValues>({
+    resolver: zodResolver(formSchema),
+    defaultValues,
+  });
+
+  useEffect(() => {
+    if (editingExpense) {
+      editForm.reset({
+        title: editingExpense.title,
+        amount: Number(editingExpense.amount),
+        priority: editingExpense.priority as "essential" | "important" | "luxury",
+        categoryId: editingExpense.categoryId ?? undefined,
+        date: editingExpense.date,
+        notes: editingExpense.notes ?? "",
+      });
+    }
+  }, [editingExpense]);
+
+  const onCreateSubmit = (values: FormValues) => {
     createExpense.mutate({ data: values });
   };
+
+  const onEditSubmit = (values: FormValues) => {
+    if (!editingExpense) return;
+    updateExpense.mutate({ id: editingExpense.id, data: values });
+  };
+
+  const priorityFields = (control: any, isEdit = false) => (
+    <>
+      <FormField
+        control={control}
+        name="title"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>البيان (ماذا اشتريت؟)</FormLabel>
+            <FormControl>
+              <Input placeholder="قهوة، عشاء، تذكرة..." className="h-12 rounded-xl bg-background" {...field} />
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+      <div className="grid grid-cols-2 gap-4">
+        <FormField
+          control={control}
+          name="amount"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>المبلغ ({getCurrency(baseCurrency).code})</FormLabel>
+              <FormControl>
+                <Input type="number" step="0.01" className="h-12 rounded-xl bg-background text-lg font-semibold" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={control}
+          name="date"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>التاريخ</FormLabel>
+              <FormControl>
+                <Input type="date" className="h-12 rounded-xl bg-background" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+      </div>
+      <FormField
+        control={control}
+        name="priority"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>الأولوية (هل كان ضرورياً؟)</FormLabel>
+            <Select onValueChange={field.onChange} value={field.value}>
+              <FormControl>
+                <SelectTrigger className="h-12 rounded-xl bg-background">
+                  <SelectValue placeholder="اختر مستوى الأولوية" />
+                </SelectTrigger>
+              </FormControl>
+              <SelectContent className="rounded-xl">
+                <SelectItem value="essential">ضرورية (لا يمكن الاستغناء عنها)</SelectItem>
+                <SelectItem value="important">مهمة (تحسن جودة الحياة)</SelectItem>
+                <SelectItem value="luxury">كمالية (ترفيه ورغبات)</SelectItem>
+              </SelectContent>
+            </Select>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+      <FormField
+        control={control}
+        name="categoryId"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>الفئة (اختياري)</FormLabel>
+            <Select onValueChange={(val) => field.onChange(Number(val))} value={field.value?.toString() || ""}>
+              <FormControl>
+                <SelectTrigger className="h-12 rounded-xl bg-background">
+                  <SelectValue placeholder="اختر فئة" />
+                </SelectTrigger>
+              </FormControl>
+              <SelectContent className="rounded-xl max-h-48">
+                {categories?.map(cat => (
+                  <SelectItem key={cat.id} value={cat.id.toString()}>
+                    {cat.icon && <span className="ml-2">{cat.icon}</span>}
+                    {cat.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+      <FormField
+        control={control}
+        name="notes"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>ملاحظات (اختياري)</FormLabel>
+            <FormControl>
+              <Input placeholder="تفاصيل إضافية..." className="h-12 rounded-xl bg-background" {...field} />
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+    </>
+  );
 
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-700">
@@ -119,7 +265,8 @@ export default function Expenses() {
           </div>
         </div>
         
-        <Dialog open={isOpen} onOpenChange={setIsOpen}>
+        {/* Create Dialog */}
+        <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
           <DialogTrigger asChild>
             <Button className="rounded-xl h-12 px-6 shadow-md hover:shadow-lg transition-all" size="lg">
               <Plus className="w-5 h-5 ml-2" />
@@ -130,113 +277,9 @@ export default function Expenses() {
             <DialogHeader>
               <DialogTitle className="text-xl">تسجيل مصروف جديد</DialogTitle>
             </DialogHeader>
-            <Form {...form}>
-              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 mt-4">
-                <FormField
-                  control={form.control}
-                  name="title"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>البيان (ماذا اشتريت؟)</FormLabel>
-                      <FormControl>
-                        <Input placeholder="قهوة، عشاء، تذكرة..." className="h-12 rounded-xl bg-background" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <div className="grid grid-cols-2 gap-4">
-                  <FormField
-                    control={form.control}
-                    name="amount"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>المبلغ ({getCurrency(baseCurrency).code})</FormLabel>
-                        <FormControl>
-                          <Input type="number" step="0.01" className="h-12 rounded-xl bg-background text-lg font-semibold" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="date"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>التاريخ</FormLabel>
-                        <FormControl>
-                          <Input type="date" className="h-12 rounded-xl bg-background" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-                
-                <FormField
-                  control={form.control}
-                  name="priority"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>الأولوية (هل كان ضرورياً؟)</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
-                        <FormControl>
-                          <SelectTrigger className="h-12 rounded-xl bg-background">
-                            <SelectValue placeholder="اختر مستوى الأولوية" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent className="rounded-xl">
-                          <SelectItem value="essential">ضرورية (لا يمكن الاستغناء عنها)</SelectItem>
-                          <SelectItem value="important">مهمة (تحسن جودة الحياة)</SelectItem>
-                          <SelectItem value="luxury">كمالية (ترفيه ورغبات)</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="categoryId"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>الفئة (اختياري)</FormLabel>
-                      <Select onValueChange={(val) => field.onChange(Number(val))} value={field.value?.toString() || ""}>
-                        <FormControl>
-                          <SelectTrigger className="h-12 rounded-xl bg-background">
-                            <SelectValue placeholder="اختر فئة" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent className="rounded-xl max-h-48">
-                          {categories?.map(cat => (
-                            <SelectItem key={cat.id} value={cat.id.toString()}>
-                              {cat.icon && <span className="ml-2">{cat.icon}</span>}
-                              {cat.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="notes"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>ملاحظات (اختياري)</FormLabel>
-                      <FormControl>
-                        <Input placeholder="تفاصيل إضافية..." className="h-12 rounded-xl bg-background" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                
+            <Form {...createForm}>
+              <form onSubmit={createForm.handleSubmit(onCreateSubmit)} className="space-y-4 mt-4">
+                {priorityFields(createForm.control)}
                 <Button type="submit" className="w-full h-12 rounded-xl mt-6 text-base font-bold shadow-md" disabled={createExpense.isPending}>
                   {createExpense.isPending ? "جاري التسجيل..." : "تسجيل المصروف"}
                 </Button>
@@ -245,6 +288,23 @@ export default function Expenses() {
           </DialogContent>
         </Dialog>
       </div>
+
+      {/* Edit Dialog — single shared dialog outside the list */}
+      <Dialog open={!!editingExpense} onOpenChange={(open) => { if (!open) setEditingExpense(null); }}>
+        <DialogContent className="sm:max-w-[450px] rounded-3xl p-6 border-none shadow-xl bg-card max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="text-xl">تعديل المصروف</DialogTitle>
+          </DialogHeader>
+          <Form {...editForm}>
+            <form onSubmit={editForm.handleSubmit(onEditSubmit)} className="space-y-4 mt-4">
+              {priorityFields(editForm.control, true)}
+              <Button type="submit" className="w-full h-12 rounded-xl mt-6 text-base font-bold shadow-md" disabled={updateExpense.isPending}>
+                {updateExpense.isPending ? "جاري الحفظ..." : "حفظ التعديلات"}
+              </Button>
+            </form>
+          </Form>
+        </DialogContent>
+      </Dialog>
 
       {/* Filters */}
       <div className="flex flex-wrap gap-4 items-center bg-card/40 p-4 rounded-2xl border">
@@ -313,13 +373,24 @@ export default function Expenses() {
                     </div>
                   </div>
                   
-                  <div className="flex items-center gap-4">
+                  <div className="flex items-center gap-3">
                     <div className="text-left">
                       <div className="text-xl font-black text-foreground">
                         {format(expense.amount, baseCurrency)}
                       </div>
                     </div>
+
+                    {/* Edit button */}
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="text-muted-foreground hover:bg-primary/10 hover:text-primary rounded-xl opacity-0 group-hover:opacity-100 transition-opacity"
+                      onClick={() => setEditingExpense(expense)}
+                    >
+                      <Pencil className="w-4 h-4" />
+                    </Button>
                     
+                    {/* Delete button */}
                     <Button 
                       variant="ghost" 
                       size="icon" 
