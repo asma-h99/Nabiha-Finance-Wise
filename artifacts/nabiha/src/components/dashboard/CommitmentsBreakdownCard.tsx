@@ -54,9 +54,6 @@ const ICON_COLORS = [
   { bg: "bg-purple-100",  text: "text-purple-700"  },
 ];
 
-// Commitments matching this pattern are excluded from the pie (e.g. rent)
-const PIE_EXCLUDE_PATTERN = /إيجار|rent|شقة|منزل|بيت/i;
-
 function getIcon(title: string): LucideIcon {
   if (/إيجار|rent|منزل|بيت|شقة/i.test(title)) return Home;
   if (/كهرب|electric|ضوء/i.test(title)) return Zap;
@@ -120,8 +117,7 @@ export function CommitmentsBreakdownCard() {
 
   const salary = profile?.monthlySalary ?? 0;
   const list = (commitments ?? []).slice().sort((a, b) => a.dueDay - b.dueDay);
-  // Exclude rent/housing from the pie visualization (still counted in totals)
-  const pieList = list.filter((c) => !PIE_EXCLUDE_PATTERN.test(c.title));
+  const pieList = list;
   const totalCommitments = list.reduce((s, c) => s + Number(c.amount), 0);
   const remaining = Math.max(0, salary - totalCommitments);
 
