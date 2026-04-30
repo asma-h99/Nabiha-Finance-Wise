@@ -24,6 +24,7 @@ import {
 import happyMascot from "@assets/Gemini_Generated_Image_d3nzkdd3nzkdd3nz_1777144269395.png";
 import { SalaryCard } from "@/components/dashboard/SalaryCard";
 import { BalanceCard } from "@/components/dashboard/BalanceCard";
+import { SavingsCard } from "@/components/dashboard/SavingsCard";
 import { FinancialCalendarCard } from "@/components/dashboard/FinancialCalendarCard";
 import { CommitmentsBreakdownCard } from "@/components/dashboard/CommitmentsBreakdownCard";
 import { useDisplayCurrency } from "@/contexts/CurrencyContext";
@@ -124,8 +125,8 @@ export default function Dashboard() {
           )}
         </div>
       </div>
-      {/* Money KPIs: Salary, Balance, Subscriptions Card */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 md:gap-4">
+      {/* Money KPIs: Balance, Salary, This Month, Accumulated Savings */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
         <BalanceCard />
         <SalaryCard />
         <Card className="rounded-3xl border-none shadow-md bg-card/60 backdrop-blur-sm" data-testid="card-this-month">
@@ -145,6 +146,7 @@ export default function Dashboard() {
             </div>
           </CardContent>
         </Card>
+        <SavingsCard />
       </div>
       {/* Financial Calendar */}
       <div className="grid grid-cols-1 gap-6">

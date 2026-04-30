@@ -202,6 +202,78 @@ router.get("/summary/balance", async (_req, res) => {
   });
 });
 
+router.get("/summary/savings", async (_req, res) => {
+  const currentMonth = getCurrentMonth();
+
+  const [profile] = await db.select().from(userProfileTable);
+  const monthlySalary = Number(profile?.monthlySalary ?? 0);
+  const currency = profile?.currency ?? "JOD";
+
+  const subs = await db.select().from(subscriptionsTable);
+  const subscriptionsMonthly = subs.reduce((acc, s) => {
+    const amt = Number(s.amount);
+    return acc + (s.billingCycle === "yearly" ? amt / 12 : amt);
+  }, 0);
+
+  const commitments = await db.select().from(commitmentsTable);
+  const commitmentsTotal = commitments.reduce((acc, c) => acc + Number(c.amount), 0);
+  const unpaidCommitmentsTotal = commitments
+    .filter((c) => !c.isPaid)
+    .reduce((acc, c) => acc + Number(c.amount), 0);
+
+  // Collect all distinct months that appear in expenses
+  const monthRows = await db
+    .selectDistinct({
+      month: sql<string>`substr(${expensesTable.date}, 1, 7)`,
+    })
+    .from(expensesTable)
+    .orderBy(sql`substr(${expensesTable.date}, 1, 7)`);
+
+  const allMonths = monthRows.map((r) => r.month).filter(Boolean);
+
+  // Always include current month even if no expenses yet
+  if (!allMonths.includes(currentMonth)) {
+    allMonths.push(currentMonth);
+  }
+
+  // Fetch total expenses for every month in one pass
+  const monthlyTotals = await Promise.all(
+    allMonths.map(async (month) => {
+      const [row] = await db
+        .select({
+          total: sql<string>`COALESCE(SUM(CAST(${expensesTable.amount} AS DECIMAL)), 0)`,
+        })
+        .from(expensesTable)
+        .where(sql`${expensesTable.date} LIKE ${month + "%"}`);
+      return { month, expenses: Number(row?.total ?? 0) };
+    }),
+  );
+
+  // Calculate Si for each month
+  const monthlyBreakdown = monthlyTotals.map(({ month, expenses }) => {
+    const isCurrent = month === currentMonth;
+    // For past months assume all commitments were paid; for current use only unpaid
+    const commitmentsDeduction = isCurrent ? unpaidCommitmentsTotal : commitmentsTotal;
+    const savings = monthlySalary - expenses - commitmentsDeduction - subscriptionsMonthly;
+    return { month, savings: Math.round(savings * 1000) / 1000, isCurrent };
+  });
+
+  const currentEntry = monthlyBreakdown.find((m) => m.isCurrent);
+  const currentMonthSavings = currentEntry?.savings ?? 0;
+  const previousMonthsSavings = monthlyBreakdown
+    .filter((m) => !m.isCurrent)
+    .reduce((acc, m) => acc + m.savings, 0);
+  const totalSavings = Math.round((previousMonthsSavings + currentMonthSavings) * 1000) / 1000;
+
+  res.json({
+    currency,
+    totalSavings,
+    previousMonthsSavings: Math.round(previousMonthsSavings * 1000) / 1000,
+    currentMonthSavings: Math.round(currentMonthSavings * 1000) / 1000,
+    monthlyBreakdown,
+  });
+});
+
 router.get("/summary/monthly-trend", async (_req, res) => {
   const months: string[] = [];
   const now = new Date();

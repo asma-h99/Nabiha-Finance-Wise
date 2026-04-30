@@ -227,6 +227,26 @@ export interface BalanceSummary {
   subscriptionsCount: number;
 }
 
+export interface MonthlySavingsEntry {
+  /** Month in YYYY-MM format */
+  month: string;
+  /** Salary minus expenses, commitments, and subscriptions for this month */
+  savings: number;
+  /** Whether this entry represents the current month */
+  isCurrent: boolean;
+}
+
+export interface AccumulatedSavings {
+  currency: string;
+  /** Sum of all monthly savings (previous months + current month) */
+  totalSavings: number;
+  /** Sum of savings from all completed past months */
+  previousMonthsSavings: number;
+  /** Projected savings for the current month */
+  currentMonthSavings: number;
+  monthlyBreakdown: MonthlySavingsEntry[];
+}
+
 export type ListExpensesParams = {
   categoryId?: number;
   priority?: Priority;

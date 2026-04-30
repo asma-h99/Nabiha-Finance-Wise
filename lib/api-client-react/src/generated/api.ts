@@ -17,6 +17,7 @@ import type {
 } from "@tanstack/react-query";
 
 import type {
+  AccumulatedSavings,
   BalanceSummary,
   Category,
   CategoryBreakdown,
@@ -2176,6 +2177,81 @@ export function useGetBalanceSummary<
   request?: SecondParameter<typeof customFetch>;
 }): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
   const queryOptions = getGetBalanceSummaryQueryOptions(options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Get accumulated savings across all months
+ */
+export const getGetAccumulatedSavingsUrl = () => {
+  return `/api/summary/savings`;
+};
+
+export const getAccumulatedSavings = async (
+  options?: RequestInit,
+): Promise<AccumulatedSavings> => {
+  return customFetch<AccumulatedSavings>(getGetAccumulatedSavingsUrl(), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getGetAccumulatedSavingsQueryKey = () => {
+  return [`/api/summary/savings`] as const;
+};
+
+export const getGetAccumulatedSavingsQueryOptions = <
+  TData = Awaited<ReturnType<typeof getAccumulatedSavings>>,
+  TError = ErrorType<unknown>,
+>(options?: {
+  query?: UseQueryOptions<
+    Awaited<ReturnType<typeof getAccumulatedSavings>>,
+    TError,
+    TData
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getGetAccumulatedSavingsQueryKey();
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof getAccumulatedSavings>>
+  > = ({ signal }) => getAccumulatedSavings({ signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof getAccumulatedSavings>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type GetAccumulatedSavingsQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getAccumulatedSavings>>
+>;
+export type GetAccumulatedSavingsQueryError = ErrorType<unknown>;
+
+/**
+ * @summary Get accumulated savings across all months
+ */
+
+export function useGetAccumulatedSavings<
+  TData = Awaited<ReturnType<typeof getAccumulatedSavings>>,
+  TError = ErrorType<unknown>,
+>(options?: {
+  query?: UseQueryOptions<
+    Awaited<ReturnType<typeof getAccumulatedSavings>>,
+    TError,
+    TData
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getGetAccumulatedSavingsQueryOptions(options);
 
   const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
     queryKey: QueryKey;

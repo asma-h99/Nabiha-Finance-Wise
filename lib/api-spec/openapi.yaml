@@ -468,6 +468,19 @@ paths:
               schema:
                 $ref: "#/components/schemas/BalanceSummary"
 
+  /summary/savings:
+    get:
+      operationId: getAccumulatedSavings
+      tags: [summary]
+      summary: Get accumulated savings across all months
+      responses:
+        "200":
+          description: Accumulated savings summary
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AccumulatedSavings"
+
   /summary/monthly-trend:
     get:
       operationId: getMonthlyTrend
@@ -951,3 +964,45 @@ components:
         - spentThisMonth
         - projectedRemaining
         - subscriptionsCount
+
+    MonthlySavingsEntry:
+      type: object
+      properties:
+        month:
+          type: string
+          description: "Month in YYYY-MM format"
+        savings:
+          type: number
+          description: "Salary minus expenses, commitments, and subscriptions for this month"
+        isCurrent:
+          type: boolean
+          description: "Whether this entry represents the current month"
+      required:
+        - month
+        - savings
+        - isCurrent
+
+    AccumulatedSavings:
+      type: object
+      properties:
+        currency:
+          type: string
+        totalSavings:
+          type: number
+          description: "Sum of all monthly savings (previous months + current month)"
+        previousMonthsSavings:
+          type: number
+          description: "Sum of savings from all completed past months"
+        currentMonthSavings:
+          type: number
+          description: "Projected savings for the current month"
+        monthlyBreakdown:
+          type: array
+          items:
+            $ref: "#/components/schemas/MonthlySavingsEntry"
+      required:
+        - currency
+        - totalSavings
+        - previousMonthsSavings
+        - currentMonthSavings
+        - monthlyBreakdown

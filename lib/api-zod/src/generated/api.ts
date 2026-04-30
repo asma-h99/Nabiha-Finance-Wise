@@ -416,6 +416,35 @@ export const GetBalanceSummaryResponse = zod.object({
 });
 
 /**
+ * @summary Get accumulated savings across all months
+ */
+export const GetAccumulatedSavingsResponse = zod.object({
+  currency: zod.string(),
+  totalSavings: zod
+    .number()
+    .describe("Sum of all monthly savings (previous months + current month)"),
+  previousMonthsSavings: zod
+    .number()
+    .describe("Sum of savings from all completed past months"),
+  currentMonthSavings: zod
+    .number()
+    .describe("Projected savings for the current month"),
+  monthlyBreakdown: zod.array(
+    zod.object({
+      month: zod.string().describe("Month in YYYY-MM format"),
+      savings: zod
+        .number()
+        .describe(
+          "Salary minus expenses, commitments, and subscriptions for this month",
+        ),
+      isCurrent: zod
+        .boolean()
+        .describe("Whether this entry represents the current month"),
+    }),
+  ),
+});
+
+/**
  * @summary Get monthly spending trend for the last 6 months
  */
 export const GetMonthlyTrendResponseItem = zod.object({
