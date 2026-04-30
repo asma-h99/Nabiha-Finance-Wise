@@ -123,15 +123,15 @@ export function NotificationsBell() {
           variant="outline"
           size="icon"
           className={cn(
-            "rounded-xl h-9 w-9 relative border-primary/20 hover:bg-primary/5 hover:border-primary/40",
-            isActive && "border-accent/50 bg-accent/5",
+            "rounded-xl h-9 w-9 relative border-amber-300 bg-amber-50 hover:bg-amber-100 hover:border-amber-400",
+            isActive && "border-amber-400 bg-amber-100",
           )}
           data-testid="button-notifications-bell"
           aria-label="تنبيهات نَبِيهَة"
         >
-          <Bell className={cn("w-4 h-4", isActive ? "text-accent" : "text-primary")} />
+          <Bell className="w-4 h-4 text-amber-500" fill="currentColor" />
           {isActive && (
-            <span className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-accent border-2 border-card" />
+            <span className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-amber-500 border-2 border-card" />
           )}
         </Button>
       </DialogTrigger>
