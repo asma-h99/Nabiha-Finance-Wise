@@ -125,10 +125,10 @@ export default function Dashboard() {
           )}
         </div>
       </div>
-      {/* Money KPIs: Balance, Salary, This Month, Accumulated Savings */}
+      {/* Money KPIs (right → left by importance): Balance, Savings, This Month, Salary */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
         <BalanceCard />
-        <SalaryCard />
+        <SavingsCard />
         <Card className="rounded-3xl border-none shadow-md bg-card/60 backdrop-blur-sm" data-testid="card-this-month">
           <CardHeader className="pb-1 pt-4 px-4">
             <CardTitle className="text-xs font-medium text-muted-foreground flex items-center justify-center gap-1.5">
@@ -146,7 +146,7 @@ export default function Dashboard() {
             </div>
           </CardContent>
         </Card>
-        <SavingsCard />
+        <SalaryCard />
       </div>
       {/* Financial Calendar */}
       <div className="grid grid-cols-1 gap-6">
