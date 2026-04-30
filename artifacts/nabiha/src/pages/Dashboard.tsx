@@ -29,9 +29,9 @@ import { formatMoney } from "@/lib/currency";
 import { useMemo } from "react";
 
 const PRIORITY_COLORS = {
-  essential: "hsl(var(--destructive))",
-  important: "hsl(var(--chart-3))",
-  luxury: "hsl(var(--primary))",
+  essential: "hsl(var(--primary))",      // brand emerald
+  important: "hsl(38 92% 52%)",          // brand gold accent
+  luxury:    "hsl(var(--destructive))",  // red – luxury = risk
 };
 
 const PRIORITY_LABELS = {
@@ -192,34 +192,51 @@ export default function Dashboard() {
             <CardTitle className="text-lg">النمط الشهري</CardTitle>
             <CardDescription>تتبع صرفياتك خلال الأشهر الماضية</CardDescription>
           </CardHeader>
-          <CardContent className="flex-1 flex flex-col justify-center p-6 min-h-[340px]">
+          <CardContent className="flex-1 flex flex-col justify-center px-4 pt-3 pb-4 min-h-[340px]">
             {loadingTrend ? (
               <Skeleton className="w-full h-full rounded-2xl" />
             ) : trendChart.length > 0 ? (
               <ResponsiveContainer width="100%" height={300}>
-                <LineChart data={trendChart} margin={{ top: 20, right: 10, left: -10, bottom: 5 }}>
+                <LineChart data={trendChart} margin={{ top: 16, right: 52, left: 0, bottom: 0 }}>
                   <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" />
-                  <XAxis dataKey="month" axisLine={false} tickLine={false} tickMargin={10} style={{ fontFamily: "var(--font-sans)", fontSize: "0.875rem", fill: "hsl(var(--foreground))" }} />
-                  <YAxis axisLine={false} tickLine={false} style={{ fontFamily: "var(--font-sans)", fontSize: "0.875rem", fill: "hsl(var(--foreground))" }} />
+                  <XAxis
+                    dataKey="month"
+                    axisLine={false}
+                    tickLine={false}
+                    tickMargin={8}
+                    style={{ fontFamily: "var(--font-sans)", fontSize: "0.72rem", fill: "hsl(var(--muted-foreground))" }}
+                  />
+                  <YAxis
+                    orientation="right"
+                    axisLine={false}
+                    tickLine={false}
+                    width={46}
+                    style={{ fontFamily: "var(--font-sans)", fontSize: "0.72rem", fill: "hsl(var(--muted-foreground))" }}
+                  />
                   <RechartsTooltip
                     formatter={(value: number, name: string) => [
                       formatMoney(value, displayCurrency),
                       name === "total" ? "الإجمالي" : PRIORITY_LABELS[name as keyof typeof PRIORITY_LABELS] || name,
                     ]}
-                    contentStyle={{ borderRadius: "12px", border: "none", boxShadow: "0 10px 15px -3px rgb(0 0 0 / 0.1)" }}
+                    contentStyle={{ borderRadius: "12px", border: "none", boxShadow: "0 10px 15px -3px rgb(0 0 0 / 0.1)", fontSize: "0.75rem", direction: "rtl" }}
                   />
                   <Legend
-                    formatter={(value) => <span className="text-foreground font-medium pr-2">{value === "total" ? "الإجمالي" : PRIORITY_LABELS[value as keyof typeof PRIORITY_LABELS] || value}</span>}
                     iconType="circle"
+                    iconSize={8}
+                    formatter={(value) => (
+                      <span style={{ fontFamily: "var(--font-sans)", fontSize: "0.72rem" }} className="text-foreground font-medium px-1">
+                        {value === "total" ? "الإجمالي" : PRIORITY_LABELS[value as keyof typeof PRIORITY_LABELS] || value}
+                      </span>
+                    )}
                   />
-                  <Line type="monotone" dataKey="total" stroke="hsl(var(--foreground))" strokeWidth={3} dot={{ r: 4, strokeWidth: 2 }} activeDot={{ r: 6 }} />
-                  <Line type="monotone" dataKey="essential" stroke={PRIORITY_COLORS.essential} strokeWidth={2} dot={false} />
+                  <Line type="monotone" dataKey="total" stroke="hsl(var(--foreground))" strokeWidth={2.5} dot={{ r: 3, strokeWidth: 2 }} activeDot={{ r: 5 }} />
+                  <Line type="monotone" dataKey="essential" stroke={PRIORITY_COLORS.essential} strokeWidth={2} dot={false} strokeDasharray="0" />
                   <Line type="monotone" dataKey="important" stroke={PRIORITY_COLORS.important} strokeWidth={2} dot={false} />
-                  <Line type="monotone" dataKey="luxury" stroke={PRIORITY_COLORS.luxury} strokeWidth={2} dot={false} />
+                  <Line type="monotone" dataKey="luxury"    stroke={PRIORITY_COLORS.luxury}    strokeWidth={2} dot={false} />
                 </LineChart>
               </ResponsiveContainer>
             ) : (
-              <div className="text-muted-foreground text-center">لا توجد بيانات كافية</div>
+              <div className="text-muted-foreground text-center text-sm">لا توجد بيانات كافية</div>
             )}
           </CardContent>
         </Card>
