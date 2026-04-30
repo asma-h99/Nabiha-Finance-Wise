@@ -1,6 +1,7 @@
 import app from "./app";
 import { logger } from "./lib/logger";
 import { startReminderScheduler } from "./lib/notifications";
+import { seedCalendarEventsIfEmpty } from "./lib/seedCalendarEvents";
 
 const rawPort = process.env["PORT"];
 
@@ -23,6 +24,9 @@ app.listen(port, (err) => {
   }
 
   logger.info({ port }, "Server listening");
+
+  void seedCalendarEventsIfEmpty();
+
   if (process.env.RESEND_API_KEY) {
     startReminderScheduler();
     logger.info("Email reminder scheduler started");

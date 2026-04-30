@@ -7,6 +7,7 @@ import summaryRouter from "./summary";
 import profileRouter from "./profile";
 import subscriptionsRouter from "./subscriptions";
 import notificationsRouter from "./notifications";
+import calendarEventsRouter from "./calendar-events";
 
 const router: IRouter = Router();
 
@@ -18,5 +19,6 @@ router.use(summaryRouter);
 router.use(profileRouter);
 router.use(subscriptionsRouter);
 router.use(notificationsRouter);
+router.use(calendarEventsRouter);
 
 export default router;

@@ -4,3 +4,4 @@ export * from "./commitments";
 export * from "./userProfile";
 export * from "./subscriptions";
 export * from "./sentReminders";
+export * from "./calendarEvents";

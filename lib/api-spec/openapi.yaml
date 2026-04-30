@@ -24,6 +24,8 @@ tags:
     description: Email reminder notifications
   - name: subscriptions
     description: Recurring subscriptions tracker
+  - name: calendar-events
+    description: Calendar events (religious occasions, personal events, etc.)
 paths:
   /healthz:
     get:
@@ -495,6 +497,108 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/MonthlyTrend"
+
+  /calendar-events:
+    get:
+      operationId: listCalendarEvents
+      tags: [calendar-events]
+      summary: List calendar events with optional date range filters
+      parameters:
+        - name: from
+          in: query
+          required: false
+          schema:
+            type: string
+            description: "Start date in YYYY-MM-DD format"
+        - name: to
+          in: query
+          required: false
+          schema:
+            type: string
+            description: "End date in YYYY-MM-DD format"
+      responses:
+        "200":
+          description: List of calendar events
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/CalendarEvent"
+    post:
+      operationId: createCalendarEvent
+      tags: [calendar-events]
+      summary: Create a new calendar event
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateCalendarEventBody"
+      responses:
+        "201":
+          description: Created calendar event
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CalendarEvent"
+
+  /calendar-events/{id}:
+    get:
+      operationId: getCalendarEvent
+      tags: [calendar-events]
+      summary: Get a calendar event by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Calendar event
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CalendarEvent"
+        "404":
+          description: Not found
+    put:
+      operationId: updateCalendarEvent
+      tags: [calendar-events]
+      summary: Update a calendar event
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateCalendarEventBody"
+      responses:
+        "200":
+          description: Updated calendar event
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CalendarEvent"
+    delete:
+      operationId: deleteCalendarEvent
+      tags: [calendar-events]
+      summary: Delete a calendar event
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
 
 components:
   schemas:
@@ -1006,3 +1110,127 @@ components:
         - previousMonthsSavings
         - currentMonthSavings
         - monthlyBreakdown
+
+    CalendarEventType:
+      type: string
+      enum: [bill, subscription, loan, religious, personal, education, health, other]
+
+    CalendarEventRecurring:
+      type: string
+      enum: [none, monthly, yearly]
+
+    CalendarEventPriority:
+      type: string
+      enum: [low, normal, high]
+
+    CalendarEvent:
+      type: object
+      properties:
+        id:
+          type: integer
+        userId:
+          type: string
+          nullable: true
+          description: "Owner user ID. Null or sentinel value (nabiha_demo_seed) means read-only demo event."
+        title:
+          type: string
+        date:
+          type: string
+          format: date
+          description: "Full date in YYYY-MM-DD format"
+        type:
+          $ref: "#/components/schemas/CalendarEventType"
+        amount:
+          type: number
+          nullable: true
+        currency:
+          type: string
+        categoryId:
+          type: integer
+          nullable: true
+        recurring:
+          $ref: "#/components/schemas/CalendarEventRecurring"
+        priority:
+          $ref: "#/components/schemas/CalendarEventPriority"
+        notes:
+          type: string
+          nullable: true
+        isPaid:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - title
+        - date
+        - type
+        - currency
+        - recurring
+        - priority
+        - isPaid
+        - createdAt
+        - updatedAt
+
+    CreateCalendarEventBody:
+      type: object
+      properties:
+        title:
+          type: string
+        date:
+          type: string
+          format: date
+          description: "Full date in YYYY-MM-DD format"
+        type:
+          $ref: "#/components/schemas/CalendarEventType"
+        amount:
+          type: number
+          nullable: true
+        currency:
+          type: string
+        categoryId:
+          type: integer
+          nullable: true
+        recurring:
+          $ref: "#/components/schemas/CalendarEventRecurring"
+        priority:
+          $ref: "#/components/schemas/CalendarEventPriority"
+        notes:
+          type: string
+          nullable: true
+        isPaid:
+          type: boolean
+      required:
+        - title
+        - date
+
+    UpdateCalendarEventBody:
+      type: object
+      properties:
+        title:
+          type: string
+        date:
+          type: string
+          format: date
+        type:
+          $ref: "#/components/schemas/CalendarEventType"
+        amount:
+          type: number
+          nullable: true
+        currency:
+          type: string
+        categoryId:
+          type: integer
+          nullable: true
+        recurring:
+          $ref: "#/components/schemas/CalendarEventRecurring"
+        priority:
+          $ref: "#/components/schemas/CalendarEventPriority"
+        notes:
+          type: string
+          nullable: true
+        isPaid:
+          type: boolean

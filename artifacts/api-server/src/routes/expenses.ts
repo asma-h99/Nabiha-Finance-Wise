@@ -52,10 +52,11 @@ router.post("/expenses", async (req, res) => {
     return;
   }
   const { title, amount, priority, categoryId, notes, date } = parseResult.data;
+  const dateStr = date instanceof Date ? date.toISOString().slice(0, 10) : String(date);
 
   const [expense] = await db
     .insert(expensesTable)
-    .values({ title, amount: String(amount), priority, categoryId: categoryId ?? null, notes: notes ?? null, date })
+    .values({ title, amount: String(amount), priority, categoryId: categoryId ?? null, notes: notes ?? null, date: dateStr })
     .returning();
 
   const categoryName = categoryId
@@ -115,7 +116,9 @@ router.put("/expenses/:id", async (req, res) => {
   if (body.priority !== undefined) updates.priority = body.priority;
   if (body.categoryId !== undefined) updates.categoryId = body.categoryId ?? null;
   if (body.notes !== undefined) updates.notes = body.notes ?? null;
-  if (body.date !== undefined) updates.date = body.date;
+  if (body.date !== undefined) {
+    updates.date = body.date instanceof Date ? body.date.toISOString().slice(0, 10) : String(body.date);
+  }
 
   const [expense] = await db
     .update(expensesTable)

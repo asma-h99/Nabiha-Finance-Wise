@@ -455,3 +455,179 @@ export const GetMonthlyTrendResponseItem = zod.object({
   luxury: zod.number(),
 });
 export const GetMonthlyTrendResponse = zod.array(GetMonthlyTrendResponseItem);
+
+/**
+ * @summary List calendar events with optional date range filters
+ */
+export const ListCalendarEventsQueryParams = zod.object({
+  from: zod.coerce.string().optional(),
+  to: zod.coerce.string().optional(),
+});
+
+export const ListCalendarEventsResponseItem = zod.object({
+  id: zod.number(),
+  userId: zod
+    .string()
+    .nullish()
+    .describe(
+      "Owner user ID. Null or sentinel value (nabiha_demo_seed) means read-only demo event.",
+    ),
+  title: zod.string(),
+  date: zod.coerce.date().describe("Full date in YYYY-MM-DD format"),
+  type: zod.enum([
+    "bill",
+    "subscription",
+    "loan",
+    "religious",
+    "personal",
+    "education",
+    "health",
+    "other",
+  ]),
+  amount: zod.number().nullish(),
+  currency: zod.string(),
+  categoryId: zod.number().nullish(),
+  recurring: zod.enum(["none", "monthly", "yearly"]),
+  priority: zod.enum(["low", "normal", "high"]),
+  notes: zod.string().nullish(),
+  isPaid: zod.boolean(),
+  createdAt: zod.coerce.date(),
+  updatedAt: zod.coerce.date(),
+});
+export const ListCalendarEventsResponse = zod.array(
+  ListCalendarEventsResponseItem,
+);
+
+/**
+ * @summary Create a new calendar event
+ */
+export const CreateCalendarEventBody = zod.object({
+  title: zod.string(),
+  date: zod.coerce.date().describe("Full date in YYYY-MM-DD format"),
+  type: zod
+    .enum([
+      "bill",
+      "subscription",
+      "loan",
+      "religious",
+      "personal",
+      "education",
+      "health",
+      "other",
+    ])
+    .optional(),
+  amount: zod.number().nullish(),
+  currency: zod.string().optional(),
+  categoryId: zod.number().nullish(),
+  recurring: zod.enum(["none", "monthly", "yearly"]).optional(),
+  priority: zod.enum(["low", "normal", "high"]).optional(),
+  notes: zod.string().nullish(),
+  isPaid: zod.boolean().optional(),
+});
+
+/**
+ * @summary Get a calendar event by ID
+ */
+export const GetCalendarEventParams = zod.object({
+  id: zod.coerce.number(),
+});
+
+export const GetCalendarEventResponse = zod.object({
+  id: zod.number(),
+  userId: zod
+    .string()
+    .nullish()
+    .describe(
+      "Owner user ID. Null or sentinel value (nabiha_demo_seed) means read-only demo event.",
+    ),
+  title: zod.string(),
+  date: zod.coerce.date().describe("Full date in YYYY-MM-DD format"),
+  type: zod.enum([
+    "bill",
+    "subscription",
+    "loan",
+    "religious",
+    "personal",
+    "education",
+    "health",
+    "other",
+  ]),
+  amount: zod.number().nullish(),
+  currency: zod.string(),
+  categoryId: zod.number().nullish(),
+  recurring: zod.enum(["none", "monthly", "yearly"]),
+  priority: zod.enum(["low", "normal", "high"]),
+  notes: zod.string().nullish(),
+  isPaid: zod.boolean(),
+  createdAt: zod.coerce.date(),
+  updatedAt: zod.coerce.date(),
+});
+
+/**
+ * @summary Update a calendar event
+ */
+export const UpdateCalendarEventParams = zod.object({
+  id: zod.coerce.number(),
+});
+
+export const UpdateCalendarEventBody = zod.object({
+  title: zod.string().optional(),
+  date: zod.coerce.date().optional(),
+  type: zod
+    .enum([
+      "bill",
+      "subscription",
+      "loan",
+      "religious",
+      "personal",
+      "education",
+      "health",
+      "other",
+    ])
+    .optional(),
+  amount: zod.number().nullish(),
+  currency: zod.string().optional(),
+  categoryId: zod.number().nullish(),
+  recurring: zod.enum(["none", "monthly", "yearly"]).optional(),
+  priority: zod.enum(["low", "normal", "high"]).optional(),
+  notes: zod.string().nullish(),
+  isPaid: zod.boolean().optional(),
+});
+
+export const UpdateCalendarEventResponse = zod.object({
+  id: zod.number(),
+  userId: zod
+    .string()
+    .nullish()
+    .describe(
+      "Owner user ID. Null or sentinel value (nabiha_demo_seed) means read-only demo event.",
+    ),
+  title: zod.string(),
+  date: zod.coerce.date().describe("Full date in YYYY-MM-DD format"),
+  type: zod.enum([
+    "bill",
+    "subscription",
+    "loan",
+    "religious",
+    "personal",
+    "education",
+    "health",
+    "other",
+  ]),
+  amount: zod.number().nullish(),
+  currency: zod.string(),
+  categoryId: zod.number().nullish(),
+  recurring: zod.enum(["none", "monthly", "yearly"]),
+  priority: zod.enum(["low", "normal", "high"]),
+  notes: zod.string().nullish(),
+  isPaid: zod.boolean(),
+  createdAt: zod.coerce.date(),
+  updatedAt: zod.coerce.date(),
+});
+
+/**
+ * @summary Delete a calendar event
+ */
+export const DeleteCalendarEventParams = zod.object({
+  id: zod.coerce.number(),
+});

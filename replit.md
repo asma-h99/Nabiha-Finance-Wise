@@ -13,6 +13,8 @@ Arabic-first financial awareness and expense management web application. The mas
 - **Subscriptions tracker**: Donut chart + add/delete (with confirmation) for monthly/yearly subscriptions, with renewal day.
 - **Dashboard (لوحة التحكم)**: Monthly spending overview, priority breakdown charts, category distribution, monthly trend. KPI row (4 cards): Balance, Salary, This Month, Accumulated Savings.
 - **Accumulated Savings (المدخرات المتراكمة)**: New card on the dashboard. Formula: Σ(i=1..n-1) S_i + S_n where S_i = salary − expenses_i − commitmentsTotal − subscriptionsMonthly (past months assume all commitments paid) and S_n uses only unpaid commitments for the current month. Endpoint: GET /api/summary/savings. Returns totalSavings, previousMonthsSavings, currentMonthSavings, monthlyBreakdown[]. Card shows total with a mini bar chart (positive months emerald, negative months red), 2-col breakdown sub-row, and a motivational badge.
+- **Financial Calendar Timeline Modal**: Clicking any month tile on the yearly Financial Calendar card opens a full-screen modal with a merged vertical timeline of all financial events for that month — commitments, subscriptions, expenses, and new calendar events. The modal shows a summary row (total payments, event count, upcoming/overdue warnings), a borrowing-capacity gauge (salary minus monthly committed outflow), and a highlighted banner for major occasions (Eid, Ramadan). Each timeline row has contextual icons/colors by event type, status rings (green/orange/red), category badges, mark-paid toggles, and edit/delete controls for calendar events. An "+ إضافة حدث" button opens an add/edit form.
+- **Calendar Events (أحداث التقويم)**: New entity stored in `calendar_events` table. Types: bill, subscription, loan, religious, personal, education, health, other. Fields: title, date, type, amount (optional), currency, categoryId, recurring (none/monthly/yearly), priority (low/normal/high), notes, isPaid. Full CRUD at `/api/calendar-events`. Seeded demo events: عيد الفطر, عيد الأضحى, رسوم مدرسية, فحص طبي.
 - **Expenses (المصاريف)**: Track expenses with 3 priority levels: ضرورية, مهمة, كمالية.
 - **Commitments & Categories (الالتزامات والفئات)**: Unified page at `/app/commitments` with two tabs. Tab 1 manages personal obligations (rent, loans) with due dates, payment tracking, in-card edit dialog, and a back-to-dashboard button. Tab 2 manages custom expense categories with color coding. Sidebar links here as a single entry; legacy `/app/categories` redirects to this page. Card styling: `max-w-xs`, centered text, `p-4` padding, `h-8` icon buttons, theme-consistent emerald primary + amber accent.
 
@@ -55,6 +57,8 @@ Arabic-first financial awareness and expense management web application. The mas
 - `GET/POST /api/subscriptions`, `PUT/DELETE /api/subscriptions/:id` — subscriptions CRUD
 - `POST /api/notifications/test` — send a sample reminder email immediately
 - `POST /api/notifications/run` — manually trigger the reminder scheduler (also runs hourly in background)
+- `GET/POST /api/calendar-events` — calendar events CRUD (with optional `from`/`to` date filters)
+- `GET/PUT/DELETE /api/calendar-events/:id`
 
 ## DB Schema
 
@@ -64,6 +68,7 @@ Arabic-first financial awareness and expense management web application. The mas
 - `user_profile` — single row id=1 (monthlySalary numeric(14,3), currency, payday, emailNotificationsEnabled, notificationEmail, userName)
 - `subscriptions` — recurring digital subscriptions (name, amount numeric(14,3), billingCycle, color, renewsOnDay)
 - `sent_reminders` — dedupe ledger for outbound 48-hour reminders (commitmentId, dueDateKey YYYY-MM-DD, sentAt)
+- `calendar_events` — calendar events for the timeline modal (title, date, type, amount nullable numeric(14,3), currency, categoryId nullable, recurring, priority, notes, isPaid)
 
 ## Email reminders (Nabiha persona)
 

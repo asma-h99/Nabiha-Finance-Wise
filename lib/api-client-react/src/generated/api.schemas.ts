@@ -247,6 +247,84 @@ export interface AccumulatedSavings {
   monthlyBreakdown: MonthlySavingsEntry[];
 }
 
+export type CalendarEventType =
+  (typeof CalendarEventType)[keyof typeof CalendarEventType];
+
+export const CalendarEventType = {
+  bill: "bill",
+  subscription: "subscription",
+  loan: "loan",
+  religious: "religious",
+  personal: "personal",
+  education: "education",
+  health: "health",
+  other: "other",
+} as const;
+
+export type CalendarEventRecurring =
+  (typeof CalendarEventRecurring)[keyof typeof CalendarEventRecurring];
+
+export const CalendarEventRecurring = {
+  none: "none",
+  monthly: "monthly",
+  yearly: "yearly",
+} as const;
+
+export type CalendarEventPriority =
+  (typeof CalendarEventPriority)[keyof typeof CalendarEventPriority];
+
+export const CalendarEventPriority = {
+  low: "low",
+  normal: "normal",
+  high: "high",
+} as const;
+
+export interface CalendarEvent {
+  id: number;
+  /** Owner user ID. Null or sentinel value (nabiha_demo_seed) means read-only demo event. */
+  userId?: string | null;
+  title: string;
+  /** Full date in YYYY-MM-DD format */
+  date: string;
+  type: CalendarEventType;
+  amount?: number | null;
+  currency: string;
+  categoryId?: number | null;
+  recurring: CalendarEventRecurring;
+  priority: CalendarEventPriority;
+  notes?: string | null;
+  isPaid: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreateCalendarEventBody {
+  title: string;
+  /** Full date in YYYY-MM-DD format */
+  date: string;
+  type?: CalendarEventType;
+  amount?: number | null;
+  currency?: string;
+  categoryId?: number | null;
+  recurring?: CalendarEventRecurring;
+  priority?: CalendarEventPriority;
+  notes?: string | null;
+  isPaid?: boolean;
+}
+
+export interface UpdateCalendarEventBody {
+  title?: string;
+  date?: string;
+  type?: CalendarEventType;
+  amount?: number | null;
+  currency?: string;
+  categoryId?: number | null;
+  recurring?: CalendarEventRecurring;
+  priority?: CalendarEventPriority;
+  notes?: string | null;
+  isPaid?: boolean;
+}
+
 export type ListExpensesParams = {
   categoryId?: number;
   priority?: Priority;
@@ -269,4 +347,15 @@ export type GetPriorityBreakdownParams = {
 
 export type GetCategoryBreakdownParams = {
   month?: string;
+};
+
+export type ListCalendarEventsParams = {
+  /**
+   * Start date in YYYY-MM-DD format
+   */
+  from?: string;
+  /**
+   * End date in YYYY-MM-DD format
+   */
+  to?: string;
 };
