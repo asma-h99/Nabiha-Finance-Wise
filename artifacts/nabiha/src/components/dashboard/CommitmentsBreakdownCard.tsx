@@ -244,8 +244,11 @@ export function CommitmentsBreakdownCard() {
               {/* Remaining */}
               <div className="flex items-center gap-2 px-3 py-2 rounded-2xl border border-emerald-200 bg-emerald-50/60" data-testid="row-remaining">
                 <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: REMAINING_COLOR }} />
-                <span className="flex-1 font-bold text-sm text-emerald-700">الراتب المتبقي</span>
-                <span className="font-bold text-sm text-emerald-700 tabular-nums">{format(remaining, baseCurrency)}</span>
+                <div className="flex-1 min-w-0">
+                  <span className="font-bold text-sm text-emerald-700 block">المتبقي بعد الالتزامات</span>
+                  <span className="text-[10px] text-muted-foreground">بدون الصرفيات والاشتراكات</span>
+                </div>
+                <span className="font-bold text-sm text-emerald-700 tabular-nums shrink-0">{format(remaining, baseCurrency)}</span>
               </div>
             </div>
           </div>

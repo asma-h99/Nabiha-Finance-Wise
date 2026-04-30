@@ -1,5 +1,6 @@
 import {
   useGetDashboardSummary,
+  useGetBalanceSummary,
   useGetMonthlyTrend,
   useGetUserProfile,
 } from "@workspace/api-client-react";
@@ -42,6 +43,7 @@ export default function Dashboard() {
   const currentMonth = new Date().toISOString().slice(0, 7);
   const { data: profile } = useGetUserProfile();
   const { data: summary, isLoading: loadingSummary } = useGetDashboardSummary({ month: currentMonth });
+  const { data: balance } = useGetBalanceSummary();
   const { data: trendData, isLoading: loadingTrend } = useGetMonthlyTrend();
 
   const { format, convert, displayCurrency, baseCurrency } = useDisplayCurrency();
@@ -152,18 +154,24 @@ export default function Dashboard() {
             <CardHeader className="pb-2">
               <CardTitle className="text-sm font-medium text-muted-foreground flex items-center justify-center gap-2">
                 <Info className="w-4 h-4 text-chart-3" />
-                نسبة الالتزامات من الراتب
+                الأعباء الثابتة من الراتب
               </CardTitle>
             </CardHeader>
             <CardContent className="flex flex-col items-center text-center">
               <div className="text-xl font-bold text-foreground mb-1">
-                {profile?.monthlySalary && summary?.commitmentsTotal
-                  ? `${Math.min(100, Math.round((summary.commitmentsTotal / profile.monthlySalary) * 100))}%`
-                  : "—"}
+                {(() => {
+                  const salary = profile?.monthlySalary ? Number(profile.monthlySalary) : 0;
+                  const fixed = (summary?.commitmentsTotal ?? 0) + (balance?.subscriptionsMonthly ?? 0);
+                  if (!salary || !fixed) return "—";
+                  return `${Math.min(100, Math.round((fixed / salary) * 100))}%`;
+                })()}
               </div>
-              <div className="text-xs text-muted-foreground mt-2 flex items-center gap-1">
+              <div className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
+                <span className="text-[10px] text-muted-foreground/70">التزامات + اشتراكات</span>
+              </div>
+              <div className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
                 <Sparkles className="w-3.5 h-3.5 text-accent" />
-                <span>يُنصح ألا تتجاوز 50% من الراتب</span>
+                <span>يُنصح ألا تتجاوز 50%</span>
               </div>
             </CardContent>
           </Card>
