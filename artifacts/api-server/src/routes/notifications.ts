@@ -1,5 +1,4 @@
 import { Router } from "express";
-import { getAuth } from "@clerk/express";
 import { SendTestNotificationBody } from "@workspace/api-zod";
 import { sendReminderEmail } from "../lib/email";
 import { runReminderCheck } from "../lib/notifications";
@@ -7,16 +6,9 @@ import { runReminderCheck } from "../lib/notifications";
 const router = Router();
 
 router.post("/notifications/test", async (req, res) => {
-  // Require an authenticated session so this email-sending endpoint cannot be
-  // abused by unauthenticated callers to send arbitrary mail through Resend.
-  const { userId } = getAuth(req);
-  if (!userId) {
-    res.status(401).json({ error: "Unauthorized" });
-    return;
-  }
   const parsed = SendTestNotificationBody.safeParse(req.body);
   if (!parsed.success) {
-    res.status(400).json({ error: "Invalid body" });
+    res.status(400).json({ error: "بريد إلكتروني غير صالح" });
     return;
   }
   const { email, userName } = parsed.data;
@@ -33,7 +25,17 @@ router.post("/notifications/test", async (req, res) => {
     res.json({ sent: 1, skipped: 0, message: "تم إرسال البريد التجريبي بنجاح" });
   } catch (err) {
     req.log.error({ err }, "Test email failed");
-    const msg = err instanceof Error ? err.message : "فشل إرسال البريد";
+    const raw = err instanceof Error ? err.message : "";
+    let msg = "فشل إرسال البريد. حاولي مرة أخرى لاحقاً.";
+    const sandboxMatch = raw.match(/own email address \(([^)]+)\)/i);
+    if (sandboxMatch) {
+      const verified = sandboxMatch[1];
+      msg = `حساب Resend في وضع الاختبار، لذلك لا يمكن الإرسال إلا للعنوان الموثّق: ${verified}. لإرسال الرسائل لأي عنوان، يجب توثيق نطاق على resend.com/domains وضبط RESEND_FROM_EMAIL.`;
+    } else if (/api key/i.test(raw)) {
+      msg = "مفتاح Resend غير صالح أو مفقود.";
+    } else if (raw) {
+      msg = `تعذّر إرسال البريد: ${raw}`;
+    }
     res.status(500).json({ sent: 0, skipped: 0, message: msg });
   }
 });
