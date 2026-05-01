@@ -6,7 +6,7 @@ import {
 } from "@workspace/api-client-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { AlertCircle, Wallet, Target, Info, Sparkles, TrendingUp, TrendingDown } from "lucide-react";
+import { AlertCircle, Wallet, Target, Info, Sparkles } from "lucide-react";
 import {
   ResponsiveContainer,
   LineChart,
@@ -75,8 +75,6 @@ export default function Dashboard() {
     );
   }
 
-  const isOverspending = (summary?.totalThisMonth || 0) > (summary?.totalLastMonth || 0);
-
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700 text-center">
       {/* Welcome Banner */}
@@ -114,23 +112,9 @@ export default function Dashboard() {
               إجمالي الإنفاق
             </CardTitle>
           </CardHeader>
-          <CardContent className="px-3 pb-3 flex flex-col items-center text-center gap-1">
+          <CardContent className="px-3 pb-3 flex flex-col items-center text-center">
             <div className="text-base font-bold text-foreground tabular-nums">
               {format((summary?.totalThisMonth || 0) + (summary?.commitmentsTotal || 0), baseCurrency)}
-            </div>
-            <div className="flex flex-col gap-0.5 w-full">
-              <div className="text-[9px] text-muted-foreground flex items-center justify-between px-1">
-                <span className="text-primary/70">صرفيات</span>
-                <span className="tabular-nums font-medium">{format(summary?.totalThisMonth || 0, baseCurrency)}</span>
-              </div>
-              <div className="text-[9px] text-muted-foreground flex items-center justify-between px-1">
-                <span className="text-accent/80">التزامات</span>
-                <span className="tabular-nums font-medium">{format(summary?.commitmentsTotal || 0, baseCurrency)}</span>
-              </div>
-            </div>
-            <div className={`text-[9px] flex items-center gap-0.5 font-medium ${isOverspending ? "text-destructive" : "text-emerald-600"}`}>
-              {isOverspending ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
-              <span>الصرفيات {isOverspending ? "أكثر" : "أقل"} من الشهر الماضي</span>
             </div>
           </CardContent>
         </Card>
