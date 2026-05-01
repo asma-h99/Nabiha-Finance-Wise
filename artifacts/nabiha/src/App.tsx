@@ -16,6 +16,7 @@ import { CurrencyProvider } from "@/contexts/CurrencyContext";
 import { CurrencySwitcher } from "@/components/CurrencySwitcher";
 import { NotificationsBell } from "@/components/NotificationsBell";
 import { NabihaBubble } from "@/components/NabihaBubble";
+import { OnboardingTour } from "@/components/OnboardingTour";
 
 import logoImage from "@assets/Gemini_Generated_Image_j4skn9j4skn9j4sk_1777594348722.png";
 
@@ -278,6 +279,7 @@ function AppShell() {
       </Switch>
     </Layout>
     <NabihaBubble />
+    <OnboardingTour />
     </>
   );
 }
