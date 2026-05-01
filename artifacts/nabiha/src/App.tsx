@@ -19,6 +19,7 @@ import { NabihaBubble } from "@/components/NabihaBubble";
 import { OnboardingTour } from "@/components/OnboardingTour";
 
 import logoImage from "@assets/Gemini_Generated_Image_j4skn9j4skn9j4sk_1777594348722.png";
+import heroImage from "@assets/Gemini_Generated_Image_capuzucapuzucapu_1777642645923.png";
 
 const queryClient = new QueryClient();
 
@@ -208,8 +209,8 @@ function Landing() {
 
           <div className="order-1 lg:order-2 flex justify-center">
             <div className="relative">
-              <div className="absolute inset-0 bg-primary/20 rounded-full blur-2xl" />
-              <img src={logoImage} alt="نَبِيهَة" className="relative w-48 h-48 md:w-64 md:h-64 rounded-full object-cover border-4 border-white shadow-xl" />
+              <div className="absolute inset-0 bg-primary/20 rounded-full blur-2xl scale-110" />
+              <img src={heroImage} alt="نَبِيهَة" className="relative w-52 h-52 md:w-72 md:h-72 rounded-full object-cover object-top border-4 border-white shadow-2xl" />
             </div>
           </div>
         </section>
