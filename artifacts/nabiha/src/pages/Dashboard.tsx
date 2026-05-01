@@ -111,16 +111,26 @@ export default function Dashboard() {
           <CardHeader className="pb-0 pt-3 px-3">
             <CardTitle className="text-[10px] font-medium text-muted-foreground flex items-center justify-center gap-1">
               <Wallet className="w-3 h-3 text-primary" />
-              صرفياتي هذا الشهر
+              إجمالي الإنفاق
             </CardTitle>
           </CardHeader>
-          <CardContent className="px-3 pb-3 flex flex-col items-center text-center gap-1.5">
+          <CardContent className="px-3 pb-3 flex flex-col items-center text-center gap-1">
             <div className="text-base font-bold text-foreground tabular-nums">
-              {format(summary?.totalThisMonth || 0, baseCurrency)}
+              {format((summary?.totalThisMonth || 0) + (summary?.commitmentsTotal || 0), baseCurrency)}
             </div>
-            <div className={`text-[10px] flex items-center gap-0.5 font-medium ${isOverspending ? "text-destructive" : "text-emerald-600"}`}>
+            <div className="flex flex-col gap-0.5 w-full">
+              <div className="text-[9px] text-muted-foreground flex items-center justify-between px-1">
+                <span className="text-primary/70">صرفيات</span>
+                <span className="tabular-nums font-medium">{format(summary?.totalThisMonth || 0, baseCurrency)}</span>
+              </div>
+              <div className="text-[9px] text-muted-foreground flex items-center justify-between px-1">
+                <span className="text-accent/80">التزامات</span>
+                <span className="tabular-nums font-medium">{format(summary?.commitmentsTotal || 0, baseCurrency)}</span>
+              </div>
+            </div>
+            <div className={`text-[9px] flex items-center gap-0.5 font-medium ${isOverspending ? "text-destructive" : "text-emerald-600"}`}>
               {isOverspending ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
-              <span>{isOverspending ? "أكثر" : "أقل"} من الشهر الماضي</span>
+              <span>الصرفيات {isOverspending ? "أكثر" : "أقل"} من الشهر الماضي</span>
             </div>
           </CardContent>
         </Card>
