@@ -326,6 +326,24 @@ paths:
         "204":
           description: Skip removed
 
+  /commitments/auto-assign-categories:
+    post:
+      operationId: autoAssignCategories
+      tags: [commitments]
+      summary: Auto-assign categories to commitments based on title keyword matching
+      responses:
+        "200":
+          description: Number of commitments updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  updated:
+                    type: integer
+                required:
+                  - updated
+
   /summary/dashboard:
     get:
       operationId: getDashboardSummary
@@ -818,6 +836,10 @@ components:
           type: string
           nullable: true
           description: "YYYY-MM format. Required when isOneTime is true."
+        categoryId:
+          type: integer
+          nullable: true
+          description: Optional reference to a category.
         createdAt:
           type: string
           format: date-time
@@ -869,6 +891,10 @@ components:
           type: string
           nullable: true
           description: "YYYY-MM format. Required when isOneTime is true."
+        categoryId:
+          type: integer
+          nullable: true
+          description: Optional reference to a category.
       required:
         - title
         - amount
@@ -902,6 +928,10 @@ components:
           format: date
           nullable: true
           description: Optional ISO date (YYYY-MM-DD) after which the commitment no longer recurs.
+        categoryId:
+          type: integer
+          nullable: true
+          description: Optional reference to a category.
 
     DashboardSummary:
       type: object

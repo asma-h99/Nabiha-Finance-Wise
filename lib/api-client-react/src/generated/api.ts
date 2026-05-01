@@ -18,6 +18,7 @@ import type {
 
 import type {
   AccumulatedSavings,
+  AutoAssignCategories200,
   BalanceSummary,
   CalendarEvent,
   Category,
@@ -1396,6 +1397,87 @@ export const useUnskipCommitmentMonth = <
   TContext
 > => {
   return useMutation(getUnskipCommitmentMonthMutationOptions(options));
+};
+
+/**
+ * @summary Auto-assign categories to commitments based on title keyword matching
+ */
+export const getAutoAssignCategoriesUrl = () => {
+  return `/api/commitments/auto-assign-categories`;
+};
+
+export const autoAssignCategories = async (
+  options?: RequestInit,
+): Promise<AutoAssignCategories200> => {
+  return customFetch<AutoAssignCategories200>(getAutoAssignCategoriesUrl(), {
+    ...options,
+    method: "POST",
+  });
+};
+
+export const getAutoAssignCategoriesMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof autoAssignCategories>>,
+    TError,
+    void,
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof autoAssignCategories>>,
+  TError,
+  void,
+  TContext
+> => {
+  const mutationKey = ["autoAssignCategories"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof autoAssignCategories>>,
+    void
+  > = () => {
+    return autoAssignCategories(requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type AutoAssignCategoriesMutationResult = NonNullable<
+  Awaited<ReturnType<typeof autoAssignCategories>>
+>;
+
+export type AutoAssignCategoriesMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Auto-assign categories to commitments based on title keyword matching
+ */
+export const useAutoAssignCategories = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof autoAssignCategories>>,
+    TError,
+    void,
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof autoAssignCategories>>,
+  TError,
+  void,
+  TContext
+> => {
+  return useMutation(getAutoAssignCategoriesMutationOptions(options));
 };
 
 /**

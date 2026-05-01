@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { db, commitmentsTable, commitmentSkipsTable } from "@workspace/db";
+import { db, commitmentsTable, commitmentSkipsTable, categoriesTable } from "@workspace/db";
 import {
   CreateCommitmentBody,
   UpdateCommitmentBody,
@@ -9,9 +9,54 @@ import {
   SkipCommitmentMonthBody,
   UnskipCommitmentMonthParams,
 } from "@workspace/api-zod";
-import { eq, and } from "drizzle-orm";
+import { eq, and, isNull } from "drizzle-orm";
 
 const router = Router();
+
+/* ── keyword → emoji mapping (mirrors categoryEmoji.ts on the client) ──────── */
+const EMOJI_MAP: { keywords: string[]; emoji: string }[] = [
+  { keywords: ["مطعم", "طعام", "أكل", "غداء", "عشاء", "وجبة", "فطور", "كافيه", "مقهى", "لانش", "restaurant", "food", "lunch", "dinner", "breakfast", "cafe"], emoji: "🍽️" },
+  { keywords: ["مقاضي", "بقال", "سوبر", "جمعية", "سوق", "خضار", "فواكه", "تسوق", "شراء", "grocery", "supermarket", "market", "shopping"], emoji: "🛒" },
+  { keywords: ["بنزين", "وقود", "سيارة", "محروقات", "ديزل", "محطة", "fuel", "gas", "petrol", "car", "vehicle"], emoji: "⛽" },
+  { keywords: ["صحة", "دواء", "طبيب", "مستشفى", "عيادة", "علاج", "صيدلية", "health", "medicine", "doctor", "hospital", "clinic", "pharmacy", "medical"], emoji: "💊" },
+  { keywords: ["كهرباء", "كهربا", "electricity", "electric", "power"], emoji: "⚡" },
+  { keywords: ["فاتورة", "اشتراك", "خدمات", "bill", "invoice", "subscription", "service"], emoji: "📄" },
+  { keywords: ["ماء", "مياه", "شرب", "water"], emoji: "💧" },
+  { keywords: ["إيجار", "ايجار", "بيت", "شقة", "سكن", "منزل", "عقار", "rent", "apartment", "house", "housing", "home"], emoji: "🏠" },
+  { keywords: ["سفر", "طيران", "تذكرة", "رحلة", "اجازة", "سياحة", "فندق", "travel", "flight", "ticket", "trip", "vacation", "hotel", "airline"], emoji: "✈️" },
+  { keywords: ["ترفيه", "ترفية", "سينما", "مسرح", "ألعاب", "نتفليكس", "شاهد", "يوتيوب", "entertainment", "cinema", "movies", "netflix", "youtube", "spotify", "games"], emoji: "🎬" },
+  { keywords: ["ملابس", "لبس", "أزياء", "موضة", "ثياب", "clothes", "clothing", "fashion", "apparel"], emoji: "👗" },
+  { keywords: ["تعليم", "دراسة", "مدرسة", "جامعة", "كتب", "قرطاسية", "دروس", "تنظيم", "education", "school", "university", "college", "books", "tuition", "course"], emoji: "📚" },
+  { keywords: ["انترنت", "إنترنت", "نت", "اتصالات", "جوال", "هاتف", "موبايل", "رصيد", "internet", "phone", "mobile", "telecom", "broadband", "wifi"], emoji: "📱" },
+  { keywords: ["رياضة", "نادي", "جيم", "صالة", "تمرين", "sport", "gym", "fitness", "workout", "exercise"], emoji: "🏋️" },
+  { keywords: ["قهوة", "شاي", "مشروبات", "عصير", "coffee", "tea", "drinks", "juice", "beverage"], emoji: "☕" },
+  { keywords: ["هدايا", "هدية", "عيدية", "مناسبة", "حفلة", "gift", "gifts", "present", "party", "celebration"], emoji: "🎁" },
+  { keywords: ["أقساط", "قسط", "بنك", "قرض", "تمويل", "ديون", "installment", "loan", "bank", "finance", "debt", "mortgage", "credit"], emoji: "🏦" },
+  { keywords: ["صيانة", "تصليح", "تعمير", "اصلاح", "maintenance", "repair", "fix"], emoji: "🔧" },
+  { keywords: ["أطفال", "طفل", "حضانة", "حليب", "حفاضات", "children", "child", "kids", "daycare", "nursery", "baby"], emoji: "👶" },
+  { keywords: ["تأمين", "تامين", "بوليصة", "insurance", "policy"], emoji: "🛡️" },
+  { keywords: ["مواصلات", "تاكسي", "باص", "حافلة", "اوبر", "كريم", "نقل", "transport", "taxi", "bus", "uber", "careem", "commute"], emoji: "🚌" },
+  { keywords: ["تجميل", "صالون", "حلاقة", "عناية", "مكياج", "عطر", "beauty", "salon", "haircut", "makeup", "perfume", "grooming"], emoji: "💄" },
+  { keywords: ["حيوانات", "قطة", "كلب", "حيوان", "بيطري", "pet", "pets", "cat", "dog", "vet", "veterinary"], emoji: "🐾" },
+  { keywords: ["متفرقات", "أخرى", "عام", "مصاريف", "miscellaneous", "misc", "other", "general", "expenses"], emoji: "📦" },
+];
+
+function isActualEmoji(str: string): boolean {
+  return /\p{Extended_Pictographic}/u.test(str);
+}
+
+function getEmojiForText(text: string): string | null {
+  const lower = (text ?? "").toLowerCase();
+  for (const entry of EMOJI_MAP) {
+    if (entry.keywords.some((k) => lower.includes(k))) return entry.emoji;
+  }
+  return null;
+}
+
+function getCategoryEmojiForCategory(name: string, icon: string | null | undefined): string {
+  if (icon && icon.trim() && isActualEmoji(icon.trim())) return icon.trim();
+  return getEmojiForText(name) ?? "📂";
+}
 
 router.get("/commitments", async (_req, res) => {
   const commitments = await db.select().from(commitmentsTable).orderBy(commitmentsTable.dueDay);
@@ -24,7 +69,7 @@ router.post("/commitments", async (req, res) => {
     res.status(400).json({ error: "Invalid body" });
     return;
   }
-  const { title, amount, dueDay, notes, endDate, isOneTime, oneTimeMonth } = parseResult.data;
+  const { title, amount, dueDay, notes, endDate, isOneTime, oneTimeMonth, categoryId } = parseResult.data;
 
   if (isOneTime && !oneTimeMonth) {
     res.status(400).json({ error: "oneTimeMonth is required when isOneTime is true" });
@@ -47,6 +92,7 @@ router.post("/commitments", async (req, res) => {
       endDate: endDateStr,
       isOneTime: isOneTime ?? false,
       oneTimeMonth: oneTimeMonth ?? null,
+      categoryId: categoryId ?? null,
     })
     .returning();
 
@@ -77,6 +123,7 @@ router.put("/commitments/:id", async (req, res) => {
       ? body.endDate.toISOString().slice(0, 10)
       : null;
   }
+  if ("categoryId" in body) updates.categoryId = body.categoryId ?? null;
 
   const [commitment] = await db
     .update(commitmentsTable)
@@ -108,6 +155,47 @@ router.get("/commitment-skips", async (_req, res) => {
   res.json(skips);
 });
 
+/* ── Auto-assign categories to commitments that have none ───────────────── */
+router.post("/commitments/auto-assign-categories", async (_req, res) => {
+  const updated = await autoAssignCategories();
+  res.json({ updated });
+});
+
+export async function autoAssignCategories(): Promise<number> {
+  const unassigned = await db
+    .select()
+    .from(commitmentsTable)
+    .where(isNull(commitmentsTable.categoryId));
+
+  if (unassigned.length === 0) return 0;
+
+  const allCategories = await db.select().from(categoriesTable);
+  if (allCategories.length === 0) return 0;
+
+  // Build category emoji → id lookup
+  const categoryByEmoji = new Map<string, number>();
+  for (const cat of allCategories) {
+    const emoji = getCategoryEmojiForCategory(cat.name, cat.icon);
+    if (!categoryByEmoji.has(emoji)) {
+      categoryByEmoji.set(emoji, cat.id);
+    }
+  }
+
+  let count = 0;
+  for (const commitment of unassigned) {
+    const emoji = getEmojiForText(commitment.title);
+    if (!emoji) continue;
+    const catId = categoryByEmoji.get(emoji);
+    if (!catId) continue;
+    await db
+      .update(commitmentsTable)
+      .set({ categoryId: catId })
+      .where(eq(commitmentsTable.id, commitment.id));
+    count++;
+  }
+  return count;
+}
+
 router.post("/commitments/:id/skip", async (req, res) => {
   const paramsResult = SkipCommitmentMonthParams.safeParse(req.params);
   if (!paramsResult.success) {
@@ -128,7 +216,6 @@ router.post("/commitments/:id/skip", async (req, res) => {
     return;
   }
 
-  // Fetch the commitment to check it exists and is not one-time
   const [targetCommitment] = await db
     .select()
     .from(commitmentsTable)

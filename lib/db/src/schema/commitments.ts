@@ -1,6 +1,7 @@
 import { pgTable, text, serial, timestamp, numeric, integer, boolean } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod/v4";
+import { categoriesTable } from "./categories";
 
 export const commitmentsTable = pgTable("commitments", {
   id: serial("id").primaryKey(),
@@ -12,6 +13,7 @@ export const commitmentsTable = pgTable("commitments", {
   endDate: text("end_date"),
   isOneTime: boolean("is_one_time").notNull().default(false),
   oneTimeMonth: text("one_time_month"),
+  categoryId: integer("category_id").references(() => categoriesTable.id, { onDelete: "set null" }),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 

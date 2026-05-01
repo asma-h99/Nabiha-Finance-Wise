@@ -2,6 +2,7 @@ import { useState } from "react";
 import {
   useListCommitments,
   useListCommitmentSkips,
+  useListCategories,
 } from "@workspace/api-client-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -12,26 +13,11 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { Link } from "wouter";
-import {
-  CalendarDays,
-  Plus,
-  Home,
-  Zap,
-  Droplets,
-  Wifi,
-  Phone,
-  Car,
-  Landmark,
-  Shield,
-  GraduationCap,
-  Heart,
-  Dumbbell,
-  CircleDollarSign,
-  type LucideIcon,
-} from "lucide-react";
+import { CalendarDays, Plus } from "lucide-react";
 import { MonthTimelineModal } from "./MonthTimelineModal";
 import { EventFormDialog } from "./EventFormDialog";
 import { ISLAMIC_OCCASIONS, type IslamicOccasion } from "@/lib/islamicOccasions";
+import { getCategoryEmoji } from "@/lib/categoryEmoji";
 
 const MONTHS = [
   "يناير", "فبراير", "مارس",
@@ -53,25 +39,10 @@ const ICON_COLORS = [
   { bg: "bg-lime-100",    text: "text-lime-700"    },
 ];
 
-function getIcon(title: string): LucideIcon {
-  const t = title;
-  if (/إيجار|rent|منزل|بيت|شقة/i.test(t)) return Home;
-  if (/كهرب|electric|ضوء/i.test(t)) return Zap;
-  if (/ماء|water|مياه/i.test(t)) return Droplets;
-  if (/انترنت|internet|wifi|نت|شبكة/i.test(t)) return Wifi;
-  if (/هاتف|phone|جوال|موبايل|اتصال/i.test(t)) return Phone;
-  if (/سيارة|car|مواصلات|بنزين|وقود/i.test(t)) return Car;
-  if (/قرض|loan|بنك|bank|تمويل|أقساط/i.test(t)) return Landmark;
-  if (/تأمين|insurance/i.test(t)) return Shield;
-  if (/مدرسة|school|تعليم|جامعة|رسوم/i.test(t)) return GraduationCap;
-  if (/صحة|health|طب|doctor|مستشفى/i.test(t)) return Heart;
-  if (/نادي|gym|رياضة|fitness/i.test(t)) return Dumbbell;
-  return CircleDollarSign;
-}
-
 export function FinancialCalendarCard() {
   const { data: commitments, isLoading } = useListCommitments();
   const { data: skips } = useListCommitmentSkips();
+  const { data: categories } = useListCategories();
 
   const today = new Date();
   const currentMonthIdx = today.getMonth();
@@ -84,6 +55,19 @@ export function FinancialCalendarCard() {
 
   if (isLoading) {
     return <Skeleton className="h-[480px] w-full rounded-3xl" />;
+  }
+
+  // Build category lookup by id
+  const categoriesById = new Map(
+    (categories ?? []).map((c) => [c.id, c]),
+  );
+
+  function getCommitmentEmoji(title: string, categoryId?: number | null): string {
+    if (categoryId != null) {
+      const cat = categoriesById.get(categoryId);
+      if (cat) return getCategoryEmoji(cat.name, cat.icon);
+    }
+    return getCategoryEmoji(title);
   }
 
   function monthStr(monthIdx: number) {
@@ -117,7 +101,6 @@ export function FinancialCalendarCard() {
   const sorted = (commitments ?? []).slice().sort((a, b) => a.dueDay - b.dueDay);
   const islamicForYear = ISLAMIC_OCCASIONS[year] ?? [];
 
-  // Group Islamic occasions by month for quick lookup
   const islamicByMonth = new Map<number, IslamicOccasion[]>();
   for (const occ of islamicForYear) {
     if (!islamicByMonth.has(occ.monthIdx)) islamicByMonth.set(occ.monthIdx, []);
@@ -200,7 +183,7 @@ export function FinancialCalendarCard() {
                         const sortedIdx = sorted.findIndex((c) => c.id === commitment.id);
                         const colorIdx = sortedIdx >= 0 ? sortedIdx : idx;
                         const color = ICON_COLORS[colorIdx % ICON_COLORS.length];
-                        const Icon = getIcon(commitment.title);
+                        const emoji = getCommitmentEmoji(commitment.title, commitment.categoryId);
                         const isPaidThisMonth = isCurrentMonth && commitment.isPaid;
                         const isOneTime = commitment.isOneTime;
 
@@ -214,15 +197,15 @@ export function FinancialCalendarCard() {
                                 className="relative"
                               >
                                 <span
-                                  className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 transition-transform hover:scale-110 ${
+                                  className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 transition-transform hover:scale-110 text-sm ${
                                     color.bg
-                                  } ${color.text} ${
+                                  } ${
                                     isPaidThisMonth
                                       ? "opacity-40 ring-1 ring-green-400"
                                       : ""
                                   }`}
                                 >
-                                  <Icon className="w-4 h-4" />
+                                  {emoji}
                                 </span>
                                 {/* One-time badge */}
                                 {isOneTime && (

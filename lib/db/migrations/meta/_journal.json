@@ -8,6 +8,13 @@
       "when": 1746095680000,
       "tag": "0001_commitment_scope",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1777641866177,
+      "tag": "0002_cool_rogue",
+      "breakpoints": true
     }
   ]
 }

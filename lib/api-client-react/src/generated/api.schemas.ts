@@ -75,6 +75,8 @@ export interface Commitment {
   isOneTime: boolean;
   /** YYYY-MM format. Required when isOneTime is true. */
   oneTimeMonth?: string | null;
+  /** Optional reference to a category. */
+  categoryId?: number | null;
   createdAt: string;
 }
 
@@ -96,6 +98,8 @@ export interface CreateCommitmentBody {
   isOneTime?: boolean;
   /** YYYY-MM format. Required when isOneTime is true. */
   oneTimeMonth?: string | null;
+  /** Optional reference to a category. */
+  categoryId?: number | null;
 }
 
 export interface CreateCommitmentSkipBody {
@@ -111,6 +115,8 @@ export interface UpdateCommitmentBody {
   notes?: string | null;
   /** Optional ISO date (YYYY-MM-DD) after which the commitment no longer recurs. */
   endDate?: string | null;
+  /** Optional reference to a category. */
+  categoryId?: number | null;
 }
 
 export interface DashboardSummary {
@@ -358,6 +364,10 @@ export type ListExpensesParams = {
    * YYYY-MM format
    */
   month?: string;
+};
+
+export type AutoAssignCategories200 = {
+  updated: number;
 };
 
 export type GetDashboardSummaryParams = {

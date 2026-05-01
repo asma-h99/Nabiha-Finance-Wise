@@ -128,6 +128,7 @@ type TimelineRow =
       dueDay: number;
       notes?: string | null;
       endDate?: string | null;
+      categoryId?: number | null;
       raw: {
         id: number;
         title: string;
@@ -136,6 +137,7 @@ type TimelineRow =
         isPaid: boolean;
         notes?: string | null;
         endDate?: string | null;
+        categoryId?: number | null;
       };
     };
 
@@ -169,6 +171,7 @@ type EditingCommitment = {
   isPaid: boolean;
   isOneTime?: boolean;
   oneTimeMonth?: string | null;
+  categoryId?: number | null;
 };
 
 /* -------------------------------------------------------------------------- */
@@ -361,6 +364,7 @@ export default function Money() {
         notes: editingCommitment.notes ?? "",
         endDate: editingCommitment.endDate ?? "",
         scope: editingCommitment.isOneTime ? "one-time" : "recurring",
+        categoryId: editingCommitment.categoryId ?? null,
       });
     }
   }, [editingCommitment, editCommitmentForm]);
@@ -475,6 +479,7 @@ export default function Money() {
           dueDay: c.dueDay,
           notes: c.notes,
           endDate: c.endDate ?? null,
+          categoryId: c.categoryId ?? null,
           raw: {
             id: c.id,
             title: c.title,
@@ -483,6 +488,7 @@ export default function Money() {
             isPaid: c.isPaid,
             notes: c.notes,
             endDate: c.endDate ?? null,
+            categoryId: c.categoryId ?? null,
           },
         });
       }
@@ -499,9 +505,8 @@ export default function Money() {
       if (tab === "expenses" && row.kind !== "expense") return false;
       if (tab === "commitments" && row.kind !== "commitment") return false;
 
-      // Category (commitments have no category)
+      // Category filter — applies to both expenses and commitments
       if (filterCategory !== "all") {
-        if (row.kind !== "expense") return false;
         if (row.categoryId !== filterCategory) return false;
       }
 
@@ -551,6 +556,7 @@ export default function Money() {
       notes: values.notes && values.notes.length > 0 ? values.notes : null,
       isOneTime,
       oneTimeMonth: isOneTime ? filterMonth : null,
+      categoryId: values.categoryId ?? null,
     };
   };
   const onCreateCommitmentSubmit = (values: CommitmentFormValues) => {
@@ -1271,16 +1277,13 @@ function TimelineRowItem({
     }
   }, [isHighlighted]);
 
-  const cat =
-    row.kind === "expense" && row.categoryId != null
-      ? categoriesById.get(row.categoryId)
-      : undefined;
-  const emoji =
-    row.kind === "expense"
-      ? cat
-        ? getCategoryEmoji(cat.name, cat.icon)
-        : "📦"
-      : "📅";
+  const catId = row.categoryId ?? null;
+  const cat = catId != null ? categoriesById.get(catId) : undefined;
+  const emoji = cat
+    ? getCategoryEmoji(cat.name, cat.icon)
+    : row.kind === "expense"
+    ? "📦"
+    : getCategoryEmoji(row.title);
 
   return (
     <Card
@@ -1427,6 +1430,7 @@ function TimelineRowItem({
                   notes: row.notes,
                   endDate: row.endDate,
                   isPaid: row.isPaid,
+                  categoryId: row.categoryId,
                 });
             }}
             data-testid={`button-edit-${row.kind}-${row.id}`}

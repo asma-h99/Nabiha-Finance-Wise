@@ -155,6 +155,10 @@ export const ListCommitmentsResponseItem = zod.object({
     .string()
     .nullish()
     .describe("YYYY-MM format. Required when isOneTime is true."),
+  categoryId: zod
+    .number()
+    .nullish()
+    .describe("Optional reference to a category."),
   createdAt: zod.coerce.date(),
 });
 export const ListCommitmentsResponse = zod.array(ListCommitmentsResponseItem);
@@ -181,6 +185,10 @@ export const CreateCommitmentBody = zod.object({
     .string()
     .nullish()
     .describe("YYYY-MM format. Required when isOneTime is true."),
+  categoryId: zod
+    .number()
+    .nullish()
+    .describe("Optional reference to a category."),
 });
 
 /**
@@ -202,6 +210,10 @@ export const UpdateCommitmentBody = zod.object({
     .describe(
       "Optional ISO date (YYYY-MM-DD) after which the commitment no longer recurs.",
     ),
+  categoryId: zod
+    .number()
+    .nullish()
+    .describe("Optional reference to a category."),
 });
 
 export const UpdateCommitmentResponse = zod.object({
@@ -226,6 +238,10 @@ export const UpdateCommitmentResponse = zod.object({
     .string()
     .nullish()
     .describe("YYYY-MM format. Required when isOneTime is true."),
+  categoryId: zod
+    .number()
+    .nullish()
+    .describe("Optional reference to a category."),
   createdAt: zod.coerce.date(),
 });
 
@@ -271,6 +287,13 @@ export const SkipCommitmentMonthBody = zod.object({
 export const UnskipCommitmentMonthParams = zod.object({
   id: zod.coerce.number(),
   month: zod.coerce.string(),
+});
+
+/**
+ * @summary Auto-assign categories to commitments based on title keyword matching
+ */
+export const AutoAssignCategoriesResponse = zod.object({
+  updated: zod.number(),
 });
 
 /**

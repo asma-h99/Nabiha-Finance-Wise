@@ -36,8 +36,10 @@ import {
   useDeleteCalendarEvent,
   useListExpenses,
   useGetUserProfile,
+  useListCategories,
   type Commitment,
 } from "@workspace/api-client-react";
+import { getCategoryEmoji } from "@/lib/categoryEmoji";
 import { useQueryClient } from "@tanstack/react-query";
 import { invalidateCommitmentsEverywhere } from "@/lib/queryInvalidation";
 import { useUser } from "@clerk/react";
@@ -162,10 +164,21 @@ function getCommitmentIcon(title: string): LucideIcon {
   return CircleDollarSign;
 }
 
-function getCommitmentSpec(title: string): IconSpec {
-  const Icon = getCommitmentIcon(title);
+function getCommitmentSpec(
+  title: string,
+  categoryId?: number | null,
+  categoriesById?: Map<number, { name: string; icon?: string | null }>,
+): IconSpec {
   const color = isLoanTitle(title) ? COLOR_ORANGE : COLOR_GREEN;
-  return { Icon, ...color };
+  if (categoryId != null && categoriesById) {
+    const cat = categoriesById.get(categoryId);
+    if (cat) {
+      const emoji = getCategoryEmoji(cat.name, cat.icon);
+      return { Icon: null, emoji, ...color };
+    }
+  }
+  const emoji = getCategoryEmoji(title);
+  return { Icon: null, emoji, ...color };
 }
 
 function getSubscriptionSpec(name: string, isYearly: boolean): IconSpec {
@@ -236,6 +249,7 @@ export function MonthTimelineModal({ open, onOpenChange, month, year }: MonthTim
   const currentUserId = user?.id ?? null;
   const { data: commitments } = useListCommitments();
   const { data: commitmentSkips } = useListCommitmentSkips();
+  const { data: categories } = useListCategories();
   const { data: subscriptions } = useListSubscriptions();
   const { data: profile } = useGetUserProfile();
   const queryClient = useQueryClient();
@@ -312,6 +326,7 @@ export function MonthTimelineModal({ open, onOpenChange, month, year }: MonthTim
         dueDay: editCommitment.dueDay,
         notes: editCommitment.notes ?? "",
         endDate: editCommitment.endDate ?? "",
+        categoryId: editCommitment.categoryId ?? null,
       });
     }
   }, [editCommitment, editCommitmentForm]);
@@ -368,6 +383,11 @@ export function MonthTimelineModal({ open, onOpenChange, month, year }: MonthTim
     );
   }, [commitmentSkips, viewedMonthStr]);
 
+  const categoriesById = useMemo(
+    () => new Map((categories ?? []).map((c) => [c.id, c])),
+    [categories],
+  );
+
   const timelineItems = useMemo<TimelineItem[]>(() => {
     const items: TimelineItem[] = [];
 
@@ -403,7 +423,7 @@ export function MonthTimelineModal({ open, onOpenChange, month, year }: MonthTim
         isSpecialOccasion: false,
         canEdit: true,
         canMarkPaid: isCurrentMonth,
-        iconSpec: getCommitmentSpec(c.title),
+        iconSpec: getCommitmentSpec(c.title, c.categoryId, categoriesById),
         rawId: c.id,
         commitment: c,
       });
@@ -523,7 +543,7 @@ export function MonthTimelineModal({ open, onOpenChange, month, year }: MonthTim
     }
 
     return items.sort((a, b) => a.day - b.day || a.title.localeCompare(b.title));
-  }, [commitments, subscriptions, calendarEvents, expenses, baseCurrency, month, year, isCurrentMonth, todayDay, lastDay, currentUserId, skippedIds, viewedMonthStr]);
+  }, [commitments, subscriptions, calendarEvents, expenses, baseCurrency, month, year, isCurrentMonth, todayDay, lastDay, currentUserId, skippedIds, viewedMonthStr, categoriesById]);
 
   const totalFinancial = useMemo(
     () => timelineItems

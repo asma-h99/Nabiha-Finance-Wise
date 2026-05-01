@@ -1,5 +1,6 @@
 import * as z from "zod";
-import { type Control, useWatch } from "react-hook-form";
+import { type Control, useWatch, useFormContext } from "react-hook-form";
+import { useEffect, useRef } from "react";
 import {
   FormControl,
   FormDescription,
@@ -10,6 +11,8 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { getCurrency } from "@/lib/currency";
+import { getCategoryEmoji, getEmojiForTitle } from "@/lib/categoryEmoji";
+import { useListCategories } from "@workspace/api-client-react";
 
 export const commitmentFormSchema = z.object({
   title: z.string().min(2, "الاسم مطلوب"),
@@ -24,6 +27,7 @@ export const commitmentFormSchema = z.object({
       "تاريخ غير صالح",
     ),
   scope: z.enum(["recurring", "one-time"]).default("recurring"),
+  categoryId: z.number().nullable().optional(),
 });
 
 export type CommitmentFormValues = z.infer<typeof commitmentFormSchema>;
@@ -35,7 +39,25 @@ export const commitmentFormDefaultValues: CommitmentFormValues = {
   notes: "",
   endDate: "",
   scope: "recurring",
+  categoryId: null,
 };
+
+function useBestCategoryId(
+  title: string,
+  categories: { id: number; name: string; icon?: string | null }[],
+): number | null {
+  if (!title || !categories.length) return null;
+  const titleEmoji = getEmojiForTitle(title);
+  if (!titleEmoji) return null;
+
+  const catEmojiMap = new Map<string, number>();
+  for (const cat of categories) {
+    const emoji = getCategoryEmoji(cat.name, cat.icon);
+    if (!catEmojiMap.has(emoji)) catEmojiMap.set(emoji, cat.id);
+  }
+
+  return catEmojiMap.get(titleEmoji) ?? null;
+}
 
 export function CommitmentFormFields({
   control,
@@ -47,6 +69,51 @@ export function CommitmentFormFields({
   showScopePicker?: boolean;
 }) {
   const scope = useWatch({ control, name: "scope" });
+  const titleValue = useWatch({ control, name: "title" });
+  const currentCategoryId = useWatch({ control, name: "categoryId" });
+
+  const { setValue } = useFormContext<CommitmentFormValues>();
+  const { data: categories } = useListCategories();
+
+  const suggestedCategoryId = useBestCategoryId(titleValue ?? "", categories ?? []);
+
+  // Set to true when the user explicitly clicks any category chip (including clear).
+  // Prevents auto-suggestion from overriding a deliberate user choice.
+  const categoryUserTouched = useRef(false);
+
+  // Tracks the categoryId that was last set by auto-suggestion (not by the user
+  // or by the server). Used to distinguish "auto-suggested, can re-suggest on
+  // title change" from "loaded from server on edit, must not overwrite".
+  const autoSuggestedRef = useRef<number | null>(null);
+
+  // Reset both flags when the form is cleared (new form dialog opened).
+  useEffect(() => {
+    if (!titleValue) {
+      categoryUserTouched.current = false;
+      autoSuggestedRef.current = null;
+    }
+  }, [titleValue]);
+
+  // Auto-suggest a category as the user types, subject to these guards:
+  //   1. User has not explicitly interacted with the picker.
+  //   2. The current categoryId is either null (no category) or was set by a
+  //      previous auto-suggestion — never overwrite a server-persisted value.
+  useEffect(() => {
+    if (categoryUserTouched.current) return;
+    const currentIsServerValue =
+      currentCategoryId !== null &&
+      currentCategoryId !== undefined &&
+      currentCategoryId !== autoSuggestedRef.current;
+    if (currentIsServerValue) return;
+
+    if (suggestedCategoryId !== null) {
+      setValue("categoryId", suggestedCategoryId);
+      autoSuggestedRef.current = suggestedCategoryId;
+    } else if (autoSuggestedRef.current !== null) {
+      setValue("categoryId", null);
+      autoSuggestedRef.current = null;
+    }
+  }, [suggestedCategoryId, currentCategoryId, setValue]);
 
   return (
     <>
@@ -104,6 +171,59 @@ export function CommitmentFormFields({
           </FormItem>
         )}
       />
+
+      {/* Category picker */}
+      {(categories ?? []).length > 0 && (
+        <FormField
+          control={control}
+          name="categoryId"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>الفئة (اختياري)</FormLabel>
+              <div className="flex flex-wrap gap-1.5 mt-1">
+                <button
+                  type="button"
+                  onClick={() => {
+                    categoryUserTouched.current = true;
+                    field.onChange(null);
+                  }}
+                  className={`px-3 py-1.5 rounded-xl border text-xs font-semibold transition-colors ${
+                    field.value === null || field.value === undefined
+                      ? "bg-primary text-primary-foreground border-primary"
+                      : "bg-background border-border text-muted-foreground hover:border-primary/50"
+                  }`}
+                >
+                  بلا فئة
+                </button>
+                {(categories ?? []).map((cat) => {
+                  const emoji = getCategoryEmoji(cat.name, cat.icon);
+                  const isSelected = field.value === cat.id;
+                  return (
+                    <button
+                      key={cat.id}
+                      type="button"
+                      onClick={() => {
+                        categoryUserTouched.current = true;
+                        field.onChange(cat.id);
+                      }}
+                      className={`flex items-center gap-1 px-3 py-1.5 rounded-xl border text-xs font-semibold transition-colors ${
+                        isSelected
+                          ? "bg-primary text-primary-foreground border-primary"
+                          : "bg-background border-border text-muted-foreground hover:border-primary/50"
+                      }`}
+                    >
+                      <span>{emoji}</span>
+                      <span>{cat.name}</span>
+                    </button>
+                  );
+                })}
+              </div>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+      )}
+
       <div className="grid grid-cols-2 gap-3">
         <FormField
           control={control}

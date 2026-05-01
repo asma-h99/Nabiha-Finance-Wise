@@ -2,6 +2,7 @@ import app from "./app";
 import { logger } from "./lib/logger";
 import { startReminderScheduler } from "./lib/notifications";
 import { seedCalendarEventsIfEmpty } from "./lib/seedCalendarEvents";
+import { autoAssignCategories } from "./routes/commitments";
 
 const rawPort = process.env["PORT"];
 
@@ -26,6 +27,7 @@ app.listen(port, (err) => {
   logger.info({ port }, "Server listening");
 
   void seedCalendarEventsIfEmpty();
+  void autoAssignCategories();
 
   if (process.env.RESEND_API_KEY) {
     startReminderScheduler();
