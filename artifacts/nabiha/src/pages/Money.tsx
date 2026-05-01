@@ -1,5 +1,11 @@
 import { useState, useEffect, useMemo } from "react";
 import {
+  CommitmentFormFields,
+  commitmentFormSchema,
+  commitmentFormDefaultValues,
+  type CommitmentFormValues,
+} from "@/components/dashboard/CommitmentFormFields";
+import {
   useListExpenses,
   useCreateExpense,
   useUpdateExpense,
@@ -11,12 +17,14 @@ import {
   useListCategories,
   useCreateCategory,
   useDeleteCategory,
-  getListExpensesQueryKey,
-  getListCommitmentsQueryKey,
   getListCategoriesQueryKey,
   type Expense,
 } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
+import {
+  invalidateCommitmentsEverywhere,
+  invalidateExpensesEverywhere,
+} from "@/lib/queryInvalidation";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -92,11 +100,6 @@ const PRIORITY_LABELS: Record<
   },
 };
 
-const DASHBOARD_KEYS: readonly (readonly string[])[] = [
-  ["/api/dashboard/summary"],
-  ["/api/balance/summary"],
-];
-
 type TabKey = "all" | "expenses" | "commitments";
 
 type TimelineRow =
@@ -122,6 +125,7 @@ type TimelineRow =
       isFuture: boolean;
       dueDay: number;
       notes?: string | null;
+      endDate?: string | null;
       raw: {
         id: number;
         title: string;
@@ -129,6 +133,7 @@ type TimelineRow =
         dueDay: number;
         isPaid: boolean;
         notes?: string | null;
+        endDate?: string | null;
       };
     };
 
@@ -146,14 +151,6 @@ const expenseSchema = z.object({
 });
 type ExpenseFormValues = z.infer<typeof expenseSchema>;
 
-const commitmentSchema = z.object({
-  title: z.string().min(2, "الاسم مطلوب"),
-  amount: z.coerce.number().min(1, "المبلغ يجب أن يكون أكبر من 0"),
-  dueDay: z.coerce.number().min(1, "يوم الدفع مطلوب").max(31, "يوم غير صالح"),
-  notes: z.string().optional(),
-});
-type CommitmentFormValues = z.infer<typeof commitmentSchema>;
-
 const categorySchema = z.object({
   name: z.string().min(2, "الاسم يجب أن يكون حرفين على الأقل"),
   color: z.string().optional(),
@@ -166,6 +163,7 @@ type EditingCommitment = {
   amount: number | string;
   dueDay: number;
   notes?: string | null;
+  endDate?: string | null;
   isPaid: boolean;
 };
 
@@ -195,20 +193,9 @@ export default function Money() {
   const { data: categories } = useListCategories();
 
   /* ── invalidation helpers ───────────────────────────────────────────── */
-  const invalidateExpenses = () => {
-    queryClient.invalidateQueries({ queryKey: getListExpensesQueryKey() });
-    DASHBOARD_KEYS.forEach((key) =>
-      queryClient.invalidateQueries({ queryKey: key }),
-    );
-  };
-
-  const invalidateCommitments = () => {
-    queryClient.invalidateQueries({ queryKey: getListCommitmentsQueryKey() });
-    DASHBOARD_KEYS.forEach((key) =>
-      queryClient.invalidateQueries({ queryKey: key }),
-    );
-  };
-
+  const invalidateExpenses = () => invalidateExpensesEverywhere(queryClient);
+  const invalidateCommitments = () =>
+    invalidateCommitmentsEverywhere(queryClient);
   const invalidateCategories = () => {
     queryClient.invalidateQueries({ queryKey: getListCategoriesQueryKey() });
   };
@@ -284,20 +271,15 @@ export default function Money() {
   const [editingCommitment, setEditingCommitment] =
     useState<EditingCommitment | null>(null);
 
-  const commitmentDefaultValues: CommitmentFormValues = {
-    title: "",
-    amount: 0,
-    dueDay: 1,
-    notes: "",
-  };
+  const commitmentDefaultValues: CommitmentFormValues = commitmentFormDefaultValues;
 
   const createCommitmentForm = useForm<CommitmentFormValues>({
-    resolver: zodResolver(commitmentSchema),
+    resolver: zodResolver(commitmentFormSchema),
     defaultValues: commitmentDefaultValues,
   });
 
   const editCommitmentForm = useForm<CommitmentFormValues>({
-    resolver: zodResolver(commitmentSchema),
+    resolver: zodResolver(commitmentFormSchema),
     defaultValues: commitmentDefaultValues,
   });
 
@@ -342,6 +324,7 @@ export default function Money() {
         amount: Number(editingCommitment.amount),
         dueDay: editingCommitment.dueDay,
         notes: editingCommitment.notes ?? "",
+        endDate: editingCommitment.endDate ?? "",
       });
     }
   }, [editingCommitment, editCommitmentForm]);
@@ -429,6 +412,7 @@ export default function Money() {
           isFuture: isFutureMonth || (isCurrentMonth && c.dueDay >= today.getDate()),
           dueDay: c.dueDay,
           notes: c.notes,
+          endDate: c.endDate ?? null,
           raw: {
             id: c.id,
             title: c.title,
@@ -436,6 +420,7 @@ export default function Money() {
             dueDay: c.dueDay,
             isPaid: c.isPaid,
             notes: c.notes,
+            endDate: c.endDate ?? null,
           },
         });
       }
@@ -491,12 +476,20 @@ export default function Money() {
     if (!editingExpense) return;
     updateExpense.mutate({ id: editingExpense.id, data: values });
   };
+  const normalizeCommitmentValues = (values: CommitmentFormValues) => ({
+    ...values,
+    endDate: values.endDate && values.endDate.length > 0 ? values.endDate : null,
+    notes: values.notes && values.notes.length > 0 ? values.notes : null,
+  });
   const onCreateCommitmentSubmit = (values: CommitmentFormValues) => {
-    createCommitment.mutate({ data: values });
+    createCommitment.mutate({ data: normalizeCommitmentValues(values) });
   };
   const onEditCommitmentSubmit = (values: CommitmentFormValues) => {
     if (!editingCommitment) return;
-    updateCommitmentEdit.mutate({ id: editingCommitment.id, data: values });
+    updateCommitmentEdit.mutate({
+      id: editingCommitment.id,
+      data: normalizeCommitmentValues(values),
+    });
   };
 
   const isLoading = loadingExpenses || loadingCommitments;
@@ -604,7 +597,7 @@ export default function Money() {
                   )}
                   className="space-y-4 mt-4"
                 >
-                  <CommitmentFields
+                  <CommitmentFormFields
                     control={createCommitmentForm.control}
                     baseCurrency={baseCurrency}
                   />
@@ -847,7 +840,7 @@ export default function Money() {
               onSubmit={editCommitmentForm.handleSubmit(onEditCommitmentSubmit)}
               className="space-y-4 mt-4"
             >
-              <CommitmentFields
+              <CommitmentFormFields
                 control={editCommitmentForm.control}
                 baseCurrency={baseCurrency}
               />
@@ -1341,6 +1334,7 @@ function TimelineRowItem({
                   amount: row.amount,
                   dueDay: row.dueDay,
                   notes: row.notes,
+                  endDate: row.endDate,
                   isPaid: row.isPaid,
                 });
             }}
@@ -1508,90 +1502,3 @@ function ExpenseFields({
   );
 }
 
-function CommitmentFields({
-  control,
-  baseCurrency,
-}: {
-  control: Control<CommitmentFormValues>;
-  baseCurrency: string;
-}) {
-  return (
-    <>
-      <FormField
-        control={control}
-        name="title"
-        render={({ field }) => (
-          <FormItem>
-            <FormLabel>الاسم</FormLabel>
-            <FormControl>
-              <Input
-                placeholder="إيجار، فاتورة كهرباء..."
-                className="h-11 rounded-xl bg-background"
-                {...field}
-              />
-            </FormControl>
-            <FormMessage />
-          </FormItem>
-        )}
-      />
-      <div className="grid grid-cols-2 gap-3">
-        <FormField
-          control={control}
-          name="amount"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>المبلغ ({getCurrency(baseCurrency).code})</FormLabel>
-              <FormControl>
-                <Input
-                  type="number"
-                  step="0.01"
-                  placeholder="0.00"
-                  className="h-11 rounded-xl bg-background"
-                  {...field}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={control}
-          name="dueDay"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>يوم الدفع (1–31)</FormLabel>
-              <FormControl>
-                <Input
-                  type="number"
-                  min="1"
-                  max="31"
-                  className="h-11 rounded-xl bg-background"
-                  {...field}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-      </div>
-      <FormField
-        control={control}
-        name="notes"
-        render={({ field }) => (
-          <FormItem>
-            <FormLabel>ملاحظات (اختياري)</FormLabel>
-            <FormControl>
-              <Input
-                placeholder="رقم حساب، تفاصيل..."
-                className="h-11 rounded-xl bg-background"
-                {...field}
-                value={field.value ?? ""}
-              />
-            </FormControl>
-            <FormMessage />
-          </FormItem>
-        )}
-      />
-    </>
-  );
-}

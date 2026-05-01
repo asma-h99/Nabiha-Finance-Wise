@@ -21,10 +21,17 @@ router.post("/commitments", async (req, res) => {
     res.status(400).json({ error: "Invalid body" });
     return;
   }
-  const { title, amount, dueDay, notes } = parseResult.data;
+  const { title, amount, dueDay, notes, endDate } = parseResult.data;
+  const endDateStr = endDate ? endDate.toISOString().slice(0, 10) : null;
   const [commitment] = await db
     .insert(commitmentsTable)
-    .values({ title, amount: String(amount), dueDay, notes: notes ?? null })
+    .values({
+      title,
+      amount: String(amount),
+      dueDay,
+      notes: notes ?? null,
+      endDate: endDateStr,
+    })
     .returning();
 
   res.status(201).json({ ...commitment, amount: Number(commitment.amount) });
@@ -49,6 +56,11 @@ router.put("/commitments/:id", async (req, res) => {
   if (body.dueDay !== undefined) updates.dueDay = body.dueDay;
   if (body.isPaid !== undefined) updates.isPaid = body.isPaid;
   if (body.notes !== undefined) updates.notes = body.notes ?? null;
+  if (body.endDate !== undefined) {
+    updates.endDate = body.endDate
+      ? body.endDate.toISOString().slice(0, 10)
+      : null;
+  }
 
   const [commitment] = await db
     .update(commitmentsTable)

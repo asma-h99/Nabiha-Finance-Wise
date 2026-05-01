@@ -1,10 +1,21 @@
-import { useState, useMemo } from "react";
+import { useEffect, useState, useMemo } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { Form } from "@/components/ui/form";
+import {
+  CommitmentFormFields,
+  commitmentFormSchema,
+  commitmentFormDefaultValues,
+  type CommitmentFormValues,
+} from "@/components/dashboard/CommitmentFormFields";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -15,7 +26,7 @@ import {
 import {
   useListCommitments,
   useUpdateCommitment,
-  getListCommitmentsQueryKey,
+  useDeleteCommitment,
   useListSubscriptions,
   useListCalendarEvents,
   getListCalendarEventsQueryKey,
@@ -23,8 +34,10 @@ import {
   useDeleteCalendarEvent,
   useListExpenses,
   useGetUserProfile,
+  type Commitment,
 } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
+import { invalidateCommitmentsEverywhere } from "@/lib/queryInvalidation";
 import { useUser } from "@clerk/react";
 import { useDisplayCurrency } from "@/contexts/CurrencyContext";
 import { EventFormDialog } from "./EventFormDialog";
@@ -47,11 +60,12 @@ import {
   Tv,
   Music,
   Star,
-  CheckCircle2,
-  Clock,
   AlertTriangle,
   Edit2,
   Trash2,
+  Bell,
+  Info,
+  Cake,
   type LucideIcon,
 } from "lucide-react";
 import {
@@ -75,9 +89,14 @@ const MONTHS_AR = [
   "أكتوبر", "نوفمبر", "ديسمبر",
 ];
 
-const WEEKDAYS_AR = ["الأحد", "الاثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة", "السبت"];
-
 type EventStatus = "paid" | "overdue" | "upcoming" | "today" | "safe" | "readonly";
+
+interface IconSpec {
+  Icon: LucideIcon | null;
+  emoji?: string;
+  bg: string;
+  text: string;
+}
 
 interface TimelineItem {
   id: string;
@@ -91,16 +110,25 @@ interface TimelineItem {
   categoryLabel?: string;
   status: EventStatus;
   isPaid?: boolean;
+  isSpecialOccasion: boolean;
   canEdit: boolean;
   canMarkPaid: boolean;
-  iconSpec: { Icon: LucideIcon | null; emoji?: string; bg: string; text: string };
+  iconSpec: IconSpec;
   rawId?: number;
   calendarEvent?: CalendarEvent;
+  commitment?: Commitment;
 }
 
-function getBrandColor(name: string): { bg: string; text: string } {
+const COLOR_GREEN = { bg: "bg-emerald-100", text: "text-emerald-700" };
+const COLOR_ORANGE = { bg: "bg-orange-100", text: "text-orange-700" };
+const COLOR_RED = { bg: "bg-red-100", text: "text-red-700" };
+const COLOR_PINK = { bg: "bg-pink-100", text: "text-pink-700" };
+const COLOR_INDIGO = { bg: "bg-indigo-100", text: "text-indigo-700" };
+const COLOR_GRAY = { bg: "bg-gray-100", text: "text-gray-700" };
+
+function getBrandColor(name: string): { bg: string; text: string } | null {
   const n = name.toLowerCase();
-  if (/netflix/i.test(n)) return { bg: "bg-red-100", text: "text-red-700" };
+  if (/netflix/i.test(n)) return COLOR_RED;
   if (/spotify/i.test(n)) return { bg: "bg-green-100", text: "text-green-700" };
   if (/shahid|شاهد/i.test(n)) return { bg: "bg-sky-100", text: "text-sky-700" };
   if (/apple|أبل/i.test(n)) return { bg: "bg-gray-100", text: "text-gray-700" };
@@ -108,7 +136,11 @@ function getBrandColor(name: string): { bg: string; text: string } {
   if (/youtube|يوتيوب/i.test(n)) return { bg: "bg-red-100", text: "text-red-600" };
   if (/disney|ديزني/i.test(n)) return { bg: "bg-blue-100", text: "text-blue-700" };
   if (/stc|اتصالات|mobily|زين|موبايلي/i.test(n)) return { bg: "bg-teal-100", text: "text-teal-700" };
-  return { bg: "bg-sky-100", text: "text-sky-700" };
+  return null;
+}
+
+function isLoanTitle(title: string): boolean {
+  return /قرض|loan|بنك|bank|تمويل|أقساط|قسط|دين/i.test(title);
 }
 
 function getCommitmentIcon(title: string): LucideIcon {
@@ -126,38 +158,40 @@ function getCommitmentIcon(title: string): LucideIcon {
   return CircleDollarSign;
 }
 
-function getCommitmentColor(idx: number): { bg: string; text: string } {
-  const COLORS = [
-    { bg: "bg-teal-100", text: "text-teal-700" },
-    { bg: "bg-amber-100", text: "text-amber-700" },
-    { bg: "bg-sky-100", text: "text-sky-700" },
-    { bg: "bg-rose-100", text: "text-rose-700" },
-    { bg: "bg-emerald-100", text: "text-emerald-700" },
-    { bg: "bg-orange-100", text: "text-orange-700" },
-    { bg: "bg-indigo-100", text: "text-indigo-700" },
-    { bg: "bg-lime-100", text: "text-lime-700" },
-  ];
-  return COLORS[idx % COLORS.length];
+function getCommitmentSpec(title: string): IconSpec {
+  const Icon = getCommitmentIcon(title);
+  const color = isLoanTitle(title) ? COLOR_ORANGE : COLOR_GREEN;
+  return { Icon, ...color };
 }
 
-function getCalendarEventIcon(type: string, title: string): { Icon: LucideIcon | null; emoji?: string; bg: string; text: string } {
+function getSubscriptionSpec(name: string, isYearly: boolean): IconSpec {
+  const brand = getBrandColor(name);
+  const color = brand ?? COLOR_GREEN;
+  return { Icon: isYearly ? Music : Tv, ...color };
+}
+
+function getCalendarEventSpec(type: string, title: string): IconSpec {
   switch (type) {
     case "religious":
-      return { Icon: Star, bg: "bg-amber-100", text: "text-amber-700" };
+      return { Icon: Star, ...COLOR_RED };
     case "personal":
-      return { Icon: null, emoji: "🎉", bg: "bg-rose-100", text: "text-rose-700" };
+      // Birthdays / social occasions → green w/ cake
+      if (/عيد ميلاد|birthday|ميلاد/i.test(title)) {
+        return { Icon: Cake, ...COLOR_GREEN };
+      }
+      return { Icon: Star, ...COLOR_PINK };
     case "education":
-      return { Icon: GraduationCap, bg: "bg-indigo-100", text: "text-indigo-700" };
+      return { Icon: GraduationCap, ...COLOR_INDIGO };
     case "health":
-      return { Icon: Heart, bg: "bg-rose-100", text: "text-rose-700" };
+      return { Icon: Heart, ...COLOR_RED };
     case "bill":
-      return { Icon: getCommitmentIcon(title), bg: "bg-teal-100", text: "text-teal-700" };
+      return { Icon: getCommitmentIcon(title), ...COLOR_GREEN };
     case "subscription":
-      return { ...getBrandColor(title), Icon: Tv };
+      return getSubscriptionSpec(title, false);
     case "loan":
-      return { Icon: Landmark, bg: "bg-slate-100", text: "text-slate-700" };
+      return { Icon: Landmark, ...COLOR_ORANGE };
     default:
-      return { Icon: CircleDollarSign, bg: "bg-gray-100", text: "text-gray-700" };
+      return { Icon: CircleDollarSign, ...COLOR_GRAY };
   }
 }
 
@@ -174,12 +208,16 @@ function getCategoryLabel(type: string): string {
   }
 }
 
-function isReligiousOccasion(title: string): boolean {
-  return /عيد|رمضان|هجري|ليلة القدر|المولد النبوي|ذي الحجة|محرم/i.test(title);
+function isReligiousOccasion(type: string | null | undefined): boolean {
+  return type === "religious";
 }
 
-function isMajorOccasion(title: string): boolean {
-  return /عيد الفطر|عيد الأضحى|رمضان|العيد/i.test(title);
+function relativeArabic(daysFromNow: number): string {
+  if (daysFromNow <= 0) return "اليوم";
+  if (daysFromNow === 1) return "غداً";
+  if (daysFromNow === 2) return "بعد يومين";
+  if (daysFromNow <= 10) return `بعد ${daysFromNow} أيام`;
+  return `بعد ${daysFromNow} يوماً`;
 }
 
 interface MonthTimelineModalProps {
@@ -209,7 +247,7 @@ export function MonthTimelineModal({ open, onOpenChange, month, year }: MonthTim
   const updateCommitment = useUpdateCommitment({
     mutation: {
       onSuccess: () => {
-        queryClient.invalidateQueries({ queryKey: getListCommitmentsQueryKey() });
+        invalidateCommitmentsEverywhere(queryClient);
       },
     },
   });
@@ -230,14 +268,70 @@ export function MonthTimelineModal({ open, onOpenChange, month, year }: MonthTim
     },
   });
 
+  const deleteCommitment = useDeleteCommitment({
+    mutation: {
+      onSuccess: () => {
+        invalidateCommitmentsEverywhere(queryClient);
+      },
+    },
+  });
+
   const { format, baseCurrency } = useDisplayCurrency();
   const [formOpen, setFormOpen] = useState(false);
   const [editEvent, setEditEvent] = useState<CalendarEvent | null>(null);
   const [deleteConfirmEvent, setDeleteConfirmEvent] = useState<CalendarEvent | null>(null);
+  const [editCommitment, setEditCommitment] = useState<Commitment | null>(null);
+  const [deleteConfirmCommitment, setDeleteConfirmCommitment] = useState<Commitment | null>(null);
+
+  const editCommitmentForm = useForm<CommitmentFormValues>({
+    resolver: zodResolver(commitmentFormSchema),
+    defaultValues: commitmentFormDefaultValues,
+  });
+
+  useEffect(() => {
+    if (editCommitment) {
+      editCommitmentForm.reset({
+        title: editCommitment.title,
+        amount: Number(editCommitment.amount),
+        dueDay: editCommitment.dueDay,
+        notes: editCommitment.notes ?? "",
+        endDate: editCommitment.endDate ?? "",
+      });
+    }
+  }, [editCommitment, editCommitmentForm]);
+
+  const submitCommitmentEdit = (values: CommitmentFormValues) => {
+    if (!editCommitment) return;
+    updateCommitment.mutate(
+      {
+        id: editCommitment.id,
+        data: {
+          ...values,
+          endDate:
+            values.endDate && values.endDate.length > 0 ? values.endDate : null,
+          notes:
+            values.notes && values.notes.length > 0 ? values.notes : null,
+        },
+      },
+      {
+        onSuccess: () => {
+          toast({ title: "تم تعديل الالتزام بنجاح" });
+          setEditCommitment(null);
+        },
+        onError: () => {
+          toast({ title: "فشل تعديل الالتزام", variant: "destructive" });
+        },
+      },
+    );
+  };
 
   const today = new Date();
+  today.setHours(0, 0, 0, 0);
   const isCurrentMonth = today.getMonth() === month && today.getFullYear() === year;
   const todayDay = isCurrentMonth ? today.getDate() : null;
+  const isPastMonth =
+    year < today.getFullYear() ||
+    (year === today.getFullYear() && month < today.getMonth());
 
   function getStatus(day: number, isPaid: boolean): EventStatus {
     if (isPaid) return "paid";
@@ -251,9 +345,15 @@ export function MonthTimelineModal({ open, onOpenChange, month, year }: MonthTim
   const timelineItems = useMemo<TimelineItem[]>(() => {
     const items: TimelineItem[] = [];
 
-    (commitments ?? []).forEach((c, idx) => {
+    (commitments ?? []).forEach((c) => {
       const day = Math.min(c.dueDay, lastDay);
       const date = new Date(year, month, day);
+      if (c.endDate) {
+        const end = new Date(c.endDate);
+        if (!Number.isNaN(end.getTime()) && date.getTime() > end.getTime()) {
+          return;
+        }
+      }
       items.push({
         id: `commitment-${c.id}`,
         source: "commitment",
@@ -263,13 +363,15 @@ export function MonthTimelineModal({ open, onOpenChange, month, year }: MonthTim
         notes: c.notes,
         amount: Number(c.amount),
         currency: baseCurrency,
-        categoryLabel: "التزام",
+        categoryLabel: isLoanTitle(c.title) ? "قسط" : "التزام",
         status: getStatus(day, isCurrentMonth ? c.isPaid : false),
         isPaid: isCurrentMonth ? c.isPaid : false,
-        canEdit: false,
+        isSpecialOccasion: false,
+        canEdit: true,
         canMarkPaid: isCurrentMonth,
-        iconSpec: { Icon: getCommitmentIcon(c.title), ...getCommitmentColor(idx) },
+        iconSpec: getCommitmentSpec(c.title),
         rawId: c.id,
+        commitment: c,
       });
     });
 
@@ -277,7 +379,6 @@ export function MonthTimelineModal({ open, onOpenChange, month, year }: MonthTim
       const day = Math.min(s.renewsOnDay ?? 1, lastDay);
       const date = new Date(year, month, day);
       const monthlyAmt = s.billingCycle === "yearly" ? Number(s.amount) / 12 : Number(s.amount);
-      const brandColor = getBrandColor(s.name);
       items.push({
         id: `subscription-${s.id}`,
         source: "subscription",
@@ -290,9 +391,10 @@ export function MonthTimelineModal({ open, onOpenChange, month, year }: MonthTim
         categoryLabel: "اشتراك",
         status: getStatus(day, false),
         isPaid: false,
+        isSpecialOccasion: false,
         canEdit: false,
         canMarkPaid: false,
-        iconSpec: { Icon: s.billingCycle === "yearly" ? Music : Tv, ...brandColor },
+        iconSpec: getSubscriptionSpec(s.name, s.billingCycle === "yearly"),
         rawId: s.id,
       });
     });
@@ -302,7 +404,7 @@ export function MonthTimelineModal({ open, onOpenChange, month, year }: MonthTim
       const parts = dateStr.split("-");
       const day = parseInt(parts[2], 10);
       const date = new Date(year, month, day);
-      const iconSpec = getCalendarEventIcon(ev.type ?? "other", ev.title);
+      const iconSpec = getCalendarEventSpec(ev.type ?? "other", ev.title);
       const isOwned = currentUserId !== null && ev.userId === currentUserId;
       const isDemo = ev.userId === DEMO_SEED_USER_ID;
       const hasAmount = ev.amount !== undefined && ev.amount !== null;
@@ -320,6 +422,7 @@ export function MonthTimelineModal({ open, onOpenChange, month, year }: MonthTim
           ? getStatus(day, ev.isPaid)
           : (day < (todayDay ?? Infinity) ? "paid" : "safe"),
         isPaid: ev.isPaid,
+        isSpecialOccasion: isReligiousOccasion(ev.type),
         canEdit: isOwned,
         canMarkPaid: isOwned && hasAmount,
         iconSpec,
@@ -345,9 +448,10 @@ export function MonthTimelineModal({ open, onOpenChange, month, year }: MonthTim
         categoryLabel: "مصروف",
         status: "readonly",
         isPaid: true,
+        isSpecialOccasion: false,
         canEdit: false,
         canMarkPaid: false,
-        iconSpec: { Icon: CircleDollarSign, bg: "bg-gray-100", text: "text-gray-600" },
+        iconSpec: { Icon: CircleDollarSign, ...COLOR_GRAY },
         rawId: ex.id,
       });
     });
@@ -362,76 +466,65 @@ export function MonthTimelineModal({ open, onOpenChange, month, year }: MonthTim
     [timelineItems],
   );
 
-  const overdueSoonCount = useMemo(
-    () => timelineItems.filter((i) => i.status === "overdue" || i.status === "upcoming" || i.status === "today").length,
-    [timelineItems],
-  );
+  const eventCount = timelineItems.length;
 
-  const majorEvent = useMemo(
-    () => timelineItems.find((i) => i.source === "calendar" && isMajorOccasion(i.title)),
-    [timelineItems],
-  );
+  // Upcoming = unpaid events in this month that haven't already passed
+  // (current month: from today onwards; future month: all events; past month: none)
+  const upcomingItems = useMemo(() => {
+    if (isPastMonth) return [] as TimelineItem[];
+    return timelineItems
+      .filter((i) => {
+        if (i.source === "expense" || i.isPaid) return false;
+        if (isCurrentMonth) return i.day >= (todayDay ?? 1);
+        return true; // future month: all unpaid events count as upcoming
+      })
+      .sort((a, b) => a.day - b.day);
+  }, [timelineItems, todayDay, isPastMonth, isCurrentMonth]);
+
+  const upcomingCount = upcomingItems.length;
+  const nextUpcoming = upcomingItems[0];
+  // Real day-difference between today and the event's date (works for current
+  // and future months alike). For past months we never read this value.
+  const nextUpcomingDays = nextUpcoming
+    ? Math.max(
+        0,
+        Math.round(
+          (nextUpcoming.date.getTime() - today.getTime()) / (1000 * 60 * 60 * 24),
+        ),
+      )
+    : null;
+  const nextUpcomingLabel = nextUpcomingDays !== null ? relativeArabic(nextUpcomingDays) : null;
 
   const salary = Number(profile?.monthlySalary ?? 0);
   const committed = totalFinancial;
   const capacityPct = salary > 0 ? Math.min(100, Math.round((committed / salary) * 100)) : 0;
-  const freePct = 100 - capacityPct;
-
-  function getStatusRing(status: EventStatus): string {
-    switch (status) {
-      case "paid": return "ring-2 ring-emerald-400";
-      case "overdue":
-      case "today": return "ring-2 ring-red-400";
-      case "upcoming": return "ring-2 ring-amber-400";
-      case "readonly": return "ring-1 ring-gray-300 opacity-60";
-      default: return "ring-1 ring-border/40";
-    }
-  }
-
-  function getStatusBadge(status: EventStatus) {
-    switch (status) {
-      case "paid":
-        return <Badge variant="outline" className="border-emerald-300 bg-emerald-50 text-emerald-700 gap-1 h-5 px-1.5 text-[10px]"><CheckCircle2 className="w-2.5 h-2.5" />مدفوع</Badge>;
-      case "overdue":
-        return <Badge variant="outline" className="border-red-300 bg-red-50 text-red-700 h-5 px-1.5 text-[10px]">متأخر</Badge>;
-      case "today":
-        return <Badge variant="outline" className="border-primary/30 bg-primary/10 text-primary gap-1 h-5 px-1.5 text-[10px]"><Clock className="w-2.5 h-2.5" />اليوم</Badge>;
-      case "upcoming":
-        return <Badge variant="outline" className="border-amber-300 bg-amber-50 text-amber-700 gap-1 h-5 px-1.5 text-[10px]"><Clock className="w-2.5 h-2.5" />قريباً</Badge>;
-      case "readonly":
-        return <Badge variant="outline" className="border-gray-200 bg-gray-50 text-gray-500 h-5 px-1.5 text-[10px]">مصروف</Badge>;
-      default:
-        return null;
-    }
-  }
-
-  function getRowBg(status: EventStatus): string {
-    switch (status) {
-      case "paid": return "bg-emerald-50/50 border-emerald-200";
-      case "overdue":
-      case "today": return "bg-red-50/40 border-red-200";
-      case "upcoming": return "bg-amber-50/40 border-amber-200";
-      case "readonly": return "bg-gray-50/40 border-gray-200 opacity-80";
-      default: return "bg-background/70 border-border/60";
-    }
-  }
+  const safetyPct = salary > 0 ? Math.max(0, 100 - capacityPct) : 100;
+  const safetyLabel =
+    safetyPct >= 60 ? "آمن" : safetyPct >= 30 ? "حذر" : "مرتفع الخطورة";
+  const safetyLabelColor =
+    safetyPct >= 60 ? "text-emerald-700" : safetyPct >= 30 ? "text-amber-700" : "text-red-700";
 
   return (
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
         <DialogContent
           dir="rtl"
-          className="w-full sm:w-[80vw] max-w-none sm:max-w-none max-h-[90vh] flex flex-col overflow-hidden p-0 gap-0"
+          className="w-full sm:w-[85vw] max-w-none sm:max-w-[1100px] max-h-[92vh] flex flex-col overflow-hidden p-0 gap-0"
         >
-          <DialogHeader className="px-5 pt-5 pb-0 shrink-0">
-            <div className="flex items-center justify-between">
-              <DialogTitle className="text-xl font-extrabold text-foreground">
+          {/* === HEADER === */}
+          <DialogHeader className="px-5 sm:px-6 pt-5 pb-3 shrink-0 border-b border-border/40 space-y-0">
+            <div className="flex items-center justify-between gap-3 pl-9">
+              {/* In RTL, first child renders on the right (trailing edge of viewport, "trailing side" per spec) */}
+              <DialogTitle className="text-base sm:text-lg font-extrabold text-foreground text-right">
                 {MONTHS_AR[month]} {year}
+                <span className="text-muted-foreground font-bold"> - التزاماتك المالية</span>
               </DialogTitle>
+              {/* Add button on the leading (visually left) side */}
               <Button
                 size="sm"
-                className="rounded-xl gap-1.5 text-xs"
+                className="rounded-xl gap-1.5 text-xs bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm shrink-0"
                 onClick={() => { setEditEvent(null); setFormOpen(true); }}
+                data-testid="button-add-event"
               >
                 <Plus className="w-3.5 h-3.5" />
                 إضافة حدث
@@ -439,75 +532,127 @@ export function MonthTimelineModal({ open, onOpenChange, month, year }: MonthTim
             </div>
           </DialogHeader>
 
-          <div className="px-5 pt-4 pb-0 space-y-3 shrink-0">
-            {/* Summary row */}
-            <div className="grid grid-cols-3 gap-2">
-              <div className="rounded-2xl p-3 bg-primary/5 border border-primary/10 text-center">
-                <div className="text-[10px] text-muted-foreground font-bold mb-0.5">إجمالي المدفوعات</div>
-                <div className="text-base font-extrabold text-primary tabular-nums">
+          {/* === SUMMARY AREA ===
+              On wide screens the three summary cards sit on the leading edge
+              (visually right in RTL) and the borrowing-safety gauge sits on the
+              trailing edge (visually left in RTL), matching the mockup that
+              places the gauge to the side of the cards. On narrow screens
+              everything stacks. */}
+          <div
+            className={`px-5 sm:px-6 pt-4 pb-4 shrink-0 bg-muted/20 border-b border-border/40 ${salary > 0 ? "grid gap-3 lg:grid-cols-[minmax(0,1.4fr)_minmax(280px,1fr)] lg:items-stretch" : "space-y-3"}`}
+          >
+            {/* Three summary cards */}
+            <div className="grid grid-cols-3 gap-2 sm:gap-3">
+              {/* 1. Total payments */}
+              <div
+                className="rounded-2xl p-3 bg-card border border-border/60 shadow-sm flex flex-col items-center justify-center text-center gap-1"
+                data-testid="card-summary-total"
+              >
+                <div className="text-[10px] sm:text-xs text-muted-foreground font-bold">إجمالي المدفوعات</div>
+                <div className="text-base sm:text-lg font-extrabold text-foreground tabular-nums leading-tight">
                   {format(totalFinancial, baseCurrency)}
                 </div>
+                <div className="text-[9px] sm:text-[10px] text-muted-foreground font-medium">دفع</div>
               </div>
-              <div className="rounded-2xl p-3 bg-accent/5 border border-accent/20 text-center">
-                <div className="text-[10px] text-muted-foreground font-bold mb-0.5">عدد الأحداث</div>
-                <div className="text-base font-extrabold text-foreground">
-                  {timelineItems.length}
+
+              {/* 2. Event count */}
+              <div
+                className="rounded-2xl p-3 bg-card border border-border/60 shadow-sm flex flex-col items-center justify-center text-center gap-1"
+                data-testid="card-summary-events"
+              >
+                <div className="text-[10px] sm:text-xs text-muted-foreground font-bold">عدد المناسبات</div>
+                <div className="text-base sm:text-lg font-extrabold text-foreground tabular-nums leading-tight">
+                  {eventCount}
                 </div>
+                <div className="text-[9px] sm:text-[10px] text-muted-foreground font-medium">مناسبة</div>
               </div>
-              <div className={`rounded-2xl p-3 border text-center ${overdueSoonCount > 0 ? "bg-amber-50/60 border-amber-200" : "bg-muted/30 border-border/60"}`}>
-                <div className="text-[10px] text-muted-foreground font-bold mb-0.5">تنبيهات</div>
-                <div className={`text-base font-extrabold ${overdueSoonCount > 0 ? "text-amber-700" : "text-muted-foreground"}`}>
-                  {overdueSoonCount > 0 ? (
-                    <span className="flex items-center justify-center gap-1">
-                      <AlertTriangle className="w-3.5 h-3.5" />
-                      {overdueSoonCount}
-                    </span>
-                  ) : "لا تنبيهات"}
+
+              {/* 3. Upcoming alerts */}
+              <div
+                className="rounded-2xl p-3 bg-card border border-border/60 shadow-sm flex flex-col items-center justify-center text-center gap-1"
+                data-testid="card-summary-alerts"
+              >
+                <div className="text-[10px] sm:text-xs text-muted-foreground font-bold flex items-center justify-center gap-1">
+                  <Bell className="w-3 h-3 text-amber-500" />
+                  تنبيهات قادمة
                 </div>
+                <div className="text-base sm:text-lg font-extrabold text-foreground tabular-nums leading-tight">
+                  {upcomingCount}
+                </div>
+                {nextUpcomingLabel ? (
+                  <Badge
+                    className="bg-amber-100 text-amber-700 border-amber-200 hover:bg-amber-100 h-5 px-2 text-[10px] font-bold gap-0.5"
+                    variant="outline"
+                    data-testid="badge-next-upcoming"
+                  >
+                    {nextUpcomingLabel}
+                  </Badge>
+                ) : (
+                  <div className="text-[9px] sm:text-[10px] text-muted-foreground font-medium">لا تنبيهات</div>
+                )}
               </div>
             </div>
 
-            {/* Borrowing capacity */}
+            {/* Borrowing safety gauge */}
             {salary > 0 && (
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <div className="rounded-2xl p-3 bg-background/70 border border-border/60 cursor-help">
-                    <div className="flex justify-between items-center mb-1.5">
-                      <span className="text-[11px] font-bold text-muted-foreground">قدرة الاقتراض</span>
-                      <span className="text-[11px] font-extrabold text-foreground">{freePct}% متبقية</span>
-                    </div>
-                    <div className="h-2 bg-muted rounded-full overflow-hidden">
-                      <div
-                        className={`h-full rounded-full transition-all ${capacityPct > 75 ? "bg-red-500" : capacityPct > 50 ? "bg-amber-500" : "bg-emerald-500"}`}
-                        style={{ width: `${capacityPct}%` }}
-                      />
-                    </div>
-                    <div className="flex justify-between mt-1">
-                      <span className="text-[10px] text-muted-foreground">الالتزامات: {capacityPct}%</span>
-                      <span className="text-[10px] text-muted-foreground">الراتب: {format(salary, baseCurrency)}</span>
-                    </div>
+              <div
+                className="rounded-2xl p-3 sm:p-4 bg-card border border-border/60 shadow-sm"
+                data-testid="card-borrowing-safety"
+              >
+                <div className="flex items-center justify-between mb-2 gap-2">
+                  <div className="flex items-center gap-1.5 min-w-0">
+                    <span className="text-xs sm:text-sm font-extrabold text-foreground truncate">
+                      مؤشر الأمان المالي
+                    </span>
+                    <span className="text-[10px] sm:text-xs text-muted-foreground font-medium truncate">
+                      / محاكي الاقتراض
+                    </span>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <button
+                          type="button"
+                          className="text-muted-foreground hover:text-foreground transition-colors shrink-0"
+                          aria-label="معلومات عن مؤشر الأمان المالي"
+                          data-testid="button-safety-info"
+                        >
+                          <Info className="w-3.5 h-3.5" />
+                        </button>
+                      </TooltipTrigger>
+                      <TooltipContent dir="rtl" side="bottom" className="max-w-xs text-[11px] leading-relaxed">
+                        يحسب هذا المؤشر مدى قدرتك على تحمّل دين إضافي بناءً على دخلك الشهري والتزاماتك الحالية. كلما كانت التزاماتك أقل من دخلك، زادت مساحة الأمان وقدرتك على الاقتراض بأمان.
+                      </TooltipContent>
+                    </Tooltip>
                   </div>
-                </TooltipTrigger>
-                <TooltipContent dir="rtl" side="top" className="max-w-xs text-xs text-center">
-                  يساعدك هذا المؤشر على تقييم قدرتك على تحمّل دين إضافي بناءً على دخلك والتزاماتك لهذا الشهر
-                </TooltipContent>
-              </Tooltip>
-            )}
+                  <div className={`text-xs sm:text-sm font-extrabold tabular-nums ${safetyLabelColor} shrink-0`}>
+                    {safetyPct}% — {safetyLabel}
+                  </div>
+                </div>
 
-            {/* Major occasion banner */}
-            {majorEvent && (
-              <div className="rounded-2xl px-4 py-3 bg-amber-50 border border-amber-300 flex items-center gap-3">
-                <Star className="w-5 h-5 text-amber-600 shrink-0" />
-                <div>
-                  <div className="text-sm font-extrabold text-amber-800">{majorEvent.title}</div>
-                  <div className="text-[11px] text-amber-700">توقع مصاريف إضافية هذا الشهر</div>
+                {/* Gauge bar (rendered LTR so the gradient direction is consistent) */}
+                <div dir="ltr" className="relative">
+                  <div className="h-3 rounded-full overflow-hidden bg-gradient-to-r from-red-500 via-orange-400 to-emerald-500 shadow-inner" />
+                  <div
+                    className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-2 h-6 bg-white border-2 border-foreground rounded-sm shadow-md transition-all duration-500"
+                    style={{ left: `${safetyPct}%` }}
+                    aria-label={`موقع المؤشر عند ${safetyPct} بالمئة`}
+                  />
+                </div>
+                <div dir="ltr" className="flex justify-between mt-1.5 text-[9px] sm:text-[10px] text-muted-foreground font-medium tabular-nums">
+                  <span>0% خطر</span>
+                  <span>50%</span>
+                  <span>100% آمن</span>
+                </div>
+
+                <div className="flex items-center justify-between mt-2 text-[10px] sm:text-[11px] text-muted-foreground">
+                  <span>الالتزامات: <span className="font-bold text-foreground tabular-nums">{format(committed, baseCurrency)}</span></span>
+                  <span>الراتب: <span className="font-bold text-foreground tabular-nums">{format(salary, baseCurrency)}</span></span>
                 </div>
               </div>
             )}
           </div>
 
-          {/* Timeline */}
-          <div className="flex-1 overflow-y-auto px-5 py-4 space-y-2.5" dir="rtl">
+          {/* === TIMELINE === */}
+          <div className="flex-1 overflow-y-auto px-5 sm:px-6 py-4" dir="rtl">
             {timelineItems.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-14 text-muted-foreground text-sm gap-3 text-center">
                 <CircleDollarSign className="w-10 h-10 opacity-20" />
@@ -522,118 +667,198 @@ export function MonthTimelineModal({ open, onOpenChange, month, year }: MonthTim
                 </Button>
               </div>
             ) : (
-              timelineItems.map((item, i) => {
-                const { Icon, emoji, bg, text } = item.iconSpec;
-                const weekday = WEEKDAYS_AR[item.date.getDay()];
-                const animStyle = { animationDelay: `${i * 40}ms` };
+              <div className="relative">
+                {/* Vertical green spine — sits at the position of the icon column.
+                    In RTL, the icon sits visually in the middle of the row; we place
+                    the spine through the icon center. The icon column is 40px wide,
+                    so the line sits at right-[60px] relative to the row container. */}
+                <div
+                  className="absolute top-0 bottom-0 w-0.5 bg-gradient-to-b from-emerald-300 via-emerald-400 to-emerald-300 rounded-full pointer-events-none"
+                  style={{ right: "calc(2.5rem + 1.25rem)" }}
+                  aria-hidden
+                />
 
-                return (
-                  <div
-                    key={item.id}
-                    className={`flex items-center gap-3 p-3 rounded-2xl border transition-colors animate-in fade-in slide-in-from-bottom-1 duration-300 ${getRowBg(item.status)}`}
-                    style={animStyle}
-                  >
-                    {/* Day badge */}
-                    <div className="shrink-0 w-10 text-center">
-                      <div className="text-[9px] text-muted-foreground font-medium leading-none">{weekday}</div>
-                      <div className="text-lg font-extrabold text-foreground leading-tight">{item.day}</div>
-                    </div>
+                <div className="space-y-2.5">
+                  {timelineItems.map((item, i) => {
+                    const { Icon, emoji, bg, text } = item.iconSpec;
+                    const animStyle = { animationDelay: `${i * 35}ms` };
+                    const special = item.isSpecialOccasion;
 
-                    <div className="w-px h-9 bg-border/60 shrink-0" />
+                    const baseRowClasses = special
+                      ? "bg-yellow-50 border-yellow-300"
+                      : "bg-card border-border/60 hover:border-emerald-300/60";
 
-                    {/* Icon badge */}
-                    <div className={`shrink-0 w-9 h-9 rounded-xl flex items-center justify-center text-base ${bg} ${text} ${getStatusRing(item.status)}`}>
-                      {emoji ? (
-                        <span>{emoji}</span>
-                      ) : Icon ? (
-                        <Icon className="w-4 h-4" />
-                      ) : (
-                        <CircleDollarSign className="w-4 h-4" />
-                      )}
-                    </div>
-
-                    {/* Content */}
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-1.5 flex-wrap">
-                        <span className="font-bold text-sm text-foreground truncate">{item.title}</span>
-                        <Badge variant="outline" className="text-[9px] h-4 px-1.5 border-border/60 text-muted-foreground font-medium">
-                          {item.categoryLabel}
-                        </Badge>
-                        {getStatusBadge(item.status)}
-                      </div>
-                      {item.notes && (
-                        <div className="text-[10px] text-muted-foreground mt-0.5 truncate">{item.notes}</div>
-                      )}
-                      {item.amount !== null && (
-                        <div className="text-xs font-extrabold text-primary mt-0.5 tabular-nums">
-                          {format(item.amount, item.currency)}
+                    return (
+                      <div
+                        key={item.id}
+                        className={`relative flex items-stretch gap-3 p-3 sm:p-3.5 rounded-2xl border shadow-sm transition-all animate-in fade-in slide-in-from-bottom-1 duration-300 ${baseRowClasses}`}
+                        style={animStyle}
+                        data-testid={`timeline-row-${item.id}`}
+                      >
+                        {/* Date column (right / leading edge in RTL) */}
+                        <div className="shrink-0 w-10 flex flex-col items-center justify-center text-center">
+                          <div className="text-lg sm:text-xl font-extrabold text-foreground leading-none tabular-nums">
+                            {item.day}
+                          </div>
+                          <div className="text-[9px] sm:text-[10px] text-muted-foreground font-bold mt-0.5">
+                            {MONTHS_AR[month]}
+                          </div>
                         </div>
-                      )}
-                    </div>
 
-                    {/* Actions */}
-                    <div className="flex items-center gap-1 shrink-0">
-                      {item.canMarkPaid && item.source === "commitment" && (
-                        <Button
-                          size="sm"
-                          variant={item.isPaid ? "outline" : "default"}
-                          className={`rounded-xl h-8 text-xs ${item.isPaid ? "border-emerald-300 text-emerald-700 hover:bg-emerald-50" : ""}`}
-                          disabled={updateCommitment.isPending}
-                          onClick={async () => {
-                            try {
-                              await updateCommitment.mutateAsync({ id: item.rawId!, data: { isPaid: !item.isPaid } });
-                              toast({ title: item.isPaid ? "تم إلغاء الدفع" : "تم تسجيل الدفع" });
-                            } catch {
-                              toast({ title: "فشل تحديث حالة الدفع", variant: "destructive" });
-                            }
-                          }}
+                        {/* Colored circular icon (sits over the spine) */}
+                        <div
+                          className={`relative shrink-0 w-10 h-10 rounded-full flex items-center justify-center self-center ring-4 ring-white shadow-sm ${bg} ${text}`}
                         >
-                          {item.isPaid ? "تم" : "دفع"}
-                        </Button>
-                      )}
-                      {item.canMarkPaid && item.source === "calendar" && (
-                        <Button
-                          size="sm"
-                          variant={item.isPaid ? "outline" : "default"}
-                          className={`rounded-xl h-8 text-xs ${item.isPaid ? "border-emerald-300 text-emerald-700 hover:bg-emerald-50" : ""}`}
-                          disabled={updateCalendarEvent.isPending}
-                          onClick={async () => {
-                            try {
-                              await updateCalendarEvent.mutateAsync({ id: item.rawId!, data: { isPaid: !item.isPaid } });
-                              toast({ title: item.isPaid ? "تم إلغاء الدفع" : "تم تسجيل الدفع" });
-                            } catch {
-                              toast({ title: "فشل تحديث حالة الدفع", variant: "destructive" });
-                            }
-                          }}
-                        >
-                          {item.isPaid ? "تم" : "دفع"}
-                        </Button>
-                      )}
-                      {item.canEdit && item.calendarEvent && (
-                        <>
-                          <Button
-                            size="icon"
-                            variant="ghost"
-                            className="h-8 w-8 text-muted-foreground hover:text-foreground"
-                            onClick={() => { setEditEvent(item.calendarEvent!); setFormOpen(true); }}
-                          >
-                            <Edit2 className="w-3.5 h-3.5" />
-                          </Button>
-                          <Button
-                            size="icon"
-                            variant="ghost"
-                            className="h-8 w-8 text-muted-foreground hover:text-destructive"
-                            disabled={deleteCalendarEvent.isPending}
-                            onClick={() => setDeleteConfirmEvent(item.calendarEvent!)}
-                          >
-                            <Trash2 className="w-3.5 h-3.5" />
-                          </Button>
-                        </>
-                      )}
-                    </div>
-                  </div>
-                );
-              })
+                          {emoji ? (
+                            <span className="text-base">{emoji}</span>
+                          ) : Icon ? (
+                            <Icon className="w-4 h-4" />
+                          ) : (
+                            <CircleDollarSign className="w-4 h-4" />
+                          )}
+                        </div>
+
+                        {/* Content */}
+                        <div className="flex-1 min-w-0 flex flex-col justify-center">
+                          <div className="flex items-center gap-1.5 flex-wrap">
+                            <span className="font-extrabold text-sm text-foreground truncate">{item.title}</span>
+                            {special && (
+                              <Badge
+                                variant="outline"
+                                className="border-yellow-400 bg-yellow-100 text-yellow-800 gap-1 h-5 px-1.5 text-[10px] font-bold"
+                                data-testid="badge-special-occasion"
+                              >
+                                <AlertTriangle className="w-2.5 h-2.5" />
+                                مناسبة خاصة
+                              </Badge>
+                            )}
+                            {item.isPaid && !special && (
+                              <Badge
+                                variant="outline"
+                                className="border-emerald-300 bg-emerald-50 text-emerald-700 h-5 px-1.5 text-[10px] font-bold"
+                              >
+                                مدفوع
+                              </Badge>
+                            )}
+                          </div>
+                          <div className="text-[10px] sm:text-[11px] text-muted-foreground mt-0.5 truncate">
+                            {item.categoryLabel}
+                            {item.notes ? ` · ${item.notes}` : ""}
+                          </div>
+                          {special && (
+                            <div className="text-[10px] sm:text-[11px] text-yellow-800 font-bold mt-1 flex items-center gap-1">
+                              <AlertTriangle className="w-3 h-3" />
+                              توقع مصاريف إضافية
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Amount + Actions (left / trailing edge in RTL) */}
+                        <div className="shrink-0 flex flex-col items-end justify-center gap-1.5">
+                          {item.amount !== null && (
+                            <div
+                              className="text-sm sm:text-base font-extrabold text-foreground tabular-nums whitespace-nowrap"
+                              dir="ltr"
+                            >
+                              {format(item.amount, item.currency)}
+                            </div>
+                          )}
+                          <div className="flex items-center gap-1">
+                            {item.canMarkPaid && item.source === "commitment" && (
+                              <Button
+                                size="sm"
+                                variant={item.isPaid ? "outline" : "default"}
+                                className={`rounded-lg h-7 text-[11px] px-2 ${item.isPaid ? "border-emerald-300 text-emerald-700 hover:bg-emerald-50" : "bg-emerald-600 hover:bg-emerald-700 text-white"}`}
+                                disabled={updateCommitment.isPending}
+                                onClick={async () => {
+                                  try {
+                                    await updateCommitment.mutateAsync({ id: item.rawId!, data: { isPaid: !item.isPaid } });
+                                    toast({ title: item.isPaid ? "تم إلغاء الدفع" : "تم تسجيل الدفع" });
+                                  } catch {
+                                    toast({ title: "فشل تحديث حالة الدفع", variant: "destructive" });
+                                  }
+                                }}
+                                data-testid={`button-toggle-paid-${item.id}`}
+                              >
+                                {item.isPaid ? "إلغاء الدفع" : "دفع"}
+                              </Button>
+                            )}
+                            {item.canMarkPaid && item.source === "calendar" && (
+                              <Button
+                                size="sm"
+                                variant={item.isPaid ? "outline" : "default"}
+                                className={`rounded-lg h-7 text-[11px] px-2 ${item.isPaid ? "border-emerald-300 text-emerald-700 hover:bg-emerald-50" : "bg-emerald-600 hover:bg-emerald-700 text-white"}`}
+                                disabled={updateCalendarEvent.isPending}
+                                onClick={async () => {
+                                  try {
+                                    await updateCalendarEvent.mutateAsync({ id: item.rawId!, data: { isPaid: !item.isPaid } });
+                                    toast({ title: item.isPaid ? "تم إلغاء الدفع" : "تم تسجيل الدفع" });
+                                  } catch {
+                                    toast({ title: "فشل تحديث حالة الدفع", variant: "destructive" });
+                                  }
+                                }}
+                                data-testid={`button-toggle-paid-${item.id}`}
+                              >
+                                {item.isPaid ? "إلغاء الدفع" : "دفع"}
+                              </Button>
+                            )}
+                            {item.canEdit && item.calendarEvent && (
+                              <>
+                                <Button
+                                  size="icon"
+                                  variant="ghost"
+                                  className="h-7 w-7 text-muted-foreground hover:text-foreground"
+                                  onClick={() => { setEditEvent(item.calendarEvent!); setFormOpen(true); }}
+                                  aria-label="تعديل"
+                                  data-testid={`button-edit-${item.id}`}
+                                >
+                                  <Edit2 className="w-3.5 h-3.5" />
+                                </Button>
+                                <Button
+                                  size="icon"
+                                  variant="ghost"
+                                  className="h-7 w-7 text-muted-foreground hover:text-destructive"
+                                  disabled={deleteCalendarEvent.isPending}
+                                  onClick={() => setDeleteConfirmEvent(item.calendarEvent!)}
+                                  aria-label="حذف"
+                                  data-testid={`button-delete-${item.id}`}
+                                >
+                                  <Trash2 className="w-3.5 h-3.5" />
+                                </Button>
+                              </>
+                            )}
+                            {item.canEdit && item.commitment && (
+                              <>
+                                <Button
+                                  size="icon"
+                                  variant="ghost"
+                                  className="h-7 w-7 text-muted-foreground hover:text-foreground"
+                                  onClick={() => setEditCommitment(item.commitment!)}
+                                  aria-label="تعديل الالتزام"
+                                  data-testid={`button-edit-${item.id}`}
+                                >
+                                  <Edit2 className="w-3.5 h-3.5" />
+                                </Button>
+                                <Button
+                                  size="icon"
+                                  variant="ghost"
+                                  className="h-7 w-7 text-muted-foreground hover:text-destructive"
+                                  disabled={deleteCommitment.isPending}
+                                  onClick={() => setDeleteConfirmCommitment(item.commitment!)}
+                                  aria-label="حذف الالتزام"
+                                  data-testid={`button-delete-${item.id}`}
+                                >
+                                  <Trash2 className="w-3.5 h-3.5" />
+                                </Button>
+                              </>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
             )}
           </div>
         </DialogContent>
@@ -664,6 +889,84 @@ export function MonthTimelineModal({ open, onOpenChange, month, year }: MonthTim
                 await deleteCalendarEvent.mutateAsync({ id: deleteConfirmEvent.id });
                 toast({ title: "تم حذف الحدث" });
                 setDeleteConfirmEvent(null);
+              }}
+            >
+              حذف
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <Dialog
+        open={!!editCommitment}
+        onOpenChange={(o) => {
+          if (!o) setEditCommitment(null);
+        }}
+      >
+        <DialogContent dir="rtl" className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>تعديل الالتزام</DialogTitle>
+            <DialogDescription>
+              عدّل تفاصيل الالتزام، وأضف تاريخ انتهاء عند الحاجة.
+            </DialogDescription>
+          </DialogHeader>
+          <Form {...editCommitmentForm}>
+            <form
+              onSubmit={editCommitmentForm.handleSubmit(submitCommitmentEdit)}
+              className="space-y-4"
+            >
+              <CommitmentFormFields
+                control={editCommitmentForm.control}
+                baseCurrency={baseCurrency}
+              />
+              <DialogFooter className="gap-2 sm:gap-0">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setEditCommitment(null)}
+                >
+                  إلغاء
+                </Button>
+                <Button
+                  type="submit"
+                  className="bg-emerald-600 hover:bg-emerald-700 text-white"
+                  disabled={updateCommitment.isPending}
+                >
+                  حفظ التعديلات
+                </Button>
+              </DialogFooter>
+            </form>
+          </Form>
+        </DialogContent>
+      </Dialog>
+
+      <AlertDialog
+        open={!!deleteConfirmCommitment}
+        onOpenChange={(o) => {
+          if (!o) setDeleteConfirmCommitment(null);
+        }}
+      >
+        <AlertDialogContent dir="rtl">
+          <AlertDialogHeader>
+            <AlertDialogTitle>حذف الالتزام؟</AlertDialogTitle>
+            <AlertDialogDescription>
+              هل أنت متأكد من حذف "{deleteConfirmCommitment?.title}"؟ لا يمكن التراجع عن هذا الإجراء.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>إلغاء</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              disabled={deleteCommitment.isPending}
+              onClick={async () => {
+                if (!deleteConfirmCommitment) return;
+                try {
+                  await deleteCommitment.mutateAsync({ id: deleteConfirmCommitment.id });
+                  toast({ title: "تم حذف الالتزام" });
+                } catch {
+                  toast({ title: "فشل حذف الالتزام", variant: "destructive" });
+                }
+                setDeleteConfirmCommitment(null);
               }}
             >
               حذف

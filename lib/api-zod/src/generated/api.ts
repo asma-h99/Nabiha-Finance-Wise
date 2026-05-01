@@ -140,6 +140,12 @@ export const ListCommitmentsResponseItem = zod.object({
   dueDay: zod.number().describe("Day of month when due (1-31)"),
   isPaid: zod.boolean(),
   notes: zod.string().nullish(),
+  endDate: zod.coerce
+    .date()
+    .nullish()
+    .describe(
+      "Optional ISO date (YYYY-MM-DD) after which the commitment no longer recurs.",
+    ),
   createdAt: zod.coerce.date(),
 });
 export const ListCommitmentsResponse = zod.array(ListCommitmentsResponseItem);
@@ -152,6 +158,12 @@ export const CreateCommitmentBody = zod.object({
   amount: zod.number(),
   dueDay: zod.number(),
   notes: zod.string().nullish(),
+  endDate: zod.coerce
+    .date()
+    .nullish()
+    .describe(
+      "Optional ISO date (YYYY-MM-DD) after which the commitment no longer recurs.",
+    ),
 });
 
 /**
@@ -167,6 +179,12 @@ export const UpdateCommitmentBody = zod.object({
   dueDay: zod.number().optional(),
   isPaid: zod.boolean().optional(),
   notes: zod.string().nullish(),
+  endDate: zod.coerce
+    .date()
+    .nullish()
+    .describe(
+      "Optional ISO date (YYYY-MM-DD) after which the commitment no longer recurs.",
+    ),
 });
 
 export const UpdateCommitmentResponse = zod.object({
@@ -176,6 +194,12 @@ export const UpdateCommitmentResponse = zod.object({
   dueDay: zod.number().describe("Day of month when due (1-31)"),
   isPaid: zod.boolean(),
   notes: zod.string().nullish(),
+  endDate: zod.coerce
+    .date()
+    .nullish()
+    .describe(
+      "Optional ISO date (YYYY-MM-DD) after which the commitment no longer recurs.",
+    ),
   createdAt: zod.coerce.date(),
 });
 

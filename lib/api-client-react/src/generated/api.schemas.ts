@@ -69,6 +69,8 @@ export interface Commitment {
   dueDay: number;
   isPaid: boolean;
   notes?: string | null;
+  /** Optional ISO date (YYYY-MM-DD) after which the commitment no longer recurs. */
+  endDate?: string | null;
   createdAt: string;
 }
 
@@ -77,6 +79,8 @@ export interface CreateCommitmentBody {
   amount: number;
   dueDay: number;
   notes?: string | null;
+  /** Optional ISO date (YYYY-MM-DD) after which the commitment no longer recurs. */
+  endDate?: string | null;
 }
 
 export interface UpdateCommitmentBody {
@@ -85,6 +89,8 @@ export interface UpdateCommitmentBody {
   dueDay?: number;
   isPaid?: boolean;
   notes?: string | null;
+  /** Optional ISO date (YYYY-MM-DD) after which the commitment no longer recurs. */
+  endDate?: string | null;
 }
 
 export interface DashboardSummary {

@@ -743,6 +743,11 @@ components:
         notes:
           type: string
           nullable: true
+        endDate:
+          type: string
+          format: date
+          nullable: true
+          description: Optional ISO date (YYYY-MM-DD) after which the commitment no longer recurs.
         createdAt:
           type: string
           format: date-time
@@ -766,6 +771,11 @@ components:
         notes:
           type: string
           nullable: true
+        endDate:
+          type: string
+          format: date
+          nullable: true
+          description: Optional ISO date (YYYY-MM-DD) after which the commitment no longer recurs.
       required:
         - title
         - amount
@@ -785,6 +795,11 @@ components:
         notes:
           type: string
           nullable: true
+        endDate:
+          type: string
+          format: date
+          nullable: true
+          description: Optional ISO date (YYYY-MM-DD) after which the commitment no longer recurs.
 
     DashboardSummary:
       type: object
