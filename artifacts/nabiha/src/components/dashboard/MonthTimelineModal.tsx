@@ -81,6 +81,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
+import { getIslamicOccasionsForMonth, type IslamicOccasion } from "@/lib/islamicOccasions";
 
 const DEMO_SEED_USER_ID = "nabiha_demo_seed";
 
@@ -102,7 +103,7 @@ interface IconSpec {
 
 interface TimelineItem {
   id: string;
-  source: "commitment" | "subscription" | "calendar" | "expense";
+  source: "commitment" | "subscription" | "calendar" | "expense" | "islamic_suggested";
   day: number;
   date: Date;
   title: string;
@@ -119,6 +120,7 @@ interface TimelineItem {
   rawId?: number;
   calendarEvent?: CalendarEvent;
   commitment?: Commitment;
+  islamicOccasion?: IslamicOccasion;
 }
 
 const COLOR_GREEN = { bg: "bg-emerald-100", text: "text-emerald-700" };
@@ -291,6 +293,9 @@ export function MonthTimelineModal({ open, onOpenChange, month, year }: MonthTim
   const [formOpen, setFormOpen] = useState(false);
   const [editEvent, setEditEvent] = useState<CalendarEvent | null>(null);
   const [deleteConfirmEvent, setDeleteConfirmEvent] = useState<CalendarEvent | null>(null);
+  const [islamicFormOpen, setIslamicFormOpen] = useState(false);
+  const [islamicFormTitle, setIslamicFormTitle] = useState("");
+  const [islamicFormDate, setIslamicFormDate] = useState("");
   const [editCommitment, setEditCommitment] = useState<Commitment | null>(null);
   const [deleteConfirmCommitment, setDeleteConfirmCommitment] = useState<Commitment | null>(null);
 
@@ -484,6 +489,38 @@ export function MonthTimelineModal({ open, onOpenChange, month, year }: MonthTim
         rawId: ex.id,
       });
     });
+
+    // Inject Islamic occasions that haven't been saved yet as calendar events
+    const islamicOccasions = getIslamicOccasionsForMonth(year, month);
+    const savedReligiousTitles = new Set(
+      (calendarEvents ?? [])
+        .filter((ev) => ev.type === "religious")
+        .map((ev) => ev.title.trim()),
+    );
+    for (const occ of islamicOccasions) {
+      if (savedReligiousTitles.has(occ.name)) continue; // already saved by user
+      const dateParts = occ.approxDate.split("-");
+      const day = parseInt(dateParts[2], 10);
+      const date = new Date(year, month, day);
+      items.push({
+        id: `islamic-${occ.name}`,
+        source: "islamic_suggested",
+        day,
+        date,
+        title: occ.name,
+        notes: null,
+        amount: null,
+        currency: baseCurrency,
+        categoryLabel: "مناسبة دينية · مقترح",
+        status: "safe",
+        isPaid: false,
+        isSpecialOccasion: true,
+        canEdit: false,
+        canMarkPaid: false,
+        iconSpec: { Icon: null, emoji: occ.emoji, bg: "bg-amber-100", text: "text-amber-700" },
+        islamicOccasion: occ,
+      });
+    }
 
     return items.sort((a, b) => a.day - b.day || a.title.localeCompare(b.title));
   }, [commitments, subscriptions, calendarEvents, expenses, baseCurrency, month, year, isCurrentMonth, todayDay, lastDay, currentUserId, skippedIds, viewedMonthStr]);
@@ -716,9 +753,12 @@ export function MonthTimelineModal({ open, onOpenChange, month, year }: MonthTim
                     const animStyle = { animationDelay: `${i * 35}ms` };
                     const special = item.isSpecialOccasion;
 
-                    const baseRowClasses = special
-                      ? "bg-yellow-50 border-yellow-300"
-                      : "bg-card border-border/60 hover:border-emerald-300/60";
+                    const baseRowClasses =
+                      item.source === "islamic_suggested"
+                        ? "bg-amber-50 border-amber-200"
+                        : special
+                        ? "bg-yellow-50 border-yellow-300"
+                        : "bg-card border-border/60 hover:border-emerald-300/60";
 
                     return (
                       <div
@@ -754,7 +794,16 @@ export function MonthTimelineModal({ open, onOpenChange, month, year }: MonthTim
                         <div className="flex-1 min-w-0 flex flex-col justify-center">
                           <div className="flex items-center gap-1.5 flex-wrap">
                             <span className="font-extrabold text-sm text-foreground truncate">{item.title}</span>
-                            {special && (
+                            {item.source === "islamic_suggested" && (
+                              <Badge
+                                variant="outline"
+                                className="border-amber-400 bg-amber-50 text-amber-800 h-5 px-1.5 text-[10px] font-bold"
+                                data-testid="badge-islamic-suggested"
+                              >
+                                مقترح
+                              </Badge>
+                            )}
+                            {special && item.source !== "islamic_suggested" && (
                               <Badge
                                 variant="outline"
                                 className="border-yellow-400 bg-yellow-100 text-yellow-800 gap-1 h-5 px-1.5 text-[10px] font-bold"
@@ -777,7 +826,12 @@ export function MonthTimelineModal({ open, onOpenChange, month, year }: MonthTim
                             {item.categoryLabel}
                             {item.notes ? ` · ${item.notes}` : ""}
                           </div>
-                          {special && (
+                          {item.source === "islamic_suggested" && item.islamicOccasion && (
+                            <div className="text-[10px] sm:text-[11px] text-amber-700 font-medium mt-0.5">
+                              {item.islamicOccasion.hint}
+                            </div>
+                          )}
+                          {special && item.source !== "islamic_suggested" && (
                             <div className="text-[10px] sm:text-[11px] text-yellow-800 font-bold mt-1 flex items-center gap-1">
                               <AlertTriangle className="w-3 h-3" />
                               توقع مصاريف إضافية
@@ -796,6 +850,22 @@ export function MonthTimelineModal({ open, onOpenChange, month, year }: MonthTim
                             </div>
                           )}
                           <div className="flex items-center gap-1">
+                            {/* Suggested Islamic occasion — add budget button */}
+                            {item.source === "islamic_suggested" && item.islamicOccasion && (
+                              <Button
+                                size="sm"
+                                className="rounded-lg h-7 text-[11px] px-2.5 gap-1 bg-amber-500 hover:bg-amber-600 text-white"
+                                onClick={() => {
+                                  setIslamicFormTitle(item.islamicOccasion!.name);
+                                  setIslamicFormDate(item.islamicOccasion!.approxDate);
+                                  setIslamicFormOpen(true);
+                                }}
+                                data-testid={`button-add-budget-${item.id}`}
+                              >
+                                <Plus className="w-3 h-3" />
+                                إضافة ميزانية
+                              </Button>
+                            )}
                             {item.canMarkPaid && item.source === "commitment" && (
                               <Button
                                 size="sm"
@@ -901,6 +971,15 @@ export function MonthTimelineModal({ open, onOpenChange, month, year }: MonthTim
         onOpenChange={setFormOpen}
         editEvent={editEvent}
         defaultDate={fromDate}
+      />
+
+      {/* Pre-filled form for Islamic occasion budget */}
+      <EventFormDialog
+        open={islamicFormOpen}
+        onOpenChange={setIslamicFormOpen}
+        defaultTitle={islamicFormTitle}
+        defaultDate={islamicFormDate}
+        defaultType="religious"
       />
 
       <AlertDialog open={!!deleteConfirmEvent} onOpenChange={(o) => { if (!o) setDeleteConfirmEvent(null); }}>
