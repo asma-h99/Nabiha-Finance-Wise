@@ -71,7 +71,18 @@ export interface Commitment {
   notes?: string | null;
   /** Optional ISO date (YYYY-MM-DD) after which the commitment no longer recurs. */
   endDate?: string | null;
+  /** If true, this commitment appears only in oneTimeMonth and not in other months. */
+  isOneTime: boolean;
+  /** YYYY-MM format. Required when isOneTime is true. */
+  oneTimeMonth?: string | null;
   createdAt: string;
+}
+
+export interface CommitmentSkip {
+  id: number;
+  commitmentId: number;
+  /** YYYY-MM format. The month in which the recurring commitment is skipped. */
+  month: string;
 }
 
 export interface CreateCommitmentBody {
@@ -81,6 +92,15 @@ export interface CreateCommitmentBody {
   notes?: string | null;
   /** Optional ISO date (YYYY-MM-DD) after which the commitment no longer recurs. */
   endDate?: string | null;
+  /** If true, commitment only appears in oneTimeMonth. */
+  isOneTime?: boolean;
+  /** YYYY-MM format. Required when isOneTime is true. */
+  oneTimeMonth?: string | null;
+}
+
+export interface CreateCommitmentSkipBody {
+  /** YYYY-MM format. The month to skip for this commitment. */
+  month: string;
 }
 
 export interface UpdateCommitmentBody {

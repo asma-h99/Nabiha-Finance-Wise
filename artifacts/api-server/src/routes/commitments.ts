@@ -1,12 +1,15 @@
 import { Router } from "express";
-import { db, commitmentsTable } from "@workspace/db";
+import { db, commitmentsTable, commitmentSkipsTable } from "@workspace/db";
 import {
   CreateCommitmentBody,
   UpdateCommitmentBody,
   UpdateCommitmentParams,
   DeleteCommitmentParams,
+  SkipCommitmentMonthParams,
+  SkipCommitmentMonthBody,
+  UnskipCommitmentMonthParams,
 } from "@workspace/api-zod";
-import { eq } from "drizzle-orm";
+import { eq, and } from "drizzle-orm";
 
 const router = Router();
 
@@ -21,7 +24,18 @@ router.post("/commitments", async (req, res) => {
     res.status(400).json({ error: "Invalid body" });
     return;
   }
-  const { title, amount, dueDay, notes, endDate } = parseResult.data;
+  const { title, amount, dueDay, notes, endDate, isOneTime, oneTimeMonth } = parseResult.data;
+
+  if (isOneTime && !oneTimeMonth) {
+    res.status(400).json({ error: "oneTimeMonth is required when isOneTime is true" });
+    return;
+  }
+
+  if (isOneTime && oneTimeMonth && !/^\d{4}-\d{2}$/.test(oneTimeMonth)) {
+    res.status(400).json({ error: "oneTimeMonth must be in YYYY-MM format" });
+    return;
+  }
+
   const endDateStr = endDate ? endDate.toISOString().slice(0, 10) : null;
   const [commitment] = await db
     .insert(commitmentsTable)
@@ -31,6 +45,8 @@ router.post("/commitments", async (req, res) => {
       dueDay,
       notes: notes ?? null,
       endDate: endDateStr,
+      isOneTime: isOneTime ?? false,
+      oneTimeMonth: oneTimeMonth ?? null,
     })
     .returning();
 
@@ -84,6 +100,96 @@ router.delete("/commitments/:id", async (req, res) => {
   }
 
   await db.delete(commitmentsTable).where(eq(commitmentsTable.id, parseResult.data.id));
+  res.status(204).send();
+});
+
+router.get("/commitment-skips", async (_req, res) => {
+  const skips = await db.select().from(commitmentSkipsTable);
+  res.json(skips);
+});
+
+router.post("/commitments/:id/skip", async (req, res) => {
+  const paramsResult = SkipCommitmentMonthParams.safeParse(req.params);
+  if (!paramsResult.success) {
+    res.status(400).json({ error: "Invalid params" });
+    return;
+  }
+  const bodyResult = SkipCommitmentMonthBody.safeParse(req.body);
+  if (!bodyResult.success) {
+    res.status(400).json({ error: "Invalid body" });
+    return;
+  }
+
+  const { id } = paramsResult.data;
+  const { month } = bodyResult.data;
+
+  if (!/^\d{4}-\d{2}$/.test(month)) {
+    res.status(400).json({ error: "month must be in YYYY-MM format" });
+    return;
+  }
+
+  // Fetch the commitment to check it exists and is not one-time
+  const [targetCommitment] = await db
+    .select()
+    .from(commitmentsTable)
+    .where(eq(commitmentsTable.id, id));
+
+  if (!targetCommitment) {
+    res.status(404).json({ error: "Commitment not found" });
+    return;
+  }
+
+  if (targetCommitment.isOneTime) {
+    res.status(400).json({ error: "Cannot skip a one-time commitment; delete it entirely instead" });
+    return;
+  }
+
+  const existing = await db
+    .select()
+    .from(commitmentSkipsTable)
+    .where(
+      and(
+        eq(commitmentSkipsTable.commitmentId, id),
+        eq(commitmentSkipsTable.month, month),
+      ),
+    );
+
+  if (existing.length > 0) {
+    res.status(409).json({ error: "Already skipped for this month" });
+    return;
+  }
+
+  const [skip] = await db
+    .insert(commitmentSkipsTable)
+    .values({ commitmentId: id, month })
+    .returning();
+
+  res.status(201).json(skip);
+});
+
+router.delete("/commitments/:id/skip/:month", async (req, res) => {
+  const paramsResult = UnskipCommitmentMonthParams.safeParse(req.params);
+  if (!paramsResult.success) {
+    res.status(400).json({ error: "Invalid params" });
+    return;
+  }
+
+  const { id, month } = paramsResult.data;
+
+  if (!/^\d{4}-\d{2}$/.test(month)) {
+    res.status(400).json({ error: "month must be in YYYY-MM format" });
+    return;
+  }
+
+  await db
+    .delete(commitmentSkipsTable)
+    .where(
+      and(
+        eq(commitmentSkipsTable.commitmentId, id),
+        eq(commitmentSkipsTable.month, month),
+      ),
+    );
+
   res.status(204).send();
 });
 

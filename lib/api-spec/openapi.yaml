@@ -263,6 +263,69 @@ paths:
         "204":
           description: Deleted
 
+  /commitment-skips:
+    get:
+      operationId: listCommitmentSkips
+      tags: [commitments]
+      summary: List all monthly skips for recurring commitments
+      responses:
+        "200":
+          description: List of commitment skips
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/CommitmentSkip"
+
+  /commitments/{id}/skip:
+    post:
+      operationId: skipCommitmentMonth
+      tags: [commitments]
+      summary: Skip a recurring commitment for a specific month
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateCommitmentSkipBody"
+      responses:
+        "201":
+          description: Skip created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CommitmentSkip"
+        "409":
+          description: Already skipped for this month
+
+  /commitments/{id}/skip/{month}:
+    delete:
+      operationId: unskipCommitmentMonth
+      tags: [commitments]
+      summary: Remove a monthly skip (restore commitment for that month)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: month
+          in: path
+          required: true
+          schema:
+            type: string
+            description: "YYYY-MM format"
+      responses:
+        "204":
+          description: Skip removed
+
   /summary/dashboard:
     get:
       operationId: getDashboardSummary
@@ -748,6 +811,13 @@ components:
           format: date
           nullable: true
           description: Optional ISO date (YYYY-MM-DD) after which the commitment no longer recurs.
+        isOneTime:
+          type: boolean
+          description: If true, this commitment appears only in oneTimeMonth and not in other months.
+        oneTimeMonth:
+          type: string
+          nullable: true
+          description: "YYYY-MM format. Required when isOneTime is true."
         createdAt:
           type: string
           format: date-time
@@ -757,7 +827,23 @@ components:
         - amount
         - dueDay
         - isPaid
+        - isOneTime
         - createdAt
+
+    CommitmentSkip:
+      type: object
+      properties:
+        id:
+          type: integer
+        commitmentId:
+          type: integer
+        month:
+          type: string
+          description: "YYYY-MM format. The month in which the recurring commitment is skipped."
+      required:
+        - id
+        - commitmentId
+        - month
 
     CreateCommitmentBody:
       type: object
@@ -776,10 +862,26 @@ components:
           format: date
           nullable: true
           description: Optional ISO date (YYYY-MM-DD) after which the commitment no longer recurs.
+        isOneTime:
+          type: boolean
+          description: If true, commitment only appears in oneTimeMonth.
+        oneTimeMonth:
+          type: string
+          nullable: true
+          description: "YYYY-MM format. Required when isOneTime is true."
       required:
         - title
         - amount
         - dueDay
+
+    CreateCommitmentSkipBody:
+      type: object
+      properties:
+        month:
+          type: string
+          description: "YYYY-MM format. The month to skip for this commitment."
+      required:
+        - month
 
     UpdateCommitmentBody:
       type: object

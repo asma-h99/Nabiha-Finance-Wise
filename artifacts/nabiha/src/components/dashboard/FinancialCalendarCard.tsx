@@ -1,6 +1,7 @@
 import { useState } from "react";
 import {
   useListCommitments,
+  useListCommitmentSkips,
 } from "@workspace/api-client-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -68,6 +69,7 @@ function getIcon(title: string): LucideIcon {
 
 export function FinancialCalendarCard() {
   const { data: commitments, isLoading } = useListCommitments();
+  const { data: skips } = useListCommitmentSkips();
 
   const today = new Date();
   const currentMonthIdx = today.getMonth();
@@ -80,6 +82,29 @@ export function FinancialCalendarCard() {
   }
 
   const isEmpty = !commitments || commitments.length === 0;
+
+  // Helper: get YYYY-MM string for a given month index in the current year
+  function monthStr(monthIdx: number) {
+    return `${year}-${String(monthIdx + 1).padStart(2, "0")}`;
+  }
+
+  // Build a map of monthStr -> Set<commitmentId> that are skipped
+  const skipsByMonth = new Map<string, Set<number>>();
+  for (const skip of skips ?? []) {
+    if (!skipsByMonth.has(skip.month)) skipsByMonth.set(skip.month, new Set());
+    skipsByMonth.get(skip.month)!.add(skip.commitmentId);
+  }
+
+  // Get commitments visible in a specific month
+  function commitmentsForMonth(monthIdx: number) {
+    const ms = monthStr(monthIdx);
+    const skippedIds = skipsByMonth.get(ms) ?? new Set<number>();
+    return (commitments ?? []).filter((c) => {
+      if (c.isOneTime) return c.oneTimeMonth === ms;
+      return !skippedIds.has(c.id);
+    });
+  }
+
   const sorted = (commitments ?? []).slice().sort((a, b) => a.dueDay - b.dueDay);
 
   return (
@@ -109,12 +134,13 @@ export function FinancialCalendarCard() {
         <CardContent className="px-4 pb-5">
           {/* === YEARLY GRID === */}
           <div className="grid grid-cols-4 gap-2" dir="rtl">
-            {MONTHS.map((month, monthIdx) => {
+            {MONTHS.map((monthName, monthIdx) => {
               const isCurrentMonth = monthIdx === currentMonthIdx;
+              const monthCommitments = commitmentsForMonth(monthIdx).sort((a, b) => a.dueDay - b.dueDay);
               return (
                 <button
                   type="button"
-                  key={month}
+                  key={monthName}
                   onClick={() => setModalMonth(monthIdx)}
                   data-testid={`button-month-${monthIdx + 1}`}
                   className={`group rounded-2xl overflow-hidden border text-left transition-all cursor-pointer hover:shadow-lg hover:-translate-y-0.5 hover:border-primary/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 ${
@@ -122,7 +148,7 @@ export function FinancialCalendarCard() {
                       ? "border-primary/30 shadow-md"
                       : "border-border/60"
                   }`}
-                  aria-label={`${month} - عرض التقويم الشهري`}
+                  aria-label={`${monthName} - عرض التقويم الشهري`}
                 >
                   <div
                     className={`px-2 py-1.5 text-center text-xs font-extrabold tracking-wide transition-colors group-hover:bg-primary ${
@@ -132,18 +158,20 @@ export function FinancialCalendarCard() {
                     }`}
                     dir="rtl"
                   >
-                    {month}
+                    {monthName}
                   </div>
 
                   <div
                     className="p-2 bg-background/70 flex flex-wrap gap-1.5 justify-center min-h-[64px] items-center"
                     dir="rtl"
                   >
-                    {isEmpty ? (
+                    {monthCommitments.length === 0 ? (
                       <span className="text-[10px] text-muted-foreground/60">انقر للتفاصيل</span>
                     ) : (
-                      sorted.map((commitment, idx) => {
-                        const color = ICON_COLORS[idx % ICON_COLORS.length];
+                      monthCommitments.map((commitment, idx) => {
+                        const sortedIdx = sorted.findIndex((c) => c.id === commitment.id);
+                        const colorIdx = sortedIdx >= 0 ? sortedIdx : idx;
+                        const color = ICON_COLORS[colorIdx % ICON_COLORS.length];
                         const Icon = getIcon(commitment.title);
                         const isPaidThisMonth =
                           isCurrentMonth && commitment.isPaid;
@@ -173,6 +201,11 @@ export function FinancialCalendarCard() {
                               className="font-semibold"
                             >
                               {commitment.title}
+                              {commitment.isOneTime && (
+                                <span className="block text-[10px] opacity-80 mt-0.5">
+                                  هذا الشهر فقط
+                                </span>
+                              )}
                               {isPaidThisMonth && (
                                 <span className="block text-[10px] opacity-80 mt-0.5">
                                   مدفوع لهذا الشهر

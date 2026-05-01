@@ -23,9 +23,11 @@ import type {
   Category,
   CategoryBreakdown,
   Commitment,
+  CommitmentSkip,
   CreateCalendarEventBody,
   CreateCategoryBody,
   CreateCommitmentBody,
+  CreateCommitmentSkipBody,
   CreateExpenseBody,
   CreateSubscriptionBody,
   DashboardSummary,
@@ -1146,6 +1148,254 @@ export const useDeleteCommitment = <
   TContext
 > => {
   return useMutation(getDeleteCommitmentMutationOptions(options));
+};
+
+/**
+ * @summary List all monthly skips for recurring commitments
+ */
+export const getListCommitmentSkipsUrl = () => {
+  return `/api/commitment-skips`;
+};
+
+export const listCommitmentSkips = async (
+  options?: RequestInit,
+): Promise<CommitmentSkip[]> => {
+  return customFetch<CommitmentSkip[]>(getListCommitmentSkipsUrl(), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getListCommitmentSkipsQueryKey = () => {
+  return [`/api/commitment-skips`] as const;
+};
+
+export const getListCommitmentSkipsQueryOptions = <
+  TData = Awaited<ReturnType<typeof listCommitmentSkips>>,
+  TError = ErrorType<unknown>,
+>(options?: {
+  query?: UseQueryOptions<
+    Awaited<ReturnType<typeof listCommitmentSkips>>,
+    TError,
+    TData
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getListCommitmentSkipsQueryKey();
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof listCommitmentSkips>>
+  > = ({ signal }) => listCommitmentSkips({ signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof listCommitmentSkips>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type ListCommitmentSkipsQueryResult = NonNullable<
+  Awaited<ReturnType<typeof listCommitmentSkips>>
+>;
+export type ListCommitmentSkipsQueryError = ErrorType<unknown>;
+
+/**
+ * @summary List all monthly skips for recurring commitments
+ */
+
+export function useListCommitmentSkips<
+  TData = Awaited<ReturnType<typeof listCommitmentSkips>>,
+  TError = ErrorType<unknown>,
+>(options?: {
+  query?: UseQueryOptions<
+    Awaited<ReturnType<typeof listCommitmentSkips>>,
+    TError,
+    TData
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getListCommitmentSkipsQueryOptions(options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Skip a recurring commitment for a specific month
+ */
+export const getSkipCommitmentMonthUrl = (id: number) => {
+  return `/api/commitments/${id}/skip`;
+};
+
+export const skipCommitmentMonth = async (
+  id: number,
+  createCommitmentSkipBody: CreateCommitmentSkipBody,
+  options?: RequestInit,
+): Promise<CommitmentSkip> => {
+  return customFetch<CommitmentSkip>(getSkipCommitmentMonthUrl(id), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(createCommitmentSkipBody),
+  });
+};
+
+export const getSkipCommitmentMonthMutationOptions = <
+  TError = ErrorType<void>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof skipCommitmentMonth>>,
+    TError,
+    { id: number; data: BodyType<CreateCommitmentSkipBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof skipCommitmentMonth>>,
+  TError,
+  { id: number; data: BodyType<CreateCommitmentSkipBody> },
+  TContext
+> => {
+  const mutationKey = ["skipCommitmentMonth"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof skipCommitmentMonth>>,
+    { id: number; data: BodyType<CreateCommitmentSkipBody> }
+  > = (props) => {
+    const { id, data } = props ?? {};
+
+    return skipCommitmentMonth(id, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type SkipCommitmentMonthMutationResult = NonNullable<
+  Awaited<ReturnType<typeof skipCommitmentMonth>>
+>;
+export type SkipCommitmentMonthMutationBody =
+  BodyType<CreateCommitmentSkipBody>;
+export type SkipCommitmentMonthMutationError = ErrorType<void>;
+
+/**
+ * @summary Skip a recurring commitment for a specific month
+ */
+export const useSkipCommitmentMonth = <
+  TError = ErrorType<void>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof skipCommitmentMonth>>,
+    TError,
+    { id: number; data: BodyType<CreateCommitmentSkipBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof skipCommitmentMonth>>,
+  TError,
+  { id: number; data: BodyType<CreateCommitmentSkipBody> },
+  TContext
+> => {
+  return useMutation(getSkipCommitmentMonthMutationOptions(options));
+};
+
+/**
+ * @summary Remove a monthly skip (restore commitment for that month)
+ */
+export const getUnskipCommitmentMonthUrl = (id: number, month: string) => {
+  return `/api/commitments/${id}/skip/${month}`;
+};
+
+export const unskipCommitmentMonth = async (
+  id: number,
+  month: string,
+  options?: RequestInit,
+): Promise<void> => {
+  return customFetch<void>(getUnskipCommitmentMonthUrl(id, month), {
+    ...options,
+    method: "DELETE",
+  });
+};
+
+export const getUnskipCommitmentMonthMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof unskipCommitmentMonth>>,
+    TError,
+    { id: number; month: string },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof unskipCommitmentMonth>>,
+  TError,
+  { id: number; month: string },
+  TContext
+> => {
+  const mutationKey = ["unskipCommitmentMonth"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof unskipCommitmentMonth>>,
+    { id: number; month: string }
+  > = (props) => {
+    const { id, month } = props ?? {};
+
+    return unskipCommitmentMonth(id, month, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type UnskipCommitmentMonthMutationResult = NonNullable<
+  Awaited<ReturnType<typeof unskipCommitmentMonth>>
+>;
+
+export type UnskipCommitmentMonthMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Remove a monthly skip (restore commitment for that month)
+ */
+export const useUnskipCommitmentMonth = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof unskipCommitmentMonth>>,
+    TError,
+    { id: number; month: string },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof unskipCommitmentMonth>>,
+  TError,
+  { id: number; month: string },
+  TContext
+> => {
+  return useMutation(getUnskipCommitmentMonthMutationOptions(options));
 };
 
 /**

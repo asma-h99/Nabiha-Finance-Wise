@@ -165,6 +165,8 @@ type EditingCommitment = {
   notes?: string | null;
   endDate?: string | null;
   isPaid: boolean;
+  isOneTime?: boolean;
+  oneTimeMonth?: string | null;
 };
 
 /* -------------------------------------------------------------------------- */
@@ -325,6 +327,7 @@ export default function Money() {
         dueDay: editingCommitment.dueDay,
         notes: editingCommitment.notes ?? "",
         endDate: editingCommitment.endDate ?? "",
+        scope: editingCommitment.isOneTime ? "one-time" : "recurring",
       });
     }
   }, [editingCommitment, editCommitmentForm]);
@@ -476,11 +479,21 @@ export default function Money() {
     if (!editingExpense) return;
     updateExpense.mutate({ id: editingExpense.id, data: values });
   };
-  const normalizeCommitmentValues = (values: CommitmentFormValues) => ({
-    ...values,
-    endDate: values.endDate && values.endDate.length > 0 ? values.endDate : null,
-    notes: values.notes && values.notes.length > 0 ? values.notes : null,
-  });
+  const normalizeCommitmentValues = (values: CommitmentFormValues) => {
+    const isOneTime = values.scope === "one-time";
+    const { scope: _scope, ...rest } = values;
+    return {
+      ...rest,
+      endDate: isOneTime
+        ? null
+        : values.endDate && values.endDate.length > 0
+        ? values.endDate
+        : null,
+      notes: values.notes && values.notes.length > 0 ? values.notes : null,
+      isOneTime,
+      oneTimeMonth: isOneTime ? filterMonth : null,
+    };
+  };
   const onCreateCommitmentSubmit = (values: CommitmentFormValues) => {
     createCommitment.mutate({ data: normalizeCommitmentValues(values) });
   };
@@ -600,6 +613,7 @@ export default function Money() {
                   <CommitmentFormFields
                     control={createCommitmentForm.control}
                     baseCurrency={baseCurrency}
+                    showScopePicker
                   />
                   <Button
                     type="submit"

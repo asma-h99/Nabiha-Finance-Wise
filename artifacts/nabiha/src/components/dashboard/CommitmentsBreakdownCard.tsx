@@ -3,10 +3,12 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
   useListCommitments,
+  useListCommitmentSkips,
   useGetUserProfile,
   useCreateCommitment,
   useUpdateCommitment,
   useDeleteCommitment,
+  useSkipCommitmentMonth,
   type Commitment,
 } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
@@ -160,6 +162,11 @@ function formatEndDate(iso: string): string {
   return `${ARABIC_MONTHS[m - 1] ?? m} ${y}`;
 }
 
+// Returns YYYY-MM string for a given date
+function toYearMonth(d: Date): string {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+}
+
 // Returns true if the obligation is no longer active (its endDate is in the past).
 function isExpired(c: Commitment, now: Date): boolean {
   if (!c.endDate) return false;
@@ -174,6 +181,7 @@ export function CommitmentsBreakdownCard() {
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const { data: commitments, isLoading: loadingC } = useListCommitments();
+  const { data: skips } = useListCommitmentSkips();
   const { data: profile, isLoading: loadingP } = useGetUserProfile();
   const { format, baseCurrency } = useDisplayCurrency();
 
@@ -183,6 +191,10 @@ export function CommitmentsBreakdownCard() {
   const [deleting, setDeleting] = useState<Commitment | null>(null);
 
   const invalidate = () => invalidateCommitmentsEverywhere(queryClient);
+
+  const now = new Date();
+  const currentMonth = toYearMonth(now);
+  const currentMonthLabel = `${ARABIC_MONTHS[now.getMonth()]} ${now.getFullYear()}`;
 
   const createForm = useForm<CommitmentFormValues>({
     resolver: zodResolver(commitmentFormSchema),
@@ -201,6 +213,7 @@ export function CommitmentsBreakdownCard() {
         dueDay: editing.dueDay,
         notes: editing.notes ?? "",
         endDate: editing.endDate ?? "",
+        scope: "recurring",
       });
     }
   }, [editing, editForm]);
@@ -233,6 +246,19 @@ export function CommitmentsBreakdownCard() {
       },
     },
   });
+  const skipCommitmentMonth = useSkipCommitmentMonth({
+    mutation: {
+      onSuccess: () => {
+        invalidate();
+        toast({ title: `تم إخفاء الالتزام من شهر ${currentMonthLabel}` });
+        setDeleting(null);
+      },
+      onError: () => {
+        toast({ title: "هذا الشهر مضاف مسبقاً للاستثناءات", variant: "destructive" });
+        setDeleting(null);
+      },
+    },
+  });
 
   const normalize = (values: CommitmentFormValues) => ({
     ...values,
@@ -241,7 +267,6 @@ export function CommitmentsBreakdownCard() {
   });
 
   const expiredCount = useMemo(() => {
-    const now = new Date();
     return (commitments ?? []).filter((c) => isExpired(c, now)).length;
   }, [commitments]);
 
@@ -250,8 +275,21 @@ export function CommitmentsBreakdownCard() {
   }
 
   const salary = profile?.monthlySalary ?? 0;
-  const now = new Date();
-  const activeList = (commitments ?? []).filter((c) => !isExpired(c, now));
+
+  // Build a set of skipped commitment IDs for the current month
+  const skippedThisMonth = new Set(
+    (skips ?? [])
+      .filter((s) => s.month === currentMonth)
+      .map((s) => s.commitmentId),
+  );
+
+  // Active list: not expired, not skipped this month, and (if one-time) matches current month
+  const activeList = (commitments ?? []).filter((c) => {
+    if (isExpired(c, now)) return false;
+    if (c.isOneTime) return c.oneTimeMonth === currentMonth;
+    return !skippedThisMonth.has(c.id);
+  });
+
   const list = activeList.slice().sort((a, b) => a.dueDay - b.dueDay);
   const pieList = list;
   const totalCommitments = list.reduce((s, c) => s + Number(c.amount), 0);
@@ -375,8 +413,13 @@ export function CommitmentsBreakdownCard() {
                     <div className="flex-1 min-w-0">
                       <div className="font-medium text-sm text-foreground truncate">
                         {c.title}
+                        {c.isOneTime && (
+                          <span className="mr-1.5 text-[10px] font-bold text-amber-600 bg-amber-50 border border-amber-200 rounded-md px-1 py-0.5">
+                            هذا الشهر
+                          </span>
+                        )}
                       </div>
-                      {c.endDate && (
+                      {c.endDate && !c.isOneTime && (
                         <div className="text-[10px] text-amber-700 font-medium flex items-center gap-1 mt-0.5">
                           <CalendarOff className="w-2.5 h-2.5" />
                           ينتهي في {formatEndDate(c.endDate)}
@@ -454,19 +497,28 @@ export function CommitmentsBreakdownCard() {
           <DialogHeader>
             <DialogTitle>إضافة التزام</DialogTitle>
             <DialogDescription>
-              التزام شهري متكرر مثل إيجار أو فاتورة. يمكنك تحديد تاريخ انتهائه.
+              اختر هل هو التزام متكرر كل شهر، أم لهذا الشهر فقط.
             </DialogDescription>
           </DialogHeader>
           <Form {...createForm}>
             <form
-              onSubmit={createForm.handleSubmit((values) =>
-                createCommitment.mutate({ data: normalize(values) }),
-              )}
+              onSubmit={createForm.handleSubmit((values) => {
+                const isOneTime = values.scope === "one-time";
+                createCommitment.mutate({
+                  data: {
+                    ...normalize(values),
+                    isOneTime,
+                    oneTimeMonth: isOneTime ? currentMonth : null,
+                    endDate: isOneTime ? null : (normalize(values).endDate as string | null | undefined),
+                  },
+                });
+              })}
               className="space-y-4 mt-2"
             >
               <CommitmentFormFields
                 control={createForm.control}
                 baseCurrency={baseCurrency}
+                showScopePicker
               />
               <DialogFooter>
                 <Button
@@ -533,7 +585,7 @@ export function CommitmentsBreakdownCard() {
         </DialogContent>
       </Dialog>
 
-      {/* === Delete confirmation === */}
+      {/* === Delete scope dialog === */}
       <AlertDialog
         open={!!deleting}
         onOpenChange={(open) => !open && setDeleting(null)}
@@ -542,20 +594,37 @@ export function CommitmentsBreakdownCard() {
           <AlertDialogHeader>
             <AlertDialogTitle>حذف الالتزام؟</AlertDialogTitle>
             <AlertDialogDescription>
-              هل أنت متأكد من حذف "{deleting?.title}"؟ لا يمكن التراجع عن هذا الإجراء.
+              {deleting?.isOneTime
+                ? `هل أنت متأكد من حذف "${deleting?.title}"؟ لا يمكن التراجع عن هذا الإجراء.`
+                : `اختر كيف تريد حذف "${deleting?.title}".`}
             </AlertDialogDescription>
           </AlertDialogHeader>
-          <AlertDialogFooter className="gap-2">
-            <AlertDialogCancel className="rounded-xl">إلغاء</AlertDialogCancel>
+          <AlertDialogFooter className="gap-2 flex-col sm:flex-col">
+            {deleting && !deleting.isOneTime && (
+              <Button
+                variant="outline"
+                className="rounded-xl w-full border-amber-300 text-amber-700 hover:bg-amber-50"
+                disabled={skipCommitmentMonth.isPending}
+                onClick={() => {
+                  if (deleting) {
+                    skipCommitmentMonth.mutate({ id: deleting.id, data: { month: currentMonth } });
+                  }
+                }}
+                data-testid="button-delete-this-month-only"
+              >
+                حذف من {currentMonthLabel} فقط
+              </Button>
+            )}
             <AlertDialogAction
-              className="rounded-xl bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              className="rounded-xl bg-destructive text-destructive-foreground hover:bg-destructive/90 w-full"
               onClick={() => {
                 if (deleting) deleteCommitment.mutate({ id: deleting.id });
               }}
               data-testid="button-confirm-delete-commitment"
             >
-              حذف
+              {deleting?.isOneTime ? "حذف" : "حذف الالتزام بالكامل (كل الأشهر)"}
             </AlertDialogAction>
+            <AlertDialogCancel className="rounded-xl w-full mt-0">إلغاء</AlertDialogCancel>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

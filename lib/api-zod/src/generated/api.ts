@@ -146,6 +146,15 @@ export const ListCommitmentsResponseItem = zod.object({
     .describe(
       "Optional ISO date (YYYY-MM-DD) after which the commitment no longer recurs.",
     ),
+  isOneTime: zod
+    .boolean()
+    .describe(
+      "If true, this commitment appears only in oneTimeMonth and not in other months.",
+    ),
+  oneTimeMonth: zod
+    .string()
+    .nullish()
+    .describe("YYYY-MM format. Required when isOneTime is true."),
   createdAt: zod.coerce.date(),
 });
 export const ListCommitmentsResponse = zod.array(ListCommitmentsResponseItem);
@@ -164,6 +173,14 @@ export const CreateCommitmentBody = zod.object({
     .describe(
       "Optional ISO date (YYYY-MM-DD) after which the commitment no longer recurs.",
     ),
+  isOneTime: zod
+    .boolean()
+    .optional()
+    .describe("If true, commitment only appears in oneTimeMonth."),
+  oneTimeMonth: zod
+    .string()
+    .nullish()
+    .describe("YYYY-MM format. Required when isOneTime is true."),
 });
 
 /**
@@ -200,6 +217,15 @@ export const UpdateCommitmentResponse = zod.object({
     .describe(
       "Optional ISO date (YYYY-MM-DD) after which the commitment no longer recurs.",
     ),
+  isOneTime: zod
+    .boolean()
+    .describe(
+      "If true, this commitment appears only in oneTimeMonth and not in other months.",
+    ),
+  oneTimeMonth: zod
+    .string()
+    .nullish()
+    .describe("YYYY-MM format. Required when isOneTime is true."),
   createdAt: zod.coerce.date(),
 });
 
@@ -208,6 +234,43 @@ export const UpdateCommitmentResponse = zod.object({
  */
 export const DeleteCommitmentParams = zod.object({
   id: zod.coerce.number(),
+});
+
+/**
+ * @summary List all monthly skips for recurring commitments
+ */
+export const ListCommitmentSkipsResponseItem = zod.object({
+  id: zod.number(),
+  commitmentId: zod.number(),
+  month: zod
+    .string()
+    .describe(
+      "YYYY-MM format. The month in which the recurring commitment is skipped.",
+    ),
+});
+export const ListCommitmentSkipsResponse = zod.array(
+  ListCommitmentSkipsResponseItem,
+);
+
+/**
+ * @summary Skip a recurring commitment for a specific month
+ */
+export const SkipCommitmentMonthParams = zod.object({
+  id: zod.coerce.number(),
+});
+
+export const SkipCommitmentMonthBody = zod.object({
+  month: zod
+    .string()
+    .describe("YYYY-MM format. The month to skip for this commitment."),
+});
+
+/**
+ * @summary Remove a monthly skip (restore commitment for that month)
+ */
+export const UnskipCommitmentMonthParams = zod.object({
+  id: zod.coerce.number(),
+  month: zod.coerce.string(),
 });
 
 /**

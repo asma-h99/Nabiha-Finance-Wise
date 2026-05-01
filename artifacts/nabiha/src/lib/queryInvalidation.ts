@@ -1,6 +1,7 @@
 import type { QueryClient } from "@tanstack/react-query";
 import {
   getListCommitmentsQueryKey,
+  getListCommitmentSkipsQueryKey,
   getListExpensesQueryKey,
   getGetBalanceSummaryQueryKey,
   getGetAccumulatedSavingsQueryKey,
@@ -24,6 +25,7 @@ const SUMMARY_KEYS_AFFECTED_BY_EXPENSES = [
 
 export function invalidateCommitmentsEverywhere(qc: QueryClient): void {
   qc.invalidateQueries({ queryKey: getListCommitmentsQueryKey() });
+  qc.invalidateQueries({ queryKey: getListCommitmentSkipsQueryKey() });
   for (const key of SUMMARY_KEYS_AFFECTED_BY_COMMITMENTS) {
     qc.invalidateQueries({ queryKey: key });
   }

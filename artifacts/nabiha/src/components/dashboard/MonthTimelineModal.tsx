@@ -25,8 +25,10 @@ import {
 } from "@/components/ui/tooltip";
 import {
   useListCommitments,
+  useListCommitmentSkips,
   useUpdateCommitment,
   useDeleteCommitment,
+  useSkipCommitmentMonth,
   useListSubscriptions,
   useListCalendarEvents,
   getListCalendarEventsQueryKey,
@@ -231,6 +233,7 @@ export function MonthTimelineModal({ open, onOpenChange, month, year }: MonthTim
   const { user } = useUser();
   const currentUserId = user?.id ?? null;
   const { data: commitments } = useListCommitments();
+  const { data: commitmentSkips } = useListCommitmentSkips();
   const { data: subscriptions } = useListSubscriptions();
   const { data: profile } = useGetUserProfile();
   const queryClient = useQueryClient();
@@ -269,6 +272,14 @@ export function MonthTimelineModal({ open, onOpenChange, month, year }: MonthTim
   });
 
   const deleteCommitment = useDeleteCommitment({
+    mutation: {
+      onSuccess: () => {
+        invalidateCommitmentsEverywhere(queryClient);
+      },
+    },
+  });
+
+  const skipCommitmentMonth = useSkipCommitmentMonth({
     mutation: {
       onSuccess: () => {
         invalidateCommitmentsEverywhere(queryClient);
@@ -342,10 +353,28 @@ export function MonthTimelineModal({ open, onOpenChange, month, year }: MonthTim
     return "safe";
   }
 
+  // Build a set of commitment IDs that are skipped for this specific month
+  const viewedMonthStr = `${year}-${String(month + 1).padStart(2, "0")}`;
+  const skippedIds = useMemo(() => {
+    return new Set(
+      (commitmentSkips ?? [])
+        .filter((s) => s.month === viewedMonthStr)
+        .map((s) => s.commitmentId),
+    );
+  }, [commitmentSkips, viewedMonthStr]);
+
   const timelineItems = useMemo<TimelineItem[]>(() => {
     const items: TimelineItem[] = [];
 
     (commitments ?? []).forEach((c) => {
+      // One-time commitments only appear in their target month
+      if (c.isOneTime) {
+        if (c.oneTimeMonth !== viewedMonthStr) return;
+      } else {
+        // Recurring: skip if there's a skip record for this month
+        if (skippedIds.has(c.id)) return;
+      }
+
       const day = Math.min(c.dueDay, lastDay);
       const date = new Date(year, month, day);
       if (c.endDate) {
@@ -457,7 +486,7 @@ export function MonthTimelineModal({ open, onOpenChange, month, year }: MonthTim
     });
 
     return items.sort((a, b) => a.day - b.day || a.title.localeCompare(b.title));
-  }, [commitments, subscriptions, calendarEvents, expenses, baseCurrency, month, year, isCurrentMonth, todayDay, lastDay, currentUserId]);
+  }, [commitments, subscriptions, calendarEvents, expenses, baseCurrency, month, year, isCurrentMonth, todayDay, lastDay, currentUserId, skippedIds, viewedMonthStr]);
 
   const totalFinancial = useMemo(
     () => timelineItems
@@ -950,13 +979,37 @@ export function MonthTimelineModal({ open, onOpenChange, month, year }: MonthTim
           <AlertDialogHeader>
             <AlertDialogTitle>حذف الالتزام؟</AlertDialogTitle>
             <AlertDialogDescription>
-              هل أنت متأكد من حذف "{deleteConfirmCommitment?.title}"؟ لا يمكن التراجع عن هذا الإجراء.
+              {deleteConfirmCommitment?.isOneTime
+                ? `هل أنت متأكد من حذف "${deleteConfirmCommitment?.title}"؟`
+                : `اختر كيف تريد حذف "${deleteConfirmCommitment?.title}".`}
             </AlertDialogDescription>
           </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>إلغاء</AlertDialogCancel>
+          <AlertDialogFooter className="flex-col gap-2 sm:flex-col">
+            {deleteConfirmCommitment && !deleteConfirmCommitment.isOneTime && (
+              <Button
+                variant="outline"
+                className="w-full rounded-xl border-amber-300 text-amber-700 hover:bg-amber-50"
+                disabled={skipCommitmentMonth.isPending}
+                onClick={async () => {
+                  if (!deleteConfirmCommitment) return;
+                  try {
+                    await skipCommitmentMonth.mutateAsync({
+                      id: deleteConfirmCommitment.id,
+                      data: { month: viewedMonthStr },
+                    });
+                    toast({ title: `تم حذف الالتزام من ${MONTHS_AR[month]} ${year}` });
+                  } catch {
+                    toast({ title: "فشل تحديث الالتزام", variant: "destructive" });
+                  }
+                  setDeleteConfirmCommitment(null);
+                }}
+                data-testid="button-delete-this-month-only"
+              >
+                حذف من {MONTHS_AR[month]} {year} فقط
+              </Button>
+            )}
             <AlertDialogAction
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              className="w-full bg-destructive text-destructive-foreground hover:bg-destructive/90"
               disabled={deleteCommitment.isPending}
               onClick={async () => {
                 if (!deleteConfirmCommitment) return;
@@ -969,8 +1022,9 @@ export function MonthTimelineModal({ open, onOpenChange, month, year }: MonthTim
                 setDeleteConfirmCommitment(null);
               }}
             >
-              حذف
+              {deleteConfirmCommitment?.isOneTime ? "حذف" : "حذف الالتزام بالكامل (كل الأشهر)"}
             </AlertDialogAction>
+            <AlertDialogCancel className="mt-0">إلغاء</AlertDialogCancel>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

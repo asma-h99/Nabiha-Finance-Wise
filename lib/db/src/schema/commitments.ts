@@ -10,6 +10,8 @@ export const commitmentsTable = pgTable("commitments", {
   isPaid: boolean("is_paid").notNull().default(false),
   notes: text("notes"),
   endDate: text("end_date"),
+  isOneTime: boolean("is_one_time").notNull().default(false),
+  oneTimeMonth: text("one_time_month"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 
