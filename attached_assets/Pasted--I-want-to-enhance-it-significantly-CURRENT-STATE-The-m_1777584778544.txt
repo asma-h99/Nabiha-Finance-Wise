@@ -1,0 +1,81 @@
+ I want to enhance it significantly.
+
+---
+
+CURRENT STATE:
+The modal has:
+- A toggle for email notifications
+- A name field
+- An email field
+- A save button
+- A "send test message" button
+
+---
+
+CHANGES NEEDED:
+
+1. RESTRUCTURE the modal into clear sections with section headers.
+   Each section should have a subtle divider line between them.
+
+2. ADD a new notification channel section called 
+   "إشعارات داخل التطبيق" with two new options:
+
+   a) SOUND NOTIFICATION toggle:
+      - Label: "صوت التنبيه"
+      - Sub-label: "سيُشغَّل صوت تنبيه عند اقتراب موعد الالتزام"
+      - Icon: 🔊
+      - When toggled ON: play a short soft chime sound as preview
+      - Use the Web Audio API to generate a gentle bell tone,
+        no external audio files needed
+
+   b) BROWSER POP-UP toggle:
+      - Label: "إشعار فوري على الشاشة"  
+      - Sub-label: "إشعار يظهر على شاشتك حتى لو كنت في تبويب آخر"
+      - Icon: 🖥️
+      - When toggled ON: immediately request browser 
+        Notification permission via the Notifications API
+      - If permission denied: show a small inline warning in amber:
+        "يرجى السماح بالإشعارات من إعدادات المتصفح"
+      - If permission granted: fire a test browser notification 
+        instantly showing: 
+        title: "نبيهة 🌿" 
+        body: "سيصلك إشعار مثل هذا قبل 48 ساعة من كل موعد"
+
+3. RESTRUCTURE the modal layout to look like this:
+
+   ┌─────────────────────────────────────────┐
+   │  🔔 تنبيهات تجديد الالتزامات            │
+   │  سنُرسل لك تذكيراً ودودًا قبل 48 ساعة  │
+   ├─────────────────────────────────────────┤
+   │  📧 البريد الإلكتروني                   │
+   │  [toggle]  تفعيل التنبيهات بالبريد      │
+   │  [name field]                           │
+   │  [email field]                          │
+   ├─────────────────────────────────────────┤
+   │  🔔 داخل التطبيق                        │
+   │  [toggle]  🔊 صوت التنبيه               │
+   │  [toggle]  🖥️ إشعار فوري على الشاشة    │
+   ├─────────────────────────────────────────┤
+   │  [إرسال رسالة تجريبية]  [حفظ ✓]        │
+   └─────────────────────────────────────────┘
+
+4. VISUAL IMPROVEMENTS:
+   - Each toggle row should have a hover background highlight (very subtle)
+   - Active toggles should be green (#16a34a) matching the app theme
+   - Inactive toggles should be gray
+   - Add a small animated bell icon at the top of the modal that 
+     swings once when the modal opens (CSS keyframe animation)
+   - The modal should have a max-height with scroll on smaller screens
+
+5. ACCESSIBILITY:
+   - All toggles must be keyboard accessible
+   - Add aria-labels in Arabic for each toggle
+   - Focus trap inside the modal when open
+
+6. STATE PERSISTENCE:
+   - Save all toggle states to localStorage under the key "nabiha_notif_prefs"
+   - On modal open, read from localStorage and restore previous state
+
+The app uses a green (#16a34a) and dark green (#15803d) color scheme
+with white backgrounds and Arabic RTL layout. 
+Keep all UI text in Arabic.

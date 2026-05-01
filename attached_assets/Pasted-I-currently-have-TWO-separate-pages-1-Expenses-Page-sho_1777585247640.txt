@@ -1,0 +1,119 @@
+I currently have TWO separate pages:
+
+1. "المصاريف" (Expenses Page) — shows a list of expenses filtered 
+   by month and priority, with an "إضافة مصروف" button
+
+2. "الالتزامات والفئات" (Commitments & Categories Page) — shows 
+   fixed recurring commitments (rent, subscriptions, installments) 
+   with status cards (متأخر / مدفوع), plus expense category icons 
+   at the top
+
+I want to MERGE both into ONE unified page called:
+"💸 مالي الشهري"
+
+---
+
+PAGE STRUCTURE:
+
+┌─────────────────────────────────────────────────────┐
+│  💸 مالي الشهري  — [month picker: أبريل 2026]       │
+│                                                     │
+│  [+ إضافة مصروف]        [+ إضافة التزام]            │
+├─────────────────────────────────────────────────────┤
+│  TABS:                                              │
+│  [الكل] [المصاريف] [الالتزامات الثابتة]             │
+├─────────────────────────────────────────────────────┤
+│  CATEGORY FILTER (horizontal scrollable icon row):  │
+│  [الكل] [مواصلات] [صحة] [ترفيه] [تسوق] [طعام]...   │
+├─────────────────────────────────────────────────────┤
+│  PRIORITY FILTER (only visible in "المصاريف" tab):  │
+│  [جميع الأولويات ▾]                                 │
+├─────────────────────────────────────────────────────┤
+│  UNIFIED TIMELINE (sorted by date descending):      │
+│                                                     │
+│  Apr 20  🏋️ اشتراك رياضة   [مهم]    80 JOD         │
+│  Apr 18  🔴 LinkedIn        [متأخر]  20 JOD  ✏️ 🗑️  │
+│  Apr 15  🚗 قسط السيارة    [متأخر] 150 JOD  ✏️ 🗑️  │
+│  Apr 12  👕 تسوق ملابس     [كمالي] 110 JOD         │
+│  Apr 05  📺 نتفليكس        [مدفوع]  45 JOD  ✓       │
+│                                                     │
+├─────────────────────────────────────────────────────┤
+│  SUMMARY BAR (sticky at bottom):                    │
+│  إجمالي الشهر: 405 JOD  |  متأخر: 170 JOD 🔴        │
+└─────────────────────────────────────────────────────┘
+
+---
+
+DETAILED REQUIREMENTS:
+
+1. TABS BEHAVIOR:
+   - "الكل" tab: shows both regular expenses AND fixed commitments 
+     merged in one date-sorted timeline
+   - "المصاريف" tab: shows only one-time expenses, 
+     shows the priority filter dropdown
+   - "الالتزامات الثابتة" tab: shows only recurring commitments, 
+     shows "تحديد كمدفوع" button on each card
+
+2. UNIFIED ITEM CARD in the timeline:
+   Each row shows:
+   - Date on the right (day + month abbreviated)
+   - Icon based on category
+   - Name of expense/commitment
+   - Badge: priority tag (ضروري/مهم/كمالي) 
+     OR status tag (متأخر/مدفوع) for commitments
+   - Amount in JOD on the left
+   - Edit ✏️ and Delete 🗑️ icons appear on hover only
+   - For commitments: "تحديد كمدفوع" button appears 
+     if status is متأخر
+
+3. CATEGORY ICONS ROW:
+   - Horizontally scrollable
+   - Clicking a category filters BOTH expenses and commitments
+   - Active category has green underline and bold text
+   - Keep the same icons from the current categories page
+
+4. STATUS BADGES STYLING:
+   - متأخر → red background, white text, with 🔴 dot
+   - مدفوع → green background, white text, with ✓
+   - مهم → amber background
+   - ضروري → red/orange background  
+   - كمالي → gray background
+
+5. ADD BUTTONS:
+   - "إضافة مصروف" opens the existing expense modal
+   - "إضافة التزام" opens the existing commitment modal
+   - Both buttons visible at the top of the page always
+
+6. SUMMARY BAR (sticky bottom):
+   Shows for the selected month:
+   - إجمالي المصاريف
+   - إجمالي الالتزامات
+   - المتأخر (in red if > 0)
+   Updates reactively as filters change
+
+7. MONTH PICKER:
+   - Keep the same month picker from the current expenses page
+   - Changing month filters ALL items (expenses + commitments) together
+
+8. NAVIGATION:
+   - Remove the two old sidebar links "المصاريف" and "الالتزامات والفئات"
+   - Replace with ONE link: "💸 مالي الشهري"
+   - Update routing accordingly
+
+9. EMPTY STATE:
+   If no items exist for the selected month/filter:
+   Show نبيهة character illustration with text:
+   "لا توجد بيانات لهذا الشهر — ابدأ بإضافة مصروف أو التزام!"
+   with both add buttons below it
+
+10. RESPONSIVE:
+    On mobile: hide the summary bar labels, show only numbers.
+    Category icons row stays horizontally scrollable.
+    Timeline cards stack cleanly on small screens.
+
+---
+
+Keep all text in Arabic RTL.
+Use the existing green (#16a34a) color theme.
+Preserve all existing modal logic for adding/editing/deleting.
+Do not break any existing data structure or API calls.
