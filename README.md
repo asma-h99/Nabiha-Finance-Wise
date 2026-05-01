@@ -1,4 +1,5 @@
-# 💡 نبيهة | Nabiha Finance Wise
+# 💡 نَبِيهَة | Nabiha
+
 
 [![Deployed on Replit](https://replit.com/badge/github/replit/replit)](https://nabiha-finance-wise.replit.app)
 
