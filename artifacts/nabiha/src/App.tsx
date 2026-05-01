@@ -11,8 +11,7 @@ import { Sparkles, ShieldCheck, PieChart, Calendar, Wallet, ArrowLeft, LogOut } 
 import NotFound from "@/pages/not-found";
 import Layout from "@/components/Layout";
 import Dashboard from "@/pages/Dashboard";
-import Expenses from "@/pages/Expenses";
-import Commitments from "@/pages/Commitments";
+import Money from "@/pages/Money";
 import { CurrencyProvider } from "@/contexts/CurrencyContext";
 import { CurrencySwitcher } from "@/components/CurrencySwitcher";
 import { NotificationsBell } from "@/components/NotificationsBell";
@@ -244,10 +243,15 @@ function AppShell() {
     >
       <Switch>
         <Route path="/app" component={Dashboard} />
-        <Route path="/app/expenses" component={Expenses} />
-        <Route path="/app/commitments" component={Commitments} />
+        <Route path="/app/money" component={Money} />
+        <Route path="/app/expenses">
+          <Redirect to="/app/money" />
+        </Route>
+        <Route path="/app/commitments">
+          <Redirect to="/app/money" />
+        </Route>
         <Route path="/app/categories">
-          <Redirect to="/app/commitments" />
+          <Redirect to="/app/money" />
         </Route>
         <Route component={NotFound} />
       </Switch>
