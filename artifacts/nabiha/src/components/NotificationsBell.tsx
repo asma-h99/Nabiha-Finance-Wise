@@ -200,18 +200,18 @@ export function NotificationsBell() {
       <DialogTrigger asChild>
         <Button
           variant="outline"
-          size="icon"
           className={cn(
-            "rounded-xl h-9 w-9 relative border-amber-300 bg-amber-50 hover:bg-amber-100 hover:border-amber-400",
-            showDot && "border-amber-400 bg-amber-100",
+            "rounded-xl h-9 px-3 gap-2 relative border-amber-400 bg-amber-50 hover:bg-amber-100 hover:border-amber-500 text-amber-600 font-bold text-xs",
+            showDot && "border-amber-500 bg-amber-100",
           )}
           data-testid="button-notifications-bell"
           aria-label="تنبيهات نَبِيهَة"
         >
-          <Bell className="w-4 h-4 text-amber-500" fill="currentColor" />
           {showDot && (
             <span className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-amber-500 border-2 border-card" />
           )}
+          <Bell className="w-4 h-4 text-amber-500 shrink-0" fill="currentColor" />
+          <span className="text-amber-600">اضغط هنا · تنبيهات نَبِيهَة</span>
         </Button>
       </DialogTrigger>
 
