@@ -30,6 +30,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { MonthTimelineModal } from "./MonthTimelineModal";
+import { EventFormDialog } from "./EventFormDialog";
 
 const MONTHS = [
   "يناير", "فبراير", "مارس",
@@ -50,6 +51,40 @@ const ICON_COLORS = [
   { bg: "bg-pink-100",    text: "text-pink-700"    },
   { bg: "bg-lime-100",    text: "text-lime-700"    },
 ];
+
+interface IslamicOccasion {
+  name: string;
+  monthIdx: number;
+  emoji: string;
+  hint: string;
+  approxDate: string;
+}
+
+// Approximate Gregorian months for major Islamic occasions by year.
+// Dates shift ~11 days earlier each Gregorian year.
+const ISLAMIC_OCCASIONS: Record<number, IslamicOccasion[]> = {
+  2025: [
+    { name: "رمضان المبارك",      monthIdx: 2, emoji: "🌙", hint: "خطط لميزانية رمضان مسبقاً",         approxDate: "2025-03-01" },
+    { name: "عيد الفطر",          monthIdx: 3, emoji: "🎊", hint: "خصص ميزانية ملابس وهدايا العيد",    approxDate: "2025-04-01" },
+    { name: "عيد الأضحى",         monthIdx: 5, emoji: "🐑", hint: "خصص ميزانية الأضحية والولائم",     approxDate: "2025-06-07" },
+    { name: "رأس السنة الهجرية", monthIdx: 6, emoji: "🌟", hint: "بداية السنة الهجرية الجديدة",       approxDate: "2025-07-18" },
+    { name: "المولد النبوي",      monthIdx: 8, emoji: "🕌", hint: "ذكرى المولد النبوي الشريف",         approxDate: "2025-09-26" },
+  ],
+  2026: [
+    { name: "رمضان المبارك",      monthIdx: 1, emoji: "🌙", hint: "خطط لميزانية رمضان مسبقاً",         approxDate: "2026-02-18" },
+    { name: "عيد الفطر",          monthIdx: 2, emoji: "🎊", hint: "خصص ميزانية ملابس وهدايا العيد",    approxDate: "2026-03-20" },
+    { name: "عيد الأضحى",         monthIdx: 4, emoji: "🐑", hint: "خصص ميزانية الأضحية والولائم",     approxDate: "2026-05-27" },
+    { name: "رأس السنة الهجرية", monthIdx: 6, emoji: "🌟", hint: "بداية السنة الهجرية الجديدة",       approxDate: "2026-07-07" },
+    { name: "المولد النبوي",      monthIdx: 8, emoji: "🕌", hint: "ذكرى المولد النبوي الشريف",         approxDate: "2026-09-15" },
+  ],
+  2027: [
+    { name: "رمضان المبارك",      monthIdx: 1, emoji: "🌙", hint: "خطط لميزانية رمضان مسبقاً",         approxDate: "2027-02-07" },
+    { name: "عيد الفطر",          monthIdx: 2, emoji: "🎊", hint: "خصص ميزانية ملابس وهدايا العيد",    approxDate: "2027-03-09" },
+    { name: "عيد الأضحى",         monthIdx: 4, emoji: "🐑", hint: "خصص ميزانية الأضحية والولائم",     approxDate: "2027-05-17" },
+    { name: "رأس السنة الهجرية", monthIdx: 5, emoji: "🌟", hint: "بداية السنة الهجرية الجديدة",       approxDate: "2027-06-26" },
+    { name: "المولد النبوي",      monthIdx: 8, emoji: "🕌", hint: "ذكرى المولد النبوي الشريف",         approxDate: "2027-09-04" },
+  ],
+};
 
 function getIcon(title: string): LucideIcon {
   const t = title;
@@ -76,37 +111,29 @@ export function FinancialCalendarCard() {
   const year = today.getFullYear();
 
   const [modalMonth, setModalMonth] = useState<number | null>(null);
+  const [islamicFormOpen, setIslamicFormOpen] = useState(false);
+  const [islamicDefaultTitle, setIslamicDefaultTitle] = useState("");
+  const [islamicDefaultDate, setIslamicDefaultDate] = useState("");
 
   if (isLoading) {
     return <Skeleton className="h-[480px] w-full rounded-3xl" />;
   }
 
-  const isEmpty = !commitments || commitments.length === 0;
-
-  // Helper: get YYYY-MM string for a given month index in the current year
   function monthStr(monthIdx: number) {
     return `${year}-${String(monthIdx + 1).padStart(2, "0")}`;
   }
 
-  // Build a map of monthStr -> Set<commitmentId> that are skipped
   const skipsByMonth = new Map<string, Set<number>>();
   for (const skip of skips ?? []) {
     if (!skipsByMonth.has(skip.month)) skipsByMonth.set(skip.month, new Set());
     skipsByMonth.get(skip.month)!.add(skip.commitmentId);
   }
 
-  // Get commitments visible in a specific month.
-  // Uses the same expiry logic as MonthTimelineModal: hide a commitment if
-  // its effective due date within the month (capped to last calendar day)
-  // falls after the commitment's endDate.
   function commitmentsForMonth(monthIdx: number) {
     const ms = monthStr(monthIdx);
     const skippedIds = skipsByMonth.get(ms) ?? new Set<number>();
-    // Last calendar day of the target month (e.g. 28/29/30/31)
     const lastDay = new Date(year, monthIdx + 1, 0).getDate();
     return (commitments ?? []).filter((c) => {
-      // Expired commitments: the commitment's effective due date in this month
-      // is after its endDate — matches MonthTimelineModal filter exactly
       if (c.endDate) {
         const end = new Date(c.endDate as string);
         if (!Number.isNaN(end.getTime())) {
@@ -121,6 +148,21 @@ export function FinancialCalendarCard() {
   }
 
   const sorted = (commitments ?? []).slice().sort((a, b) => a.dueDay - b.dueDay);
+  const islamicForYear = ISLAMIC_OCCASIONS[year] ?? [];
+
+  // Group Islamic occasions by month for quick lookup
+  const islamicByMonth = new Map<number, IslamicOccasion[]>();
+  for (const occ of islamicForYear) {
+    if (!islamicByMonth.has(occ.monthIdx)) islamicByMonth.set(occ.monthIdx, []);
+    islamicByMonth.get(occ.monthIdx)!.push(occ);
+  }
+
+  function openIslamicForm(occ: IslamicOccasion, e: React.MouseEvent) {
+    e.stopPropagation();
+    setIslamicDefaultTitle(occ.name);
+    setIslamicDefaultDate(occ.approxDate);
+    setIslamicFormOpen(true);
+  }
 
   return (
     <>
@@ -141,17 +183,19 @@ export function FinancialCalendarCard() {
               data-testid="button-add-commitment-from-calendar"
             >
               <Plus className="w-3.5 h-3.5" />
-              إضافة
+              إضافة التزام
             </Button>
           </Link>
         </CardHeader>
 
-        <CardContent className="px-4 pb-5">
-          {/* === YEARLY GRID === */}
+        <CardContent className="px-4 pb-4">
+          {/* YEARLY GRID */}
           <div className="grid grid-cols-4 gap-2" dir="rtl">
             {MONTHS.map((monthName, monthIdx) => {
               const isCurrentMonth = monthIdx === currentMonthIdx;
               const monthCommitments = commitmentsForMonth(monthIdx).sort((a, b) => a.dueDay - b.dueDay);
+              const occasions = islamicByMonth.get(monthIdx) ?? [];
+
               return (
                 <button
                   type="button"
@@ -165,6 +209,7 @@ export function FinancialCalendarCard() {
                   }`}
                   aria-label={`${monthName} - عرض التقويم الشهري`}
                 >
+                  {/* Month name header */}
                   <div
                     className={`px-2 py-1.5 text-center text-xs font-extrabold tracking-wide transition-colors group-hover:bg-primary ${
                       isCurrentMonth
@@ -176,11 +221,12 @@ export function FinancialCalendarCard() {
                     {monthName}
                   </div>
 
+                  {/* Commitment icons */}
                   <div
-                    className="p-2 bg-background/70 flex flex-wrap gap-1.5 justify-center min-h-[64px] items-center"
+                    className="px-2 pt-2 pb-1 bg-background/70 flex flex-wrap gap-1.5 justify-center min-h-[56px] items-center"
                     dir="rtl"
                   >
-                    {monthCommitments.length === 0 ? (
+                    {monthCommitments.length === 0 && occasions.length === 0 ? (
                       <span className="text-[10px] text-muted-foreground/60">انقر للتفاصيل</span>
                     ) : (
                       monthCommitments.map((commitment, idx) => {
@@ -188,8 +234,8 @@ export function FinancialCalendarCard() {
                         const colorIdx = sortedIdx >= 0 ? sortedIdx : idx;
                         const color = ICON_COLORS[colorIdx % ICON_COLORS.length];
                         const Icon = getIcon(commitment.title);
-                        const isPaidThisMonth =
-                          isCurrentMonth && commitment.isPaid;
+                        const isPaidThisMonth = isCurrentMonth && commitment.isPaid;
+                        const isOneTime = commitment.isOneTime;
 
                         return (
                           <Tooltip key={commitment.id} delayDuration={120}>
@@ -198,32 +244,40 @@ export function FinancialCalendarCard() {
                                 role="img"
                                 aria-label={commitment.title}
                                 onClick={(e) => e.stopPropagation()}
-                                className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 transition-transform hover:scale-110 ${
-                                  color.bg
-                                } ${color.text} ${
-                                  isPaidThisMonth
-                                    ? "opacity-40 ring-1 ring-green-400"
-                                    : ""
-                                }`}
+                                className="relative"
                               >
-                                <Icon className="w-4 h-4" />
+                                <span
+                                  className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 transition-transform hover:scale-110 ${
+                                    color.bg
+                                  } ${color.text} ${
+                                    isPaidThisMonth
+                                      ? "opacity-40 ring-1 ring-green-400"
+                                      : ""
+                                  }`}
+                                >
+                                  <Icon className="w-4 h-4" />
+                                </span>
+                                {/* One-time badge */}
+                                {isOneTime && (
+                                  <span
+                                    className="absolute -top-1 -left-1 w-4 h-4 bg-orange-500 text-white rounded-full flex items-center justify-center text-[9px] font-black leading-none ring-1 ring-white"
+                                    aria-label="لمرة واحدة"
+                                  >
+                                    ١
+                                  </span>
+                                )}
                               </span>
                             </TooltipTrigger>
-                            <TooltipContent
-                              side="top"
-                              sideOffset={6}
-                              dir="rtl"
-                              className="font-semibold"
-                            >
+                            <TooltipContent side="top" sideOffset={6} dir="rtl" className="font-semibold">
                               {commitment.title}
-                              {commitment.isOneTime && (
-                                <span className="block text-[10px] opacity-80 mt-0.5">
-                                  هذا الشهر فقط
+                              {isOneTime && (
+                                <span className="block text-[10px] text-orange-600 font-bold mt-0.5">
+                                  ① هذا الشهر فقط — لمرة واحدة
                                 </span>
                               )}
                               {isPaidThisMonth && (
-                                <span className="block text-[10px] opacity-80 mt-0.5">
-                                  مدفوع لهذا الشهر
+                                <span className="block text-[10px] text-emerald-600 font-bold mt-0.5">
+                                  ✓ مدفوع لهذا الشهر
                                 </span>
                               )}
                             </TooltipContent>
@@ -232,9 +286,59 @@ export function FinancialCalendarCard() {
                       })
                     )}
                   </div>
+
+                  {/* Islamic occasions row */}
+                  {occasions.length > 0 && (
+                    <div
+                      className="px-1.5 pb-2 bg-background/70 flex flex-wrap gap-1 justify-center"
+                      dir="rtl"
+                    >
+                      {occasions.map((occ) => (
+                        <Tooltip key={occ.name} delayDuration={100}>
+                          <TooltipTrigger asChild>
+                            <button
+                              type="button"
+                              onClick={(e) => openIslamicForm(occ, e)}
+                              className="flex items-center gap-0.5 bg-amber-50 border border-amber-200 rounded-full px-1.5 py-0.5 hover:bg-amber-100 transition-colors"
+                              aria-label={`${occ.name} — انقر لإضافة ميزانية`}
+                            >
+                              <span className="text-[11px] leading-none">{occ.emoji}</span>
+                              <span className="text-[9px] font-bold text-amber-800 leading-none">{occ.name.split(" ")[0]}</span>
+                            </button>
+                          </TooltipTrigger>
+                          <TooltipContent side="top" sideOffset={6} dir="rtl" className="max-w-[180px]">
+                            <div className="font-bold">{occ.name}</div>
+                            <div className="text-[11px] text-muted-foreground mt-0.5">{occ.hint}</div>
+                            <div className="text-[11px] text-primary font-bold mt-0.5">انقر لإضافة ميزانية خاصة بها</div>
+                          </TooltipContent>
+                        </Tooltip>
+                      ))}
+                    </div>
+                  )}
                 </button>
               );
             })}
+          </div>
+
+          {/* Legend */}
+          <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1 justify-end text-[10px] text-muted-foreground" dir="rtl">
+            <span className="flex items-center gap-1">
+              <span className="w-3.5 h-3.5 bg-teal-100 rounded-full inline-flex items-center justify-center">
+                <span className="w-2 h-2 rounded-full bg-teal-400" />
+              </span>
+              التزام شهري
+            </span>
+            <span className="flex items-center gap-1">
+              <span className="relative inline-flex">
+                <span className="w-3.5 h-3.5 bg-sky-100 rounded-full" />
+                <span className="absolute -top-0.5 -left-0.5 w-3 h-3 bg-orange-500 text-white rounded-full flex items-center justify-center text-[7px] font-black leading-none">١</span>
+              </span>
+              التزام لمرة واحدة
+            </span>
+            <span className="flex items-center gap-1">
+              <span className="text-[11px]">🌙🎊🐑</span>
+              مناسبة دينية — انقر لتخطيط ميزانيتها
+            </span>
           </div>
         </CardContent>
       </Card>
@@ -247,6 +351,15 @@ export function FinancialCalendarCard() {
           year={year}
         />
       )}
+
+      {/* Islamic occasion budget form */}
+      <EventFormDialog
+        open={islamicFormOpen}
+        onOpenChange={setIslamicFormOpen}
+        defaultTitle={islamicDefaultTitle}
+        defaultDate={islamicDefaultDate}
+        defaultType="religious"
+      />
     </>
   );
 }

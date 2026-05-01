@@ -46,6 +46,8 @@ interface EventFormDialogProps {
   onOpenChange: (open: boolean) => void;
   editEvent?: CalendarEvent | null;
   defaultDate?: string;
+  defaultTitle?: string;
+  defaultType?: string;
 }
 
 const EVENT_TYPES = [
@@ -71,7 +73,7 @@ const PRIORITY_OPTIONS = [
   { value: "high", label: "عالية" },
 ];
 
-export function EventFormDialog({ open, onOpenChange, editEvent, defaultDate }: EventFormDialogProps) {
+export function EventFormDialog({ open, onOpenChange, editEvent, defaultDate, defaultTitle, defaultType }: EventFormDialogProps) {
   const qc = useQueryClient();
   const { toast } = useToast();
   const { baseCurrency } = useDisplayCurrency();
@@ -103,9 +105,9 @@ export function EventFormDialog({ open, onOpenChange, editEvent, defaultDate }: 
       setPriority(editEvent.priority ?? "normal");
       setNotes(editEvent.notes ?? "");
     } else {
-      setTitle("");
+      setTitle(defaultTitle ?? "");
       setDate(defaultDate ?? new Date().toISOString().slice(0, 10));
-      setType("other");
+      setType(defaultType ?? "other");
       setAmount("");
       setCurrency(baseCurrency);
       setCategoryId("none");
@@ -113,7 +115,7 @@ export function EventFormDialog({ open, onOpenChange, editEvent, defaultDate }: 
       setPriority("normal");
       setNotes("");
     }
-  }, [editEvent, defaultDate, baseCurrency, open]);
+  }, [editEvent, defaultDate, defaultTitle, defaultType, baseCurrency, open]);
 
   async function invalidateEvents() {
     await qc.invalidateQueries({ queryKey: getListCalendarEventsQueryKey() });
@@ -170,23 +172,27 @@ export function EventFormDialog({ open, onOpenChange, editEvent, defaultDate }: 
         <DialogContent dir="rtl" className="max-w-md max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>{editEvent ? "تعديل الحدث" : "إضافة حدث جديد"}</DialogTitle>
-            <DialogDescription className="sr-only">
-              {editEvent ? "عدّل تفاصيل الحدث المالي" : "أضف حدثًا ماليًا جديدًا إلى التقويم"}
+            <DialogDescription className="text-sm text-muted-foreground">
+              {editEvent
+                ? "عدّل تفاصيل الحدث المالي"
+                : "سجّل أي مناسبة أو دفعة مستقبلية — يمكنك تحديد مبلغ متوقع أو تركه فارغاً"}
             </DialogDescription>
           </DialogHeader>
 
           <form onSubmit={handleSubmit} className="space-y-4 pt-1">
+            {/* Title */}
             <div className="space-y-1.5">
-              <Label htmlFor="ev-title">اسم الحدث</Label>
+              <Label htmlFor="ev-title">اسم المناسبة أو الحدث</Label>
               <Input
                 id="ev-title"
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
-                placeholder="مثلاً: عيد الفطر"
+                placeholder="مثلاً: عيد الفطر — مصاريف الملابس"
                 required
               />
             </div>
 
+            {/* Date */}
             <div className="space-y-1.5">
               <Label htmlFor="ev-date">التاريخ</Label>
               <Input
@@ -198,9 +204,10 @@ export function EventFormDialog({ open, onOpenChange, editEvent, defaultDate }: 
               />
             </div>
 
+            {/* Type + Priority */}
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
-                <Label htmlFor="ev-type">النوع</Label>
+                <Label htmlFor="ev-type">نوع الحدث</Label>
                 <Select value={type} onValueChange={setType}>
                   <SelectTrigger id="ev-type">
                     <SelectValue />
@@ -228,6 +235,7 @@ export function EventFormDialog({ open, onOpenChange, editEvent, defaultDate }: 
               </div>
             </div>
 
+            {/* Category */}
             <div className="space-y-1.5">
               <Label htmlFor="ev-category">الفئة (اختياري)</Label>
               <Select value={categoryId} onValueChange={setCategoryId}>
@@ -243,9 +251,13 @@ export function EventFormDialog({ open, onOpenChange, editEvent, defaultDate }: 
               </Select>
             </div>
 
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-1.5">
-                <Label htmlFor="ev-amount">المبلغ (اختياري)</Label>
+            {/* Amount + Currency */}
+            <div className="space-y-1.5">
+              <Label htmlFor="ev-amount">
+                المبلغ المتوقع
+                <span className="text-muted-foreground font-normal text-xs mr-1">(اختياري — اتركه فارغاً إن لم تعرف)</span>
+              </Label>
+              <div className="grid grid-cols-[1fr_140px] gap-2">
                 <Input
                   id="ev-amount"
                   type="number"
@@ -256,10 +268,6 @@ export function EventFormDialog({ open, onOpenChange, editEvent, defaultDate }: 
                   onChange={(e) => setAmount(e.target.value)}
                   placeholder="0.00"
                 />
-              </div>
-
-              <div className="space-y-1.5">
-                <Label htmlFor="ev-currency">العملة</Label>
                 <Select value={currency} onValueChange={setCurrency}>
                   <SelectTrigger id="ev-currency">
                     <SelectValue />
@@ -275,8 +283,9 @@ export function EventFormDialog({ open, onOpenChange, editEvent, defaultDate }: 
               </div>
             </div>
 
+            {/* Recurring */}
             <div className="space-y-1.5">
-              <Label htmlFor="ev-recurring">التكرار</Label>
+              <Label htmlFor="ev-recurring">هل يتكرر كل عام؟</Label>
               <Select value={recurring} onValueChange={setRecurring}>
                 <SelectTrigger id="ev-recurring">
                   <SelectValue />
@@ -289,13 +298,14 @@ export function EventFormDialog({ open, onOpenChange, editEvent, defaultDate }: 
               </Select>
             </div>
 
+            {/* Notes */}
             <div className="space-y-1.5">
               <Label htmlFor="ev-notes">ملاحظات (اختياري)</Label>
               <Textarea
                 id="ev-notes"
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
-                placeholder="أي تفاصيل إضافية..."
+                placeholder="مثلاً: ملابس العيد، هدايا، ولائم..."
                 rows={2}
                 className="resize-none"
               />
