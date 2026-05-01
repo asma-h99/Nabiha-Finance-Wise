@@ -1,4 +1,5 @@
 import { useUser } from "@clerk/react";
+import { useLocation } from "wouter";
 import {
   useGetUserProfile,
   useGetBalanceSummary,
@@ -14,7 +15,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 
 import characterImage from "@assets/Gemini_Generated_Image_fn3x3wfn3x3wfn3x_1777626060347.png";
 
-function CardTipRow({ tip }: { tip: NabihaTip }) {
+function CardTipRow({ tip, onNavigate }: { tip: NabihaTip; onNavigate?: (route: string) => void }) {
   const containerClass =
     tip.severity === "danger"
       ? "border-red-200 bg-red-50/40"
@@ -29,8 +30,10 @@ function CardTipRow({ tip }: { tip: NabihaTip }) {
         ? "text-amber-500"
         : "text-primary";
 
-  return (
-    <div className={cn("flex items-start gap-2.5 rounded-2xl border px-3 py-2.5", containerClass)}>
+  const isClickable = !!tip.navTarget && !!onNavigate;
+
+  const innerContent = (
+    <>
       {tip.severity === "info" ? (
         <Sparkles className={cn("w-4 h-4 shrink-0 mt-0.5", iconColor)} />
       ) : (
@@ -40,11 +43,30 @@ function CardTipRow({ tip }: { tip: NabihaTip }) {
         <div className="text-sm font-semibold text-foreground leading-snug">{tip.headline}</div>
         <div className="text-xs text-muted-foreground mt-0.5 leading-relaxed">{tip.body}</div>
       </div>
+    </>
+  );
+
+  return (
+    <div className={cn("flex items-start gap-2.5 rounded-2xl border px-3 py-2.5", containerClass)}>
+      {isClickable ? (
+        <button
+          className="flex items-start gap-2.5 flex-1 min-w-0 text-right hover:opacity-80 transition-opacity"
+          onClick={() => onNavigate!(tip.navTarget!.route)}
+          aria-label={tip.headline}
+        >
+          {innerContent}
+        </button>
+      ) : (
+        <div className="flex items-start gap-2.5 flex-1 min-w-0">
+          {innerContent}
+        </div>
+      )}
       <Tooltip>
         <TooltipTrigger asChild>
           <button
             className="text-muted-foreground hover:text-foreground transition-colors shrink-0 mt-0.5"
             aria-label="لماذا تظهر هذه النصيحة؟"
+            onClick={(e) => e.stopPropagation()}
           >
             <HelpCircle className="w-4 h-4" />
           </button>
@@ -58,8 +80,12 @@ function CardTipRow({ tip }: { tip: NabihaTip }) {
 }
 
 export function NabihaTipsCard() {
+  const [, navigate] = useLocation();
   function onOpenBubble() {
     window.dispatchEvent(new CustomEvent("nabiha:open-bubble"));
+  }
+  function handleTipNavigate(route: string) {
+    navigate(route);
   }
   const { user } = useUser();
   const { data: profile } = useGetUserProfile();
@@ -126,7 +152,7 @@ export function NabihaTipsCard() {
 
       <CardContent className="px-5 pb-5 space-y-2">
         {visibleTips.map((tip) => (
-          <CardTipRow key={tip.id} tip={tip} />
+          <CardTipRow key={tip.id} tip={tip} onNavigate={handleTipNavigate} />
         ))}
       </CardContent>
     </Card>

@@ -3,12 +3,18 @@ import type { UserProfile, BalanceSummary, DashboardSummary, Subscription, Commi
 
 export type TipSeverity = "info" | "warning" | "danger";
 
+export interface NabihaTipNavTarget {
+  route: string;
+  commitmentId?: number;
+}
+
 export interface NabihaTip {
   id: string;
   severity: TipSeverity;
   headline: string;
   body: string;
   why: string;
+  navTarget?: NabihaTipNavTarget;
 }
 
 export interface AlertItem {
@@ -208,12 +214,44 @@ export function computeNabihaTips(
 
     const unpaidCount = summary?.unpaidCommitmentsCount ?? 0;
     if (unpaidCount > 0) {
+      const unpaidCommitments = commitments
+        .filter((c) => !c.isPaid)
+        .sort((a, b) => daysUntilCommitment(a.dueDay, now) - daysUntilCommitment(b.dueDay, now));
+
+      const primary = unpaidCommitments[0];
+      const remainingCount = unpaidCommitments.length - 1;
+
+      const headline =
+        primary == null
+          ? `${unpaidCount} ${unpaidCount === 1 ? "التزام غير مدفوع" : "التزامات غير مدفوعة"}`
+          : remainingCount === 0
+            ? `التزام '${primary.title}' غير مدفوع`
+            : `'${primary.title}' و${remainingCount} ${remainingCount === 1 ? "آخر" : "آخرون"} غير مدفوعة`;
+
+      const body =
+        primary == null
+          ? "راجعي التزاماتك وتأكدي من دفع المستحقات لتجنب الغرامات."
+          : remainingCount === 0
+            ? `التزام ${primary.title} لم يُسدَّد بعد — راجعيه وتأكدي من الدفع لتجنب الغرامات.`
+            : `${primary.title} هو الأكثر إلحاحاً — راجعي التزاماتك وتأكدي من دفع المستحقات لتجنب الغرامات.`;
+
+      const why =
+        primary == null
+          ? "هذه النصيحة تظهر لأن عندك التزامات شهرية لم تُدفع بعد."
+          : remainingCount === 0
+            ? `هذه النصيحة تظهر لأن التزام '${primary.title}' لم يُدفع بعد في هذا الشهر.`
+            : `هذه النصيحة تظهر لأن التزام '${primary.title}' و${remainingCount} ${remainingCount === 1 ? "آخر" : "آخرون"} لم تُدفع بعد في هذا الشهر.`;
+
       tips.push({
         id: "unpaid-commitments",
         severity: "warning",
-        headline: `${unpaidCount} ${unpaidCount === 1 ? "التزام غير مدفوع" : "التزامات غير مدفوعة"}`,
-        body: "راجعي التزاماتك وتأكدي من دفع المستحقات لتجنب الغرامات.",
-        why: "هذه النصيحة تظهر لأن عندك التزامات شهرية لم تُدفع بعد.",
+        headline,
+        body,
+        why,
+        navTarget: {
+          route: "/app/money?tab=commitments" + (primary != null ? `&highlight=${primary.id}` : ""),
+          commitmentId: primary?.id,
+        },
       });
     }
   }

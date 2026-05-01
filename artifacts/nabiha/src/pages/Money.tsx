@@ -1,4 +1,5 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
+import { useSearch } from "wouter";
 import {
   CommitmentFormFields,
   commitmentFormSchema,
@@ -177,12 +178,42 @@ export default function Money() {
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const { format, baseCurrency } = useDisplayCurrency();
+  const searchString = useSearch();
 
   /* ── filters ────────────────────────────────────────────────────────── */
   const [filterMonth, setFilterMonth] = useState<string>(() =>
     new Date().toISOString().slice(0, 7),
   );
-  const [tab, setTab] = useState<TabKey>("all");
+  const [tab, setTab] = useState<TabKey>(() => {
+    const params = new URLSearchParams(searchString);
+    const t = params.get("tab");
+    return (t === "commitments" || t === "expenses" || t === "all") ? t : "all";
+  });
+  const [highlightedCommitmentId, setHighlightedCommitmentId] = useState<number | null>(() => {
+    const params = new URLSearchParams(searchString);
+    const h = params.get("highlight");
+    const n = Number(h);
+    return h && Number.isFinite(n) && n > 0 ? n : null;
+  });
+
+  useEffect(() => {
+    const params = new URLSearchParams(searchString);
+    const t = params.get("tab");
+    if (t === "commitments" || t === "expenses" || t === "all") {
+      setTab(t);
+    }
+    const h = params.get("highlight");
+    const n = Number(h);
+    if (h && Number.isFinite(n) && n > 0) {
+      setHighlightedCommitmentId(n);
+    }
+  }, [searchString]);
+
+  useEffect(() => {
+    if (highlightedCommitmentId == null) return;
+    const timer = setTimeout(() => setHighlightedCommitmentId(null), 3000);
+    return () => clearTimeout(timer);
+  }, [highlightedCommitmentId]);
   const [filterCategory, setFilterCategory] = useState<"all" | number>("all");
   const [filterPriority, setFilterPriority] = useState<string>("all");
 
@@ -764,6 +795,7 @@ export default function Money() {
                   deleteCommitment.mutate({ id });
               }}
               isPaidPending={updateCommitmentPaid.isPending}
+              isHighlighted={row.kind === "commitment" && row.id === highlightedCommitmentId}
             />
           ))
         )}
@@ -1181,6 +1213,7 @@ function TimelineRowItem({
   onEditCommitment,
   onDeleteCommitment,
   isPaidPending,
+  isHighlighted,
 }: {
   row: TimelineRow;
   format: (amount: number, fromCode?: string) => string;
@@ -1192,9 +1225,17 @@ function TimelineRowItem({
   onEditCommitment: (c: EditingCommitment) => void;
   onDeleteCommitment: (id: number) => void;
   isPaidPending: boolean;
+  isHighlighted?: boolean;
 }) {
+  const rowRef = useRef<HTMLDivElement>(null);
   const day = row.date.getDate();
   const monthLabel = ARABIC_MONTHS_ABBR[row.date.getMonth()];
+
+  useEffect(() => {
+    if (isHighlighted && rowRef.current) {
+      rowRef.current.scrollIntoView({ behavior: "smooth", block: "center" });
+    }
+  }, [isHighlighted]);
 
   const cat =
     row.kind === "expense" && row.categoryId != null
@@ -1209,10 +1250,12 @@ function TimelineRowItem({
 
   return (
     <Card
+      ref={rowRef}
       className={cn(
         "rounded-2xl border shadow-sm hover:shadow-md transition-shadow group",
         row.kind === "commitment" && row.isOverdue && "border-destructive/40 bg-destructive/5",
         row.kind === "commitment" && row.isPaid && "bg-muted/30 opacity-80",
+        isHighlighted && "ring-2 ring-primary/60 ring-offset-1 shadow-lg",
       )}
       data-testid={`row-${row.kind}-${row.id}`}
     >

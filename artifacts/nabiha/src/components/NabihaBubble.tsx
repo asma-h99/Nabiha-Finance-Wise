@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useUser } from "@clerk/react";
+import { useLocation } from "wouter";
 import {
   useGetUserProfile,
   useGetBalanceSummary,
@@ -32,7 +33,7 @@ function saveMinimizedState(val: boolean): void {
   }
 }
 
-function TipBubbleRow({ tip }: { tip: NabihaTip }) {
+function TipBubbleRow({ tip, onNavigate }: { tip: NabihaTip; onNavigate?: (route: string) => void }) {
   const iconColor =
     tip.severity === "danger"
       ? "text-red-500"
@@ -40,8 +41,10 @@ function TipBubbleRow({ tip }: { tip: NabihaTip }) {
         ? "text-amber-500"
         : "text-primary";
 
-  return (
-    <div className="flex items-start gap-2 py-2 border-b border-border/40 last:border-0">
+  const isClickable = !!tip.navTarget && !!onNavigate;
+
+  const content = (
+    <>
       {tip.severity === "info" ? (
         <Sparkles className={cn("w-3.5 h-3.5 shrink-0 mt-0.5", iconColor)} />
       ) : (
@@ -51,9 +54,31 @@ function TipBubbleRow({ tip }: { tip: NabihaTip }) {
         <div className="text-xs font-semibold text-foreground leading-snug">{tip.headline}</div>
         <div className="text-[11px] text-muted-foreground mt-0.5 leading-relaxed">{tip.body}</div>
       </div>
+    </>
+  );
+
+  return (
+    <div className="flex items-start gap-2 py-2 border-b border-border/40 last:border-0">
+      {isClickable ? (
+        <button
+          className="flex items-start gap-2 flex-1 min-w-0 text-right hover:opacity-80 transition-opacity"
+          onClick={() => onNavigate!(tip.navTarget!.route)}
+          aria-label={tip.headline}
+        >
+          {content}
+        </button>
+      ) : (
+        <div className="flex items-start gap-2 flex-1 min-w-0">
+          {content}
+        </div>
+      )}
       <Tooltip>
         <TooltipTrigger asChild>
-          <button className="text-muted-foreground hover:text-foreground transition-colors shrink-0 mt-0.5" aria-label="لماذا؟">
+          <button
+            className="text-muted-foreground hover:text-foreground transition-colors shrink-0 mt-0.5"
+            aria-label="لماذا؟"
+            onClick={(e) => e.stopPropagation()}
+          >
             <HelpCircle className="w-3.5 h-3.5" />
           </button>
         </TooltipTrigger>
@@ -76,6 +101,7 @@ export function NabihaBubble({ onOpenFullChat }: NabihaBubbleProps) {
   const { data: summary } = useGetDashboardSummary({ month: new Date().toISOString().slice(0, 7) });
   const { data: subscriptions = [] } = useListSubscriptions();
   const { data: commitments = [] } = useListCommitments();
+  const [, navigate] = useLocation();
 
   const [minimized, setMinimized] = useState<boolean>(() => readMinimizedState());
   const [open, setOpen] = useState(false);
@@ -134,6 +160,13 @@ export function NabihaBubble({ onOpenFullChat }: NabihaBubbleProps) {
     }
   }
 
+  function handleTipNavigate(route: string) {
+    setOpen(false);
+    setMinimized(false);
+    saveMinimizedState(false);
+    navigate(route);
+  }
+
   return (
     <div
       className="fixed bottom-6 left-6 z-50 flex flex-col items-end gap-2"
@@ -170,7 +203,7 @@ export function NabihaBubble({ onOpenFullChat }: NabihaBubbleProps) {
           {/* Tips */}
           <div className="px-4 py-3">
             {visibleTips.map((tip) => (
-              <TipBubbleRow key={tip.id} tip={tip} />
+              <TipBubbleRow key={tip.id} tip={tip} onNavigate={handleTipNavigate} />
             ))}
           </div>
 
