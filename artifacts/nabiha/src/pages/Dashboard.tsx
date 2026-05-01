@@ -124,14 +124,12 @@ export default function Dashboard() {
         <FinancialCalendarCard />
       </div>
       {/* CommitmentsBreakdown (3/4) + Loan Simulator (1/4) */}
-      <div className="grid grid-cols-4 gap-6 items-stretch">
+      <div className="grid grid-cols-2 gap-6 items-stretch">
         {/* Right col: Loan Simulator (DOM-first = visual right in RTL) */}
         <LoanSimulatorCard />
 
-        {/* Left cols: Commitments donut (read-only analysis) */}
-        <div className="col-span-3">
-          <CommitmentsBreakdownCard />
-        </div>
+        {/* Left col: Commitments donut (read-only analysis) */}
+        <CommitmentsBreakdownCard />
       </div>
 
       {/* Monthly Trend — full width */}
