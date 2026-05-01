@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { useGetBalanceSummary, useGetAccumulatedSavings } from "@workspace/api-client-react";
+import { useGetBalanceSummary } from "@workspace/api-client-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useDisplayCurrency } from "@/contexts/CurrencyContext";
@@ -27,46 +27,57 @@ const G_OR = 92;    // outer radius
 const G_IR = 50;    // inner radius
 const G_NL = 80;    // needle length (falls inside the ring)
 
-/* ─── Score 0-100 ─────────────────────────────────────────────────
-   Three weighted factors:
-     50 pts  Affordability  – how comfortably the monthly payment fits disposable income
-     30 pts  Debt ratio     – total fixed obligations vs salary after adding the loan
-     20 pts  Savings buffer – savings as a multiple of monthly salary                */
-function calcScore(
-  salary: number,
-  commitmentsTotal: number,
-  subscriptionsMonthly: number,
-  projectedRemaining: number,
-  totalSavings: number,
-  loanAmount: number,
-  durationMonths: number
-): number {
-  if (!salary || !durationMonths || loanAmount <= 0) return 0;
-  const pmt = loanAmount / durationMonths;
+/* ─── Verdict type ────────────────────────────────────────────────── */
+type Verdict = "safe" | "risky" | "dangerous";
 
-  // 1. Affordability (50 pts)
-  const disposable = projectedRemaining;
-  const afford = disposable > 0 ? Math.max(0, 1 - pmt / disposable) : 0;
+/* ─── Derive verdict from formula ────────────────────────────────────
+   availableIncome = salary − subscriptionsMonthly − commitmentsTotal
+   safeLimit       = availableIncome × 30%
+   pmt             = loanAmount / durationMonths
 
-  // 2. Debt ratio after loan (30 pts); 0 pts when ratio ≥ 55%
-  const totalFixed = commitmentsTotal + subscriptionsMonthly + pmt;
-  const debtRatio  = totalFixed / Math.max(salary, 1);
-  const debt = Math.max(0, (0.55 - debtRatio) / 0.55);
-
-  // 3. Savings buffer (20 pts); full at ≥ 3 months salary
-  const savings = Math.min(1, totalSavings / Math.max(salary * 3, 1));
-
-  return Math.round(Math.min(100, Math.max(0, afford * 50 + debt * 30 + savings * 20)));
+   Safe      → pmt < safeLimit
+   Risky     → safeLimit ≤ pmt ≤ availableIncome
+   Dangerous → pmt > availableIncome  OR  availableIncome ≤ 0         */
+function calcVerdict(
+  availableIncome: number,
+  safeLimit: number,
+  pmt: number
+): Verdict {
+  if (availableIncome <= 0) return "dangerous";
+  if (pmt < safeLimit) return "safe";
+  if (pmt <= availableIncome) return "risky";
+  return "dangerous";
 }
 
-/* ─── Eligibility label – colours match gauge bands ───────────────
-   < 40  → منخفضة  (red / orange zone)
-   40-69 → متوسطة  (gold zone)
-   ≥ 70  → عالية   (teal / emerald zone)                           */
-function eligibilityInfo(score: number) {
-  if (score >= 70) return { label: "مؤهليتك عالية",    color: "#1B7E63", bg: "bg-emerald-50/80 border-emerald-200" };
-  if (score >= 40) return { label: "مؤهليتك متوسطة",  color: "#d97706", bg: "bg-amber-50/80  border-amber-200"   };
-  return              { label: "مؤهليتك منخفضة",  color: "#dc2626", bg: "bg-red-50/80    border-red-200"     };
+/* ─── Gauge score 0-100 derived from new formula ─────────────────────
+   pmt = 0            → 100
+   pmt = safeLimit    → 50
+   pmt = availableIncome → 0
+   pmt > availableIncome → 0
+   availableIncome ≤ 0  → 0
+   Linear interpolation in each segment.                              */
+function calcGaugeScore(
+  availableIncome: number,
+  safeLimit: number,
+  pmt: number
+): number {
+  if (availableIncome <= 0 || pmt <= 0) {
+    return availableIncome <= 0 ? 0 : 100;
+  }
+  if (pmt >= availableIncome) return 0;
+  if (pmt >= safeLimit) {
+    const range = availableIncome - safeLimit;
+    if (range <= 0) return 0;
+    return Math.round(50 * (1 - (pmt - safeLimit) / range));
+  }
+  return Math.round(100 - 50 * (pmt / safeLimit));
+}
+
+/* ─── Eligibility label — Safe / Risky / Dangerous ───────────────── */
+function verdictInfo(verdict: Verdict) {
+  if (verdict === "safe")      return { label: "✅ آمن",      color: "#1B7E63", bg: "bg-emerald-50/80 border-emerald-200" };
+  if (verdict === "risky")     return { label: "⚠️ مخاطرة",  color: "#d97706", bg: "bg-amber-50/80  border-amber-200"   };
+  return                              { label: "🚨 خطر",      color: "#dc2626", bg: "bg-red-50/80    border-red-200"     };
 }
 
 /* ─── Needle tip (standard math → SVG coord) ─────────────────────
@@ -82,31 +93,35 @@ function needleTip(score: number) {
 /* ─── Component ──────────────────────────────────────────────────── */
 export function LoanSimulatorCard() {
   const { data: balance, isLoading: lb } = useGetBalanceSummary();
-  const { data: savings, isLoading: ls } = useGetAccumulatedSavings();
   const { format, baseCurrency }         = useDisplayCurrency();
 
   const [loanAmount,    setLoanAmount]    = useState(5_000);
   const [durationMonths, setDuration]     = useState(24);
 
-  const salary    = balance?.monthlySalary       ?? 0;
-  const cTotal    = balance?.commitmentsTotal     ?? 0;
-  const subsMo    = balance?.subscriptionsMonthly ?? 0;
-  const projected = balance?.projectedRemaining   ?? 0;
-  const saved     = savings?.totalSavings         ?? 0;
+  const salary  = balance?.monthlySalary       ?? 0;
+  const cTotal  = balance?.commitmentsTotal     ?? 0;
+  const subsMo  = balance?.subscriptionsMonthly ?? 0;
 
-  const score = useMemo(
-    () => calcScore(salary, cTotal, subsMo, projected, saved, loanAmount, durationMonths),
-    [salary, cTotal, subsMo, projected, saved, loanAmount, durationMonths]
+  const availableIncome = salary - subsMo - cTotal;
+  const safeLimit       = availableIncome * 0.3;
+  const pmt             = loanAmount / Math.max(durationMonths, 1);
+
+  const verdict = useMemo(
+    () => calcVerdict(availableIncome, safeLimit, pmt),
+    [availableIncome, safeLimit, pmt]
   );
 
-  const pmt        = loanAmount / Math.max(durationMonths, 1);
-  const disposable = Math.max(0, projected);
-  const pctOfDisp  = disposable > 0 ? Math.round((pmt / disposable) * 100) : null;
-  const info       = eligibilityInfo(score);
-  const tip        = needleTip(score);
+  const gaugeScore = useMemo(
+    () => calcGaugeScore(availableIncome, safeLimit, pmt),
+    [availableIncome, safeLimit, pmt]
+  );
+
+  const pctOfAvail = availableIncome > 0 ? Math.round((pmt / availableIncome) * 100) : null;
+  const info       = verdictInfo(verdict);
+  const tip        = needleTip(gaugeScore);
   const hasSalary  = salary > 0;
 
-  if (lb || ls) return <Skeleton className="h-full w-full min-h-[340px] rounded-3xl" />;
+  if (lb) return <Skeleton className="h-full w-full min-h-[340px] rounded-3xl" />;
 
   return (
     <Card
@@ -173,7 +188,7 @@ export function LoanSimulatorCard() {
                   fontSize={15} fontWeight="800"
                   fill="hsl(var(--foreground))"
                 >
-                  {score}
+                  {gaugeScore}
                 </text>
                 <text
                   x={G_CX} y={G_CY - G_IR + 22}
@@ -185,12 +200,12 @@ export function LoanSimulatorCard() {
                 </text>
 
                 {/* Arc endpoint labels */}
-                <text x={6}       y={G_CY + 3} textAnchor="middle" fontSize={9} fill="#ef4444" fontWeight="700">منخفض</text>
-                <text x={G_W - 6} y={G_CY + 3} textAnchor="middle" fontSize={9} fill="#1B7E63" fontWeight="700">عالٍ</text>
+                <text x={6}       y={G_CY + 3} textAnchor="middle" fontSize={9} fill="#ef4444" fontWeight="700">خطر</text>
+                <text x={G_W - 6} y={G_CY + 3} textAnchor="middle" fontSize={9} fill="#1B7E63" fontWeight="700">آمن</text>
               </svg>
             </div>
 
-            {/* ── Eligibility badge ──────────────────────────────────── */}
+            {/* ── Verdict badge ──────────────────────────────────────── */}
             <div
               className={`text-center text-xs font-bold py-1 px-3 rounded-xl border ${info.bg}`}
               style={{ color: info.color }}
@@ -204,8 +219,10 @@ export function LoanSimulatorCard() {
               <span>
                 القسط:{" "}
                 <span className="font-semibold text-foreground">{format(pmt, baseCurrency)}</span>
-                {pctOfDisp !== null && <span> — {pctOfDisp}% من دخلك المتاح</span>}
-                {projected <= 0 && <span className="text-red-500"> · دخلك المتاح سلبي</span>}
+                {" "}لمدة{" "}
+                <span className="font-semibold text-foreground">{durationMonths} شهر</span>
+                {pctOfAvail !== null && <span> — {pctOfAvail}% من دخلك المتاح</span>}
+                {availableIncome <= 0 && <span className="text-red-500"> · دخلك المتاح سلبي</span>}
               </span>
             </div>
 
@@ -251,9 +268,9 @@ export function LoanSimulatorCard() {
             </div>
 
             {/* ── Suggestion ────────────────────────────────────────── */}
-            {score < 40 && (
+            {(verdict === "risky" || verdict === "dangerous") && (
               <div className="text-[10px] text-muted-foreground bg-muted/40 rounded-xl px-2.5 py-1.5 text-center leading-snug">
-                {projected <= 0
+                {availableIncome <= 0
                   ? "💡 نفقاتك تتجاوز دخلك — راجع ميزانيتك أولاً"
                   : "💡 جرّب تمديد المدة أو تخفيض مبلغ القرض"}
               </div>
