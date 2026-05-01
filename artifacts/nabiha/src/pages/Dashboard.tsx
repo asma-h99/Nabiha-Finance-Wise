@@ -1,12 +1,10 @@
 import {
   useGetDashboardSummary,
-  useGetBalanceSummary,
   useGetMonthlyTrend,
-  useGetUserProfile,
 } from "@workspace/api-client-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { AlertCircle, Wallet, Target, Info, Sparkles } from "lucide-react";
+import { AlertCircle, Wallet } from "lucide-react";
 import {
   ResponsiveContainer,
   LineChart,
@@ -43,9 +41,7 @@ const PRIORITY_LABELS = {
 
 export default function Dashboard() {
   const currentMonth = new Date().toISOString().slice(0, 7);
-  const { data: profile } = useGetUserProfile();
   const { data: summary, isLoading: loadingSummary } = useGetDashboardSummary({ month: currentMonth });
-  const { data: balance } = useGetBalanceSummary();
   const { data: trendData, isLoading: loadingTrend } = useGetMonthlyTrend();
 
   const { format, convert, displayCurrency, baseCurrency } = useDisplayCurrency();
@@ -127,65 +123,20 @@ export default function Dashboard() {
       <div className="grid grid-cols-1 gap-6">
         <FinancialCalendarCard />
       </div>
-      {/* CommitmentsBreakdown (left, 3/4) + stat mini-cards (right, 1/4) */}
-      <div className="grid grid-cols-4 gap-6">
-        {/* Right column: two stat cards stacked (DOM-first = visual right in RTL) */}
-        <div className="flex flex-col gap-4">
-          <Card className="rounded-3xl border-none shadow-md bg-card/60 backdrop-blur-sm flex-1">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground flex items-center justify-center gap-2">
-                <Target className="w-4 h-4 text-accent" />
-                الفئة الأكثر استهلاكاً
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="flex flex-col items-center text-center">
-              <div className="text-xl font-bold text-foreground mb-1 truncate max-w-full">
-                {summary?.topCategory || "لا يوجد"}
-              </div>
-              <div className="text-xs text-muted-foreground mt-2 flex items-center gap-1">
-                <Sparkles className="w-3.5 h-3.5 text-accent" />
-                <span>انتبه لهذه الفئة!</span>
-              </div>
-            </CardContent>
-          </Card>
+      {/* CommitmentsBreakdown (3/4) + Loan Simulator (1/4) */}
+      <div className="grid grid-cols-4 gap-6 items-stretch">
+        {/* Right col: Loan Simulator (DOM-first = visual right in RTL) */}
+        <LoanSimulatorCard />
 
-          <Card className="rounded-3xl border-none shadow-md bg-card/60 backdrop-blur-sm flex-1">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground flex items-center justify-center gap-2">
-                <Info className="w-4 h-4 text-chart-3" />
-                الأعباء الثابتة من الراتب
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="flex flex-col items-center text-center">
-              <div className="text-xl font-bold text-foreground mb-1">
-                {(() => {
-                  const salary = profile?.monthlySalary ? Number(profile.monthlySalary) : 0;
-                  const fixed = (summary?.commitmentsTotal ?? 0) + (balance?.subscriptionsMonthly ?? 0);
-                  if (!salary || !fixed) return "—";
-                  return `${Math.min(100, Math.round((fixed / salary) * 100))}%`;
-                })()}
-              </div>
-              <div className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
-                <span className="text-[10px] text-muted-foreground/70">التزامات + اشتراكات</span>
-              </div>
-              <div className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
-                <Sparkles className="w-3.5 h-3.5 text-accent" />
-                <span>يُنصح ألا تتجاوز 50%</span>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Left column: CommitmentsBreakdownCard (takes 3/4 of the row) */}
+        {/* Left cols: Commitments donut (read-only analysis) */}
         <div className="col-span-3">
           <CommitmentsBreakdownCard />
         </div>
       </div>
 
-      {/* Monthly Trend + Loan Simulator side by side */}
-      <div className="grid grid-cols-3 gap-6 items-stretch" dir="ltr">
-        {/* LEFT: Monthly Trend chart (wider – 2/3) */}
-        <Card className="col-span-2 rounded-3xl border-none shadow-md bg-card/60 backdrop-blur-sm overflow-hidden flex flex-col" dir="rtl">
+      {/* Monthly Trend — full width */}
+      <div dir="rtl">
+        <Card className="rounded-3xl border-none shadow-md bg-card/60 backdrop-blur-sm overflow-hidden flex flex-col" dir="rtl">
           <CardHeader className="pb-0">
             <CardTitle className="text-lg">النمط الشهري</CardTitle>
             <CardDescription>تتبع صرفياتك خلال الأشهر الماضية</CardDescription>
@@ -238,9 +189,6 @@ export default function Dashboard() {
             )}
           </CardContent>
         </Card>
-
-        {/* RIGHT: Loan Simulator */}
-        <LoanSimulatorCard />
       </div>
     </div>
   );
