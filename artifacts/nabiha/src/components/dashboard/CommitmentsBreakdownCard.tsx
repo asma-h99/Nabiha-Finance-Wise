@@ -148,15 +148,15 @@ export function CommitmentsBreakdownCard() {
             <p>أضف راتبك والتزاماتك لترى التوزيع</p>
           </div>
         ) : (
-          <div className="relative" style={{ width: 300, height: 300 }}>
+          <div className="relative w-[300px] h-[300px]">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <Pie
                   data={pieData}
                   cx="50%"
                   cy="50%"
-                  innerRadius={78}
-                  outerRadius={138}
+                  innerRadius={82}
+                  outerRadius={134}
                   paddingAngle={2}
                   dataKey="value"
                   nameKey="name"
