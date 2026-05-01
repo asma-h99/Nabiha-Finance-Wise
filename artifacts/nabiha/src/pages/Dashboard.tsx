@@ -24,6 +24,7 @@ import { SavingsCard } from "@/components/dashboard/SavingsCard";
 import { FinancialCalendarCard } from "@/components/dashboard/FinancialCalendarCard";
 import { CommitmentsBreakdownCard } from "@/components/dashboard/CommitmentsBreakdownCard";
 import { LoanSimulatorCard } from "@/components/dashboard/LoanSimulatorCard";
+import { NabihaTipsCard } from "@/components/dashboard/NabihaTipsCard";
 import { useDisplayCurrency } from "@/contexts/CurrencyContext";
 import { formatMoney } from "@/lib/currency";
 import { useMemo } from "react";
@@ -125,6 +126,9 @@ export default function Dashboard() {
         </Card>
         <SalaryCard />
       </div>
+      {/* Nabiha Tips Card */}
+      <NabihaTipsCard />
+
       {/* Financial Calendar */}
       <div className="grid grid-cols-1 gap-6">
         <FinancialCalendarCard />

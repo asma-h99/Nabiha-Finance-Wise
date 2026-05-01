@@ -15,6 +15,7 @@ import Money from "@/pages/Money";
 import { CurrencyProvider } from "@/contexts/CurrencyContext";
 import { CurrencySwitcher } from "@/components/CurrencySwitcher";
 import { NotificationsBell } from "@/components/NotificationsBell";
+import { NabihaBubble } from "@/components/NabihaBubble";
 
 import logoImage from "@assets/Gemini_Generated_Image_j4skn9j4skn9j4sk_1777594348722.png";
 
@@ -240,6 +241,7 @@ function Landing() {
 function AppShell() {
   const { user } = useUser();
   return (
+    <>
     <Layout
       headerExtra={
         <div className="flex items-center gap-2 flex-wrap justify-end w-full">
@@ -275,6 +277,8 @@ function AppShell() {
         <Route component={NotFound} />
       </Switch>
     </Layout>
+    <NabihaBubble />
+    </>
   );
 }
 
