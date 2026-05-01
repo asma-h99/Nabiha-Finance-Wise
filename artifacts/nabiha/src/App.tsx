@@ -233,8 +233,28 @@ function Landing() {
         </section>
       </main>
 
-      <footer className="border-t border-border py-6 text-center text-sm text-muted-foreground">
-        © {new Date().getFullYear()} نَبِيهَة • جميع الحقوق محفوظة
+      <footer className="border-t border-border py-6 text-center text-xs text-muted-foreground space-y-1.5">
+        <div>© {new Date().getFullYear()} نَبِيهَة • جميع الحقوق محفوظة</div>
+        <div>
+          صُنع بـ ❤️ بواسطة{" "}
+          <a
+            href="https://www.linkedin.com/in/asma-hattab/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="font-medium text-primary hover:underline"
+          >
+            أسماء حطاب
+          </a>
+          {" "}و{" "}
+          <a
+            href="https://www.linkedin.com/in/ayahabuthib/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="font-medium text-primary hover:underline"
+          >
+            آية أبوذيب
+          </a>
+        </div>
       </footer>
     </div>
   );
