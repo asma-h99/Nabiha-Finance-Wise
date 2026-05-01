@@ -144,12 +144,11 @@ export function NabihaTipsCard() {
               aria-label="افتحي المحادثة مع نبيهة"
             >
               <MessageCircle className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline">افتحي المحادثة</span>
+              <span className="hidden sm:inline">افتح المحادثة</span>
             </button>
           )}
         </div>
       </CardHeader>
-
       <CardContent className="px-5 pb-5 space-y-2">
         {visibleTips.map((tip) => (
           <CardTipRow key={tip.id} tip={tip} onNavigate={handleTipNavigate} />
