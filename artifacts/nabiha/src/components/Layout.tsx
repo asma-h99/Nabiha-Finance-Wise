@@ -146,6 +146,29 @@ export default function Layout({
           </div>
         )}
         <div className="max-w-5xl mx-auto h-full">{children}</div>
+        <footer className="max-w-5xl mx-auto mt-10 pt-5 border-t border-border text-center text-xs text-muted-foreground space-y-1">
+          <div>© {new Date().getFullYear()} نَبِيهَة • جميع الحقوق محفوظة</div>
+          <div>
+            صُنع بـ ❤️ بواسطة{" "}
+            <a
+              href="https://www.linkedin.com/in/asma-hattab/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="font-medium text-primary hover:underline"
+            >
+              أسماء حطاب
+            </a>
+            {" "}و{" "}
+            <a
+              href="https://www.linkedin.com/in/ayahabuthib/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="font-medium text-primary hover:underline"
+            >
+              آية أبوذيب
+            </a>
+          </div>
+        </footer>
       </main>
     </div>
   );
