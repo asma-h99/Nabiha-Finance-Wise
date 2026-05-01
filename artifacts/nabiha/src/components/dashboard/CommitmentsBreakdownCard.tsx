@@ -30,6 +30,7 @@ const SLICE_COLORS = [
   "#65a30d",
 ];
 const REMAINING_COLOR = "#1B7E63";
+const RADIAN = Math.PI / 180;
 
 function toYearMonth(d: Date): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
@@ -51,35 +52,42 @@ interface LabelProps {
   outerRadius: number;
   percent: number;
   name: string;
+  fill: string;
 }
 
-function SliceLabel({ cx, cy, midAngle, innerRadius, outerRadius, percent, name }: LabelProps) {
-  if (percent < 0.055) return null;
-  const RADIAN = Math.PI / 180;
-  const r = innerRadius + (outerRadius - innerRadius) * 0.52;
-  const x = cx + r * Math.cos(-midAngle * RADIAN);
-  const y = cy + r * Math.sin(-midAngle * RADIAN);
-  const label = name.length > 9 ? name.slice(0, 9) + "…" : name;
+function SliceLabel({ cx, cy, midAngle, outerRadius, percent, name, fill }: LabelProps) {
+  if (percent < 0.01) return null;
+
   const pct = `${(percent * 100).toFixed(0)}%`;
+  const sin = Math.sin(-midAngle * RADIAN);
+  const cos = Math.cos(-midAngle * RADIAN);
+
+  const sx = cx + outerRadius * cos;
+  const sy = cy + outerRadius * sin;
+  const ex = cx + (outerRadius + 22) * cos;
+  const ey = cy + (outerRadius + 22) * sin;
+  const textX = ex + (cos >= 0 ? 6 : -6);
+  const anchor = cos >= 0 ? "start" : "end";
 
   return (
-    <text
-      x={x}
-      y={y}
-      textAnchor="middle"
-      dominantBaseline="central"
-      fill="white"
-      stroke="rgba(0,0,0,0.35)"
-      strokeWidth={3}
-      paintOrder="stroke"
-    >
-      <tspan x={x} dy="-0.55em" fontSize={10} fontWeight="700" fontFamily="var(--font-sans)">
-        {label}
-      </tspan>
-      <tspan x={x} dy="1.25em" fontSize={12} fontWeight="900" fontFamily="var(--font-sans)">
-        {pct}
-      </tspan>
-    </text>
+    <g>
+      <line x1={sx} y1={sy} x2={ex} y2={ey} stroke={fill} strokeWidth={1.5} />
+      <circle cx={ex} cy={ey} r={2.5} fill={fill} />
+      <text
+        x={textX}
+        y={ey}
+        textAnchor={anchor}
+        fontFamily="var(--font-sans)"
+        fill="hsl(var(--foreground))"
+      >
+        <tspan x={textX} dy="-0.65em" fontSize={10}>
+          {name}
+        </tspan>
+        <tspan x={textX} dy="1.35em" fontSize={11} fontWeight="800" fill={fill}>
+          {pct}
+        </tspan>
+      </text>
+    </g>
   );
 }
 
@@ -148,15 +156,15 @@ export function CommitmentsBreakdownCard() {
             <p>أضف راتبك والتزاماتك لترى التوزيع</p>
           </div>
         ) : (
-          <div className="relative w-[300px] h-[300px]">
+          <div className="relative w-full" style={{ height: 340 }}>
             <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
+              <PieChart margin={{ top: 30, right: 80, bottom: 30, left: 80 }}>
                 <Pie
                   data={pieData}
                   cx="50%"
                   cy="50%"
-                  innerRadius={82}
-                  outerRadius={134}
+                  innerRadius={68}
+                  outerRadius={108}
                   paddingAngle={2}
                   dataKey="value"
                   nameKey="name"
@@ -181,7 +189,7 @@ export function CommitmentsBreakdownCard() {
               </PieChart>
             </ResponsiveContainer>
 
-            {/* Center label */}
+            {/* Center label — overlay via absolute positioning */}
             <div
               className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none"
               dir="rtl"
