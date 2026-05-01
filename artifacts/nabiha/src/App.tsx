@@ -16,7 +16,7 @@ import { CurrencyProvider } from "@/contexts/CurrencyContext";
 import { CurrencySwitcher } from "@/components/CurrencySwitcher";
 import { NotificationsBell } from "@/components/NotificationsBell";
 
-import logoImage from "@assets/Gemini_Generated_Image_j4skn9j4skn9j4sk_1777144269396.png";
+import logoImage from "@assets/Gemini_Generated_Image_j4skn9j4skn9j4sk_1777594348722.png";
 
 const queryClient = new QueryClient();
 
@@ -43,9 +43,9 @@ const clerkAppearance = {
   theme: shadcn,
   cssLayerName: "clerk",
   options: {
-    logoPlacement: "inside" as const,
+    logoPlacement: "none" as const,
     logoLinkUrl: basePath || "/",
-    logoImageUrl: `${window.location.origin}${basePath}/logo.svg`,
+    logoImageUrl: `${window.location.origin}${logoImage}`,
   },
   variables: {
     colorPrimary: "#1B7E63",
@@ -83,8 +83,6 @@ const clerkAppearance = {
     otpCodeFieldInput: "bg-[#f0faf6] border border-[#e5e7eb] rounded-xl text-[#1a1a2e]",
     formFieldRow: "space-y-1.5",
     main: "gap-5",
-    logoBox: "justify-center mb-2",
-    logoImage: "h-12 w-auto",
   },
 };
 
@@ -110,9 +108,29 @@ function ClerkQueryClientCacheInvalidator() {
   return null;
 }
 
+function AuthBrand() {
+  return (
+    <div dir="rtl" className="flex flex-col items-center gap-3 mb-6">
+      <div className="relative">
+        <div className="absolute inset-0 bg-primary/20 rounded-full blur-xl scale-110" />
+        <img
+          src={logoImage}
+          alt="نَبِيهَة"
+          className="relative w-24 h-24 rounded-full object-cover border-4 border-white shadow-xl"
+        />
+      </div>
+      <div className="text-center">
+        <h1 className="text-3xl font-extrabold text-[#1B7E63] leading-tight">نَبِيهَة</h1>
+        <p className="text-sm text-[#6b7280] mt-0.5 font-medium">رفيقك المالي الذكي</p>
+      </div>
+    </div>
+  );
+}
+
 function SignInPage() {
   return (
-    <div dir="ltr" className="flex min-h-[100dvh] items-center justify-center bg-gradient-to-br from-[#f0faf6] via-white to-[#fffbf0] px-4 py-10">
+    <div dir="ltr" className="flex min-h-[100dvh] flex-col items-center bg-gradient-to-br from-[#f0faf6] via-white to-[#fffbf0] px-4 pt-10 pb-10">
+      <AuthBrand />
       <SignIn
         routing="path"
         path={`${basePath}/sign-in`}
@@ -125,7 +143,8 @@ function SignInPage() {
 
 function SignUpPage() {
   return (
-    <div dir="ltr" className="flex min-h-[100dvh] items-center justify-center bg-gradient-to-br from-[#f0faf6] via-white to-[#fffbf0] px-4 py-10">
+    <div dir="ltr" className="flex min-h-[100dvh] flex-col items-center bg-gradient-to-br from-[#f0faf6] via-white to-[#fffbf0] px-4 pt-10 pb-10">
+      <AuthBrand />
       <SignUp
         routing="path"
         path={`${basePath}/sign-up`}
