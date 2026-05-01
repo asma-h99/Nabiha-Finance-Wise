@@ -1,9 +1,21 @@
 import { useState, useEffect } from "react";
-import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
+import { useUser } from "@clerk/react";
+import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { LayoutDashboard, Wallet, RefreshCw, Sparkles, Calculator, ChevronRight, ChevronLeft } from "lucide-react";
 
-const TOUR_KEY = "nabiha_tour_seen";
+const LEGACY_TOUR_KEY = "nabiha_tour_seen";
+
+function tourKey(userId: string | null | undefined) {
+  return userId ? `nabiha_tour_seen_${userId}` : LEGACY_TOUR_KEY;
+}
+
+function hasTourBeenSeen(userId: string | null | undefined): boolean {
+  const key = tourKey(userId);
+  // Check user-specific key first, then fall back to legacy global key
+  // (so users who saw the tour before the per-user key migration don't see it again)
+  return !!(localStorage.getItem(key) || localStorage.getItem(LEGACY_TOUR_KEY));
+}
 
 const steps = [
   {
@@ -44,17 +56,20 @@ const steps = [
 ];
 
 export function OnboardingTour() {
+  const { user, isLoaded } = useUser();
   const [open, setOpen] = useState(false);
   const [step, setStep] = useState(0);
 
   useEffect(() => {
-    if (!localStorage.getItem(TOUR_KEY)) {
+    if (!isLoaded) return;
+    if (!hasTourBeenSeen(user?.id)) {
       setOpen(true);
     }
-  }, []);
+  }, [isLoaded, user?.id]);
 
   function dismiss() {
-    localStorage.setItem(TOUR_KEY, "1");
+    const key = tourKey(user?.id);
+    localStorage.setItem(key, "1");
     setOpen(false);
   }
 
@@ -72,6 +87,9 @@ export function OnboardingTour() {
         className="max-w-md w-[calc(100vw-2rem)] rounded-3xl p-0 overflow-hidden border-0 shadow-2xl gap-0"
       >
         <DialogTitle className="sr-only">جولة تعريفية بنبيهة</DialogTitle>
+        <DialogDescription className="sr-only">
+          جولة تعريفية تشرح الميزات الأساسية في تطبيق نبيهة
+        </DialogDescription>
 
         {/* Header gradient strip */}
         <div className="h-1.5 w-full bg-gradient-to-l from-emerald-400 via-primary to-emerald-600" />

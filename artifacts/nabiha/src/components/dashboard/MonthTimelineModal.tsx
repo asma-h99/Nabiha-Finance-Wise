@@ -542,6 +542,9 @@ export function MonthTimelineModal({ open, onOpenChange, month, year }: MonthTim
         >
           {/* === HEADER === */}
           <DialogHeader className="px-5 sm:px-6 pt-5 pb-3 shrink-0 border-b border-border/40 space-y-0">
+            <DialogDescription className="sr-only">
+              عرض الالتزامات المالية والأحداث لهذا الشهر
+            </DialogDescription>
             <div className="flex items-center justify-between gap-3 pl-9">
               {/* In RTL, first child renders on the right (trailing edge of viewport, "trailing side" per spec) */}
               <DialogTitle className="text-base sm:text-lg font-extrabold text-foreground text-right">

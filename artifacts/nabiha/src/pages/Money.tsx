@@ -12,6 +12,7 @@ import {
   useUpdateExpense,
   useDeleteExpense,
   useListCommitments,
+  useListCommitmentSkips,
   useCreateCommitment,
   useUpdateCommitment,
   useDeleteCommitment,
@@ -223,6 +224,7 @@ export default function Money() {
   });
   const { data: commitments, isLoading: loadingCommitments } =
     useListCommitments();
+  const { data: commitmentSkips } = useListCommitmentSkips();
   const { data: categories } = useListCategories();
 
   /* ── invalidation helpers ───────────────────────────────────────────── */
@@ -428,9 +430,35 @@ export default function Money() {
     }
 
     if (commitments) {
+      // Build a set of skipped commitment IDs for the selected month
+      const skippedIds = new Set(
+        (commitmentSkips ?? [])
+          .filter((s) => s.month === filterMonth)
+          .map((s) => s.commitmentId),
+      );
+
       // Last day of selected month so we don't overflow into next month.
       const lastDay = new Date(year, monthIndex + 1, 0).getDate();
+
       for (const c of commitments) {
+        // One-time commitments: only show in their designated month
+        if (c.isOneTime) {
+          if (c.oneTimeMonth !== filterMonth) continue;
+        } else {
+          // Recurring: skip if there's a skip record for this month
+          if (skippedIds.has(c.id)) continue;
+        }
+
+        // Exclude expired commitments: if the due date in this month exceeds endDate
+        if (c.endDate) {
+          const end = new Date(c.endDate as string);
+          if (!Number.isNaN(end.getTime())) {
+            const day = Math.min(c.dueDay, lastDay);
+            const dueDate = new Date(year, monthIndex, day);
+            if (dueDate > end) continue;
+          }
+        }
+
         const day = Math.min(c.dueDay, lastDay);
         const d = new Date(year, monthIndex, day);
         const isOverdue =
@@ -462,7 +490,7 @@ export default function Money() {
 
     rows.sort((a, b) => b.date.getTime() - a.date.getTime());
     return rows;
-  }, [expenses, commitments, year, monthIndex, isCurrentMonth, isFutureMonth]);
+  }, [expenses, commitments, commitmentSkips, filterMonth, year, monthIndex, isCurrentMonth, isFutureMonth]);
 
   /* ── filtering pipeline ─────────────────────────────────────────────── */
   const filteredRows = useMemo(() => {
@@ -587,6 +615,9 @@ export default function Money() {
                 <DialogTitle className="text-xl text-right">
                   تسجيل مصروف جديد
                 </DialogTitle>
+                <DialogDescription className="sr-only">
+                  أضف مصروفًا جديدًا مع التفاصيل والفئة
+                </DialogDescription>
               </DialogHeader>
               <Form {...createExpenseForm}>
                 <form
@@ -841,6 +872,9 @@ export default function Money() {
             <DialogTitle className="text-xl text-right">
               تعديل المصروف
             </DialogTitle>
+            <DialogDescription className="sr-only">
+              عدّل تفاصيل المصروف المسجّل
+            </DialogDescription>
           </DialogHeader>
           <Form {...editExpenseForm}>
             <form

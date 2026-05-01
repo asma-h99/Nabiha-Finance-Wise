@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
   DialogFooter,
@@ -169,6 +170,9 @@ export function EventFormDialog({ open, onOpenChange, editEvent, defaultDate }: 
         <DialogContent dir="rtl" className="max-w-md max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>{editEvent ? "تعديل الحدث" : "إضافة حدث جديد"}</DialogTitle>
+            <DialogDescription className="sr-only">
+              {editEvent ? "عدّل تفاصيل الحدث المالي" : "أضف حدثًا ماليًا جديدًا إلى التقويم"}
+            </DialogDescription>
           </DialogHeader>
 
           <form onSubmit={handleSubmit} className="space-y-4 pt-1">

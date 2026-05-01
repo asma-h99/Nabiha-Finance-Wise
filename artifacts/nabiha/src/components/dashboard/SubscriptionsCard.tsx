@@ -13,7 +13,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter, DialogTrigger } from "@/components/ui/dialog";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -148,6 +148,9 @@ export function SubscriptionsCard() {
           <DialogContent dir="rtl" className="max-w-md">
             <DialogHeader>
               <DialogTitle>اشتراك جديد</DialogTitle>
+              <DialogDescription className="sr-only">
+                أضف اشتراكًا شهريًا أو سنويًا جديدًا
+              </DialogDescription>
             </DialogHeader>
             <form onSubmit={handleAdd} className="space-y-4 pt-2">
               <div className="space-y-1.5">

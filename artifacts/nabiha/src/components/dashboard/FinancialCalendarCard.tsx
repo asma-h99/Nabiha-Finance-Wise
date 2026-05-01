@@ -95,11 +95,26 @@ export function FinancialCalendarCard() {
     skipsByMonth.get(skip.month)!.add(skip.commitmentId);
   }
 
-  // Get commitments visible in a specific month
+  // Get commitments visible in a specific month.
+  // Uses the same expiry logic as MonthTimelineModal: hide a commitment if
+  // its effective due date within the month (capped to last calendar day)
+  // falls after the commitment's endDate.
   function commitmentsForMonth(monthIdx: number) {
     const ms = monthStr(monthIdx);
     const skippedIds = skipsByMonth.get(ms) ?? new Set<number>();
+    // Last calendar day of the target month (e.g. 28/29/30/31)
+    const lastDay = new Date(year, monthIdx + 1, 0).getDate();
     return (commitments ?? []).filter((c) => {
+      // Expired commitments: the commitment's effective due date in this month
+      // is after its endDate — matches MonthTimelineModal filter exactly
+      if (c.endDate) {
+        const end = new Date(c.endDate as string);
+        if (!Number.isNaN(end.getTime())) {
+          const day = Math.min(c.dueDay, lastDay);
+          const dueDate = new Date(year, monthIdx, day);
+          if (dueDate > end) return false;
+        }
+      }
       if (c.isOneTime) return c.oneTimeMonth === ms;
       return !skippedIds.has(c.id);
     });

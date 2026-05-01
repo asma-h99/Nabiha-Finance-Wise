@@ -6,7 +6,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter, DialogTrigger } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { CURRENCIES, getCurrency } from "@/lib/currency";
 import { useDisplayCurrency } from "@/contexts/CurrencyContext";
@@ -84,6 +84,9 @@ export function SalaryCard() {
           <DialogContent dir="rtl" className="max-w-md">
             <DialogHeader>
               <DialogTitle>تعديل الراتب والعملة</DialogTitle>
+              <DialogDescription className="sr-only">
+                عدّل راتبك الشهري وعملة العرض
+              </DialogDescription>
             </DialogHeader>
             <form onSubmit={handleSave} className="space-y-4 pt-2">
               <div className="space-y-1.5">
